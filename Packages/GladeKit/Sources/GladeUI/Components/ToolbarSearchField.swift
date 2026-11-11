@@ -9,6 +9,10 @@ struct ToolbarSearchField: NSViewRepresentable {
   var prompt: String
   /// Bump to put the cursor in the field.
   var focusRequest: Int
+  var identifier = "storage.search"
+  var help = "Search titles, projects and paths"
+  var minWidth: CGFloat = 180
+  var maxWidth: CGFloat = 280
 
   func makeNSView(context: Context) -> NSSearchField {
     let field = NSSearchField()
@@ -18,12 +22,12 @@ struct ToolbarSearchField: NSViewRepresentable {
     field.delegate = context.coordinator
     field.target = context.coordinator
     field.action = #selector(Coordinator.changed(_:))
-    field.setAccessibilityIdentifier("storage.search")
+    field.setAccessibilityIdentifier(identifier)
     field.setAccessibilityLabel("Search")
-    field.toolTip = "Search titles, projects and paths"
+    field.toolTip = help
     field.translatesAutoresizingMaskIntoConstraints = false
-    field.widthAnchor.constraint(greaterThanOrEqualToConstant: 180).isActive = true
-    field.widthAnchor.constraint(lessThanOrEqualToConstant: 280).isActive = true
+    field.widthAnchor.constraint(greaterThanOrEqualToConstant: minWidth).isActive = true
+    field.widthAnchor.constraint(lessThanOrEqualToConstant: maxWidth).isActive = true
     return field
   }
 

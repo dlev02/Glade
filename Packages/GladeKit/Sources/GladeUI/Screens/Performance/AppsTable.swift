@@ -24,6 +24,8 @@ struct AppsTable: View {
   @State private var isHovering = false
   @State private var forceQuitTarget: UsageRow?
   @State private var working: Set<String> = []
+  /// Graphics and Last Used only show when some row has something in them.
+  @State private var columns = OptionalColumns.memory
 
   private static let processorHelp = "Share of the whole Mac’s processor, across all its cores."
 
@@ -54,20 +56,24 @@ struct AppsTable: View {
       .width(min: 72, ideal: 86)
       .alignment(.numeric)
 
-      TableColumn("Graphics", value: \.graphics) { row in
-        figure(row.graphics < 0 ? "—" : PerformanceFormat.percent(row.graphics), row, quiet: row.graphics <= 0)
+      if columns.graphics {
+        TableColumn("Graphics", value: \.graphics) { row in
+          figure(row.graphics < 0 ? "—" : PerformanceFormat.percent(row.graphics), row, quiet: row.graphics <= 0)
+        }
+        .width(min: 64, ideal: 78)
+        .alignment(.numeric)
       }
-      .width(min: 64, ideal: 78)
-      .alignment(.numeric)
 
-      TableColumn("Last Used", value: \.lastUsed) { row in
-        let text = PerformanceFormat.lastUsed(row.app)
-        Text(text)
-          // "—" means Glade can't tell, so it recedes.
-          .foregroundStyle(row.app.isFrontmost ? AnyShapeStyle(.primary) : text == "—" ? AnyShapeStyle(.quaternary) : AnyShapeStyle(.secondary))
-          .monospacedDigit()
+      if columns.lastUsed {
+        TableColumn("Last Used", value: \.lastUsed) { row in
+          let text = PerformanceFormat.lastUsed(row.app)
+          Text(text)
+            // "—" means Glade can't tell, so it recedes.
+            .foregroundStyle(row.app.isFrontmost ? AnyShapeStyle(.primary) : text == "—" ? AnyShapeStyle(.quaternary) : AnyShapeStyle(.secondary))
+            .monospacedDigit()
+        }
+        .width(min: 76, ideal: 96)
       }
-      .width(min: 76, ideal: 96)
     }
     .contextMenu(forSelectionType: AppUsage.ID.self) { ids in
       if let id = ids.first, let row = rows.first(where: { $0.id == id }) {
@@ -234,6 +240,8 @@ struct AppsTable: View {
       rows = fresh.sorted(using: sortOrder + [KeyPathComparator(\UsageRow.id)])
     }
     AppsTableMemory.rows = rows
+    columns.update(rows)
+    AppsTableMemory.columns = columns
     if let selection, !rows.contains(where: { $0.id == selection }) {
       self.selection = nil
     }

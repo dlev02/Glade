@@ -293,7 +293,14 @@ public final class AppModel {
   /// Sample data shows only well-known apps, never the person's own.
   private static func demoApps(_ apps: [AppUsage]) -> [AppUsage] {
     let known = ["Xcode", "Safari", "Mail", "Messages", "Music", "Finder", "Simulator", "Simulator devices", "Docker", "Notes", "Photos", "Terminal", "Calendar", "Preview", "TV", "Podcasts", "Maps", "Reminders", "Glade"]
-    return apps.filter { app in known.contains(app.name) || app.bundleIdentifier?.hasPrefix("com.apple.") == true }
+    var shown = apps.filter { app in known.contains(app.name) || app.bundleIdentifier?.hasPrefix("com.apple.") == true }
+    // `-demoGraphics YES` gives a few apps a share of the graphics chip, so the
+    // Graphics column shows.
+    if DemoState.value("demoGraphics") != nil {
+      let shares: [String: Double] = ["Safari": 6.4, "Simulator": 12.8, "Xcode": 3.1, "Music": 0.8]
+      for index in shown.indices { if let share = shares[shown[index].name] { shown[index].gpuPercent = share } }
+    }
+    return shown
   }
 
   public func refreshApps() async {

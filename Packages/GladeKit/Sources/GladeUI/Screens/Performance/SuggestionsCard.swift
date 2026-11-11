@@ -10,11 +10,20 @@ struct SuggestionsCard: View {
   var report: (String) -> Void
 
   var body: some View {
+    // Headed and divided like Overview's suggestions.
+    VStack(alignment: .leading, spacing: Metrics.s) {
+      SectionTitle("Suggestions")
+      card
+    }
+  }
+
+  private var card: some View {
     Card(padding: 0) {
       VStack(spacing: 0) {
         ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, suggestion in
           VStack(spacing: 0) {
-            if index > 0 { Divider().padding(.leading, 52) }
+            // From the text edge to the content's trailing edge.
+            if index > 0 { Divider().padding(.leading, 52).padding(.trailing, Metrics.l) }
             SuggestionRow(suggestion, iconSize: 24, report: report)
               .padding(.horizontal, Metrics.l)
               .padding(.vertical, Metrics.s)

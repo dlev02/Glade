@@ -8,4 +8,5 @@ enum AppsTableMemory {
   static var rows: [UsageRow] = []
   static var filter: AppFilter = .apps
   static var sortOrder = [KeyPathComparator(\UsageRow.memory, order: .reverse)]
+  static var columns = OptionalColumns()
 }

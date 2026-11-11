@@ -13,6 +13,7 @@ struct PerformanceScreen: View {
   @State private var noticeTask: Task<Void, Never>?
   @State private var size: CGSize = .zero
   @State private var tableSpace: CGFloat = 0
+  @State private var searchFocus = 0
 
   /// For snapshots: picks a row to show selected.
   private let preselect: (@MainActor (AppModel) -> AppUsage.ID?)?
@@ -54,7 +55,23 @@ struct PerformanceScreen: View {
     .onChange(of: filter) { AppsTableMemory.filter = filter }
     .navigationTitle("Performance")
     .navigationSubtitle(StatusLine.text(readings.snapshot))
-    .searchable(text: $search, placement: .toolbar, prompt: "Search")
+    .toolbar {
+      // A plain toolbar search field rather than `.searchable`, so it stays no wider
+      // than the names it searches need.
+      ToolbarSpacer(.fixed, placement: .primaryAction)
+      ToolbarItem(placement: .primaryAction) {
+        ToolbarSearchField(
+          text: $search, prompt: "Search", focusRequest: searchFocus,
+          identifier: "performance.search", help: "Search apps by name", minWidth: 160, maxWidth: 240
+        )
+      }
+    }
+    .background {
+      // ⌘F puts the cursor in the search field.
+      Button("Find") { searchFocus += 1 }
+        .keyboardShortcut("f")
+        .hidden()
+    }
     .onAppear {
       model.surfaceAppeared(detail: true)
       if let preselect { selection = preselect(model) }
