@@ -18,7 +18,10 @@ struct ProtectionPane: View {
       Section("Protected Unless You Turn It Off") {
         ForEach(liftable) { zone in
           Toggle(isOn: binding(for: zone)) {
-            zoneText(zone)
+            HStack(alignment: .top, spacing: Metrics.m) {
+              ZoneIcon(zone: zone)
+              zoneText(zone)
+            }
           }
         }
       }
@@ -29,20 +32,22 @@ struct ProtectionPane: View {
 
       Section {
         DisclosureGroup(isExpanded: $showsAlwaysProtected) {
-          ForEach(locked) { zone in
-            HStack(alignment: .firstTextBaseline, spacing: Metrics.s) {
-              Image(systemName: "lock.fill")
-                .foregroundStyle(.secondary)
-                .frame(width: 16)
-                .accessibilityHidden(true)
-              zoneText(zone)
+          VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(locked.enumerated()), id: \.element.id) { index, zone in
+              if index > 0 {
+                Divider().padding(.leading, 24 + Metrics.m)
+              }
+              HStack(alignment: .top, spacing: Metrics.m) {
+                ZoneIcon(zone: zone)
+                zoneText(zone)
+              }
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .padding(.vertical, Metrics.s)
+              .accessibilityElement(children: .combine)
+              .accessibilityValue("Always protected")
             }
-            // A form centres rows it can't place; these share one leading edge.
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.vertical, 3)
-            .accessibilityElement(children: .combine)
-            .accessibilityValue("Always protected")
           }
+          .padding(.top, Metrics.xs)
         } label: {
           // The whole row opens the list, not only the small triangle.
           Button {

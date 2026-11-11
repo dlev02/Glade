@@ -21,7 +21,7 @@ enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
   var symbol: String {
     switch self {
     case .general: Symbols.settings
-    case .protection: "lock.shield"
+    case .protection: Symbols.protected
     case .assistant: Symbols.assistant
     case .alerts: "bell.badge"
     case .search: "text.magnifyingglass"

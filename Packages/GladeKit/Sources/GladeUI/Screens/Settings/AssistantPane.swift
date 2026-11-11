@@ -60,7 +60,7 @@ struct AssistantPane: View {
         }
       } footer: {
         // Up here, where it's always in view, rather than at the foot of the pane.
-        Label("Cloud AIs see names, sizes and dates only", systemImage: "lock.shield")
+        Label("Cloud AIs see names, sizes and dates only", systemImage: Symbols.protected)
           .foregroundStyle(.secondary)
       }
 
