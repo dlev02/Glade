@@ -254,22 +254,6 @@ private struct AccessBanner: View {
   }
 }
 
-/// Starts a scan, or shows that one is running.
-struct ScanButton: View {
-  @Environment(AppModel.self) private var model
-
-  var body: some View {
-    if model.isScanning {
-      ProgressView()
-        .controlSize(.small)
-        .help("Scanning…")
-    } else {
-      Button("Scan", systemImage: "arrow.clockwise") { model.startScan() }
-        .help("Scan again")
-    }
-  }
-}
-
 extension MemoryPressure {
   var title: String {
     switch self {

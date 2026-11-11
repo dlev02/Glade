@@ -36,6 +36,8 @@ public struct GladeScenes: Scene {
     .defaultSize(width: 1100, height: 740)
     .commands {
       GladeCommands(model: model, updater: updater)
+      // Show and Hide Inspector in the View menu.
+      InspectorCommands()
     }
 
     MenuBarExtra {

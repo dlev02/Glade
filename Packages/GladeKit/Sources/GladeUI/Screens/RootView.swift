@@ -4,8 +4,18 @@ import SwiftUI
 /// The main window: a sidebar of sections and the selected one beside it.
 public struct RootView: View {
   @Environment(AppModel.self) private var model
+  /// The storage list and how it's being viewed, kept here so switching back to
+  /// Storage shows it straight away rather than building it again.
+  @State private var storage: StorageViewState
 
-  public init() {}
+  public init() {
+    _storage = State(initialValue: StorageViewState())
+  }
+
+  /// For snapshots that show the window with Storage in a particular state.
+  init(storage: StorageViewState) {
+    _storage = State(initialValue: storage)
+  }
 
   public var body: some View {
     @Bindable var model = model
@@ -13,7 +23,6 @@ public struct RootView: View {
       List(selection: Binding(get: { model.section }, set: { model.section = $0 ?? .overview })) {
         ForEach(AppModel.Section.allCases) { section in
           Label(section.title, systemImage: section.symbol)
-            .listItemTint(model.tint)
             .tag(section)
         }
       }
@@ -24,7 +33,7 @@ public struct RootView: View {
     } detail: {
       switch model.section {
       case .overview: OverviewScreen()
-      case .storage: StorageScreen()
+      case .storage: StorageScreen(state: storage)
       case .performance: PerformanceScreen()
       case .assistant: AssistantScreen()
       case .history: HistoryScreen()
@@ -40,22 +49,47 @@ public struct RootView: View {
   }
 }
 
-/// Free space, always in view at the foot of the sidebar.
+/// Free space, always in view at the foot of the sidebar. Clicking it opens Storage.
+/// The bar stays neutral until space runs low.
 private struct SidebarFooter: View {
   @Environment(AppModel.self) private var model
+  @State private var isHovering = false
 
   var body: some View {
     if let disk = model.snapshot?.disk ?? model.scan?.volume {
-      VStack(alignment: .leading, spacing: 6) {
-        LevelBar(fraction: 1 - disk.freeFraction, color: Palette.load(1 - disk.freeFraction))
-        Text("\(Format.bytes(disk.availableBytes)) available")
-          .font(.caption)
-          .foregroundStyle(.secondary)
-          .monospacedDigit()
+      let low = isLow(disk)
+      Button {
+        model.section = .storage
+      } label: {
+        VStack(alignment: .leading, spacing: 6) {
+          LevelBar(fraction: 1 - disk.freeFraction, color: low ? Palette.critical : Color.secondary)
+          Text("\(Format.bytes(disk.availableBytes)) available")
+            .font(.callout)
+            .foregroundStyle(low ? AnyShapeStyle(Palette.critical) : AnyShapeStyle(.secondary))
+            .monospacedDigit()
+        }
+        .padding(.horizontal, Metrics.s)
+        .padding(.vertical, Metrics.s)
+        .background(Color.primary.opacity(isHovering ? 0.06 : 0), in: .rect(cornerRadius: Metrics.s))
+        .contentShape(.rect)
       }
-      .padding(.horizontal, Metrics.l)
-      .padding(.bottom, Metrics.m)
+      .buttonStyle(.plain)
+      .onHover { hovering in
+        withAnimation(.snappy(duration: 0.12)) { isHovering = hovering }
+      }
+      .padding(.horizontal, Metrics.s)
+      .padding(.bottom, Metrics.s)
+      .help("Show Storage")
       .accessibilityElement(children: .combine)
+      .accessibilityLabel("\(Format.bytes(disk.availableBytes)) available")
+      .accessibilityHint("Shows Storage")
+      .accessibilityAddTraits(.isButton)
     }
+  }
+
+  /// Below the free-space alert threshold, or under a tenth of the disk.
+  private func isLow(_ disk: VolumeInfo) -> Bool {
+    let threshold = Int64(model.config.automation.storageFreeGB * 1_000_000_000)
+    return disk.availableBytes < threshold || disk.freeFraction < 0.1
   }
 }
