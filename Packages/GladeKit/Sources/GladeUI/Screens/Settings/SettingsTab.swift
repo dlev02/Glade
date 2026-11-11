@@ -35,7 +35,7 @@ enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
     switch self {
     case .general: 400
     case .protection: 520
-    case .assistant: 660
+    case .assistant: 720
     case .alerts: 540
     case .search: 360
     case .advanced: 600

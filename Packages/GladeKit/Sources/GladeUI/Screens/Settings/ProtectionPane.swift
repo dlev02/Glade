@@ -8,6 +8,7 @@ struct ProtectionPane: View {
   @State private var zones: [ProtectedZone] = ProtectedZones.builtIn
   @State private var pendingUnlock: ProtectedZone?
   @State private var showsAlwaysProtected = false
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   var body: some View {
     @Bindable var model = model
@@ -36,14 +37,26 @@ struct ProtectionPane: View {
                 .accessibilityHidden(true)
               zoneText(zone)
             }
+            // A form centres rows it can't place; these share one leading edge.
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 3)
             .accessibilityElement(children: .combine)
             .accessibilityValue("Always protected")
           }
         } label: {
-          LabeledContent("Always Protected") {
-            Text(locked.count == 1 ? "1 area" : "\(locked.count) areas")
-              .monospacedDigit()
+          // The whole row opens the list, not only the small triangle.
+          Button {
+            withAnimation(reduceMotion ? nil : .snappy(duration: 0.2)) { showsAlwaysProtected.toggle() }
+          } label: {
+            LabeledContent("Always Protected") {
+              Text(locked.count == 1 ? "1 area" : "\(locked.count) areas")
+                .monospacedDigit()
+            }
+            .contentShape(.rect)
           }
+          .buttonStyle(.plain)
+          .accessibilityValue(showsAlwaysProtected ? "Expanded" : "Collapsed")
+          .accessibilityIdentifier("protection.alwaysProtected")
         }
       } footer: {
         Text("Protected areas are never scanned, listed, or shown to an AI.")
@@ -67,6 +80,7 @@ struct ProtectionPane: View {
   private func zoneText(_ zone: ProtectedZone) -> some View {
     VStack(alignment: .leading, spacing: 2) {
       Text(zone.title)
+        .frame(maxWidth: .infinity, alignment: .leading)
       Text(zone.reason)
         .font(.callout)
         .foregroundStyle(.secondary)

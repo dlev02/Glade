@@ -58,6 +58,10 @@ struct AssistantPane: View {
             .help("Look for AIs again")
           }
         }
+      } footer: {
+        // Up here, where it's always in view, rather than at the foot of the pane.
+        Label("Cloud AIs see names, sizes and dates only", systemImage: "lock.shield")
+          .foregroundStyle(.secondary)
       }
 
       if !unavailable.isEmpty {
@@ -98,10 +102,6 @@ struct AssistantPane: View {
         .disabled(!model.config.assistant.proactive)
       }
 
-      Section {
-        Label("Cloud AIs see names, sizes and dates only", systemImage: "lock.shield")
-          .foregroundStyle(.secondary)
-      }
     }
     .confirmationDialog("Share file excerpts with cloud AIs?", isPresented: $confirmsSharing) {
       Button("Share Excerpts") { model.config.assistant.shareExcerpts = true }
