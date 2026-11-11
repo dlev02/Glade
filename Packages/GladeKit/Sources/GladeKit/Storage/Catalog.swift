@@ -169,18 +169,7 @@ public enum Catalog {
       paths: ["~/Library/Bitrig/Users/*/Builds/*/DerivedData"], split: .each, titleStyle: .parent,
       owner: Owner("Bitrig", bundleIDs: ["app.bitrig.Bitrig"], processNames: ["Bitrig"]), idleDays: 3
     ),
-    LocationRule(
-      id: "xcode.testdevices", category: .simulators, title: "Test simulators",
-      detail: "Copies of simulators Xcode makes to run tests in parallel. Xcode makes fresh ones the next time tests run.",
-      paths: ["~/Library/Developer/XCTestDevices"], owner: xcode_, method: .simulatorSet(name: "testing"),
-      idleDays: 3, allowsLibrariesInside: true
-    ),
-    LocationRule(
-      id: "xcode.previews", category: .simulators, title: "Preview simulators",
-      detail: "Simulators Xcode keeps for SwiftUI previews. Xcode makes fresh ones the next time a preview runs.",
-      paths: ["~/Library/Developer/Xcode/UserData/Previews"], owner: xcode_, method: .simulatorSet(name: "previews"),
-      idleDays: 3, allowsLibrariesInside: true
-    ),
+    // Test and preview simulators are found one by one by SimulatorCloneScanner.
     LocationRule(
       id: "xcode.caches", category: .xcode, title: "Xcode caches",
       detail: "Interface Builder, documentation and playground caches. Xcode recreates them when needed.",

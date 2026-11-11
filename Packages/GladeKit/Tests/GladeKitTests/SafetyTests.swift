@@ -203,6 +203,62 @@ struct SafetyTests {
     #expect(FileManager.default.fileExists(atPath: toolkit + "/bin/tool"))
   }
 
+  /// One test simulator is deleted only when the finding names that clone’s own folder
+  /// and Xcode’s current list says it exists, belongs to that set and is shut down.
+  @Test func testSimulatorClonesAreRemovedOneAtATimeAndOnlyWhenIdle() async throws {
+    let set = home + "/Library/Developer/XCTestDevices"
+    let idle = "11111111-1111-4111-8111-111111111111", booted = "22222222-2222-4222-8222-222222222222"
+    let foreign = "33333333-3333-4333-8333-333333333333", missing = "44444444-4444-4444-8444-444444444444"
+    for udid in [idle, booted, foreign, missing] {
+      try FileManager.default.createDirectory(atPath: "\(set)/\(udid)/data", withIntermediateDirectories: true)
+    }
+    let json = """
+      {"devices": {"com.apple.CoreSimulator.SimRuntime.iOS-27-2": [
+        {"udid": "\(idle)", "name": "Clone 1 of iPhone 17", "state": "Shutdown", "dataPath": "\(set)/\(idle)/data"},
+        {"udid": "\(booted)", "name": "Clone 2 of iPhone 17", "state": "Booted", "dataPath": "\(set)/\(booted)/data"},
+        {"udid": "\(foreign)", "name": "iPhone 17", "state": "Shutdown", "dataPath": "\(home)/Library/Developer/CoreSimulator/Devices/\(foreign)/data"}
+      ]}}
+      """
+    let listing = try JSONDecoder().decode(SimulatorCloneScanner.DeviceList.self, from: Data(json.utf8))
+    func clone(_ udid: String, path: String? = nil, set name: String = "testing") -> Finding {
+      finding(udid, path ?? "\(set)/\(udid)", method: .simulatorSet(name: name, udid: udid))
+    }
+    func outcome(_ finding: Finding) async -> RemovalOutcome {
+      guard case .simulatorSet(let name, let udid?) = finding.method else { return .failed(reason: "not a clone") }
+      return await Cleaner.simulatorClone(
+        finding, set: name, udid: udid, protection: protection, running: RunningApps(), dryRun: true, listing: listing
+      )
+    }
+
+    let idleOutcome = await outcome(clone(idle))
+    #expect(idleOutcome == .wouldRemove, "\(idleOutcome)")
+    for (label, hostile) in [
+      ("booted", clone(booted)), ("other set", clone(foreign)), ("not listed", clone(missing)),
+      ("wrong folder", clone(idle, path: home + "/Documents")), ("another clone’s folder", clone(idle, path: "\(set)/\(booted)")),
+    ] {
+      guard case .skipped = await outcome(hostile) else {
+        Issue.record("\(label) must be refused")
+        continue
+      }
+    }
+    // Through the cleaner itself, which turns these away before asking simctl anything.
+    let unknownSet = clone(idle, set: "standard")
+    let notUUID = finding("bad", "\(set)/../../..", method: .simulatorSet(name: "testing", udid: "../../.."))
+    let receipt = try await Cleaner.clean(
+      ids: [unknownSet.id, notUUID.id], from: scan([unknownSet, notUUID]), config: GladeConfig(),
+      options: CleanOptions(dryRun: true), protection: protection, running: RunningApps()
+    )
+    for entry in receipt.entries {
+      guard case .skipped = entry.outcome else {
+        Issue.record("\(entry.id) must be refused, got \(entry.outcome)")
+        continue
+      }
+    }
+    #expect(receipt.entries.count == 2)
+    #expect(SimulatorCloneScanner.deviceName("Clone 12 of iPad Air 11-inch (M4)") == "iPad Air 11-inch (M4)")
+    #expect(SimulatorCloneScanner.deviceName("Cloned Phone") == "Cloned Phone")
+  }
+
   /// Agents keep live state in folders named like scratch space. Even long untouched,
   /// the catalog must not offer it.
   @Test func agentStateNamedLikeScratchIsNotOffered() async throws {

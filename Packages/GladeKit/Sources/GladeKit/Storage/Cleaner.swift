@@ -125,9 +125,10 @@ public enum Cleaner {
       return await simulator(["erase", udid], udid: udid, dryRun: dryRun)
     case .unavailableSimulators:
       return await simulator(["delete", "unavailable"], udid: nil, dryRun: dryRun)
-    case .simulatorSet(let name):
+    case .simulatorSet(let name, let udid):
       guard ["previews", "testing"].contains(name) else { return .skipped(reason: "Not a known simulator set.") }
-      return await simulator(["--set", name, "delete", "all"], udid: nil, dryRun: dryRun)
+      guard let udid else { return await simulator(["--set", name, "delete", "all"], udid: nil, dryRun: dryRun) }
+      return await simulatorClone(finding, set: name, udid: udid, protection: protection, running: running, dryRun: dryRun)
     case .simulatorRuntime(let identifier):
       return await simulator(["runtime", "delete", identifier], udid: identifier, dryRun: dryRun)
     case .gitWorktree(let repository):
@@ -258,6 +259,35 @@ public enum Cleaner {
     } catch {
       return .failed(reason: reason(error))
     }
+  }
+
+  /// Deletes one test or preview simulator with `simctl`, after checking again, right
+  /// now, that the finding names that clone’s own folder, that the set still lists it,
+  /// and that it’s shut down. A dry run asks the same questions.
+  static func simulatorClone(
+    _ finding: Finding, set: String, udid: String, protection: Protection, running: RunningApps, dryRun: Bool,
+    listing: SimulatorCloneScanner.DeviceList? = nil
+  ) async -> RemovalOutcome {
+    guard let folder = SimulatorCloneScanner.folder(set: set, udid: udid, home: protection.home) else {
+      return .skipped(reason: "Not a simulator identifier.")
+    }
+    guard finding.paths.map(Protection.clean) == [folder] else {
+      Log.error(.safety, "Refused to delete simulator \(udid) for \(finding.ruleID): the finding doesn’t name its folder")
+      return .skipped(reason: "Not that simulator’s folder.")
+    }
+    let verdict = protection.verdict(forRemoving: folder)
+    guard verdict.isAllowed else { return refuse(finding, folder, verdict) }
+    if let program = InUse.runningExecutable(inside: folder, executables: running.executablePaths) {
+      return .skipped(reason: "\(program) is running from here.")
+    }
+    var current = listing
+    if current == nil { current = await SimulatorCloneScanner.list(set: set) }
+    guard let current else { return .skipped(reason: "Couldn’t read Xcode’s list of \(set) simulators.") }
+    if let refusal = SimulatorCloneScanner.refusal(udid: udid, folder: folder, listing: current) {
+      Log.info(.clean, "Kept \(set) simulator \(udid): \(refusal)")
+      return .skipped(reason: refusal)
+    }
+    return await simulator(["--set", set, "delete", udid], udid: udid, dryRun: dryRun)
   }
 
   private static func worktree(_ finding: Finding, repository: String, protection: Protection, dryRun: Bool) async -> RemovalOutcome {

@@ -51,7 +51,7 @@ Every finding says how it comes back:
 | Balanced | Adds package caches, stale agent sessions (14 days and older), idle simulators and AI models. |
 | Aggressive | Everything that can come back, even if it was used recently. |
 
-The level picks a starting selection. Change any item by hand before you clean.
+The level picks a starting selection. Change any item by hand before you clean. Each of Xcode's test and preview simulators is listed on its own, so the ones Xcode used today stay while older ones go.
 
 ### What Glade never touches
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1 — unreleased
+
+### More space from Balanced
+
+- Each test and preview simulator Xcode makes is now its own item ("Test simulator · iPhone 17 · iOS 27.2"), with its own size and last use. One clone Xcode used today no longer holds back the ones it hasn't touched for days, and a simulator that's running is always left alone.
+
 ## 0.2.0 — 2026-11-11
 
 ### Honest about the Trash
