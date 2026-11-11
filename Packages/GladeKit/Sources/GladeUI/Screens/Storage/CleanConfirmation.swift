@@ -11,6 +11,8 @@ struct CleanConfirmation: View {
   var confirm: () -> Void
   /// Whether more of the list sits below the visible part, for the fade.
   @State private var moreBelow = false
+  /// The list opens at its first row.
+  @State private var position = ScrollPosition(edge: .top)
 
   /// Rows are one line each, so the list can show whole rows only.
   static let rowHeight: CGFloat = 32
@@ -117,8 +119,14 @@ struct CleanConfirmation: View {
             }
         }
       }
+      // Scrolling settles on whole rows.
+      .scrollTargetLayout()
       .padding(.vertical, Metrics.xs)
     }
+    .scrollPosition($position)
+    .scrollTargetBehavior(.viewAligned)
+    .defaultScrollAnchor(.top)
+    .onAppear { position.scrollTo(edge: .top) }
     .scrollIndicators(items.count > Self.visibleRows ? .visible : .hidden)
     .scrollIndicatorsFlash(onAppear: true)
     .frame(height: CGFloat(visible) * Self.rowHeight + Metrics.xs * 2)
