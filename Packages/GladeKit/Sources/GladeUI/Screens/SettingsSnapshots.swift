@@ -42,6 +42,7 @@ enum SettingsSnapshots {
       "id": "quitIdleApp:\(app.id)", "kind": "quitIdleApp", "appID": app.id, "appName": app.name,
       "title": "Quit \(app.name)",
       "reason": "Not used for 3 hours and holding \(Format.bytes(app.memoryBytes)) of memory.",
+      "facts": "Idle 3 h · \(Format.bytes(app.memoryBytes))",
       "frees": ["memoryBytes": app.memoryBytes, "cpuPercent": 0.4],
       "confidence": "high", "actionable": true,
     ]
