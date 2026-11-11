@@ -2,64 +2,45 @@ import GladeKit
 import SwiftUI
 
 /// Says exactly what a clean will do before it starts: how much goes for good, how
-/// much goes to the Trash, and the biggest things by name.
+/// much goes to the Trash, and every selected item, with a warning on anything
+/// nothing can bring back.
 struct CleanConfirmation: View {
   @Environment(AppModel.self) private var model
   var cancel: () -> Void
   var confirm: () -> Void
 
-  private static let shownItems = 4
-
   var body: some View {
     let total = model.selectedBytes
     let immediate = model.immediateBytes
     let trash = max(0, total - immediate)
-    let largest = largestSelected
+    let items = selected
     VStack(alignment: .leading, spacing: Metrics.l) {
       Text("Free up \(Format.bytes(total))?")
         .font(.title2.weight(.semibold))
+        .monospacedDigit()
 
-      VStack(alignment: .leading, spacing: Metrics.m) {
+      VStack(alignment: .leading, spacing: Metrics.s) {
         if immediate > 0 {
-          outcome(
-            "\(Format.bytes(immediate)) removed straight away", symbol: "bolt",
-            detail: "Things that rebuild or download again."
-          )
+          outcome("\(Format.bytes(immediate)) removed straight away", symbol: "bolt", detail: "Rebuilds or downloads again")
         }
         if trash > 0 {
-          outcome(
-            "\(Format.bytes(trash)) moved to the Trash", symbol: "trash",
-            detail: "You can put it back."
-          )
+          outcome("\(Format.bytes(trash)) moved to the Trash", symbol: "trash", detail: "Can be put back")
         }
       }
 
-      if !largest.items.isEmpty {
-        VStack(spacing: 0) {
-          ForEach(Array(largest.items.enumerated()), id: \.element.id) { index, finding in
-            if index > 0 { Divider() }
-            HStack(spacing: Metrics.s) {
-              CategoryIcon(finding.category, size: 20)
-              Text(finding.title)
-                .lineLimit(1)
-                .truncationMode(.middle)
-              Spacer(minLength: Metrics.s)
-              Text(Format.bytes(finding.bytes))
-                .monospacedDigit()
-                .foregroundStyle(.secondary)
+      if !items.isEmpty {
+        ScrollView {
+          VStack(spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.element.id) { index, finding in
+              if index > 0 { Divider() }
+              row(finding)
             }
-            .padding(.vertical, 6)
           }
-          if largest.others > 0 {
-            Divider()
-            Text("and \(largest.others) more")
-              .foregroundStyle(.secondary)
-              .frame(maxWidth: .infinity, alignment: .leading)
-              .padding(.vertical, 6)
-          }
+          .padding(.horizontal, Metrics.m)
+          .padding(.vertical, Metrics.xs)
         }
-        .padding(.horizontal, Metrics.m)
-        .padding(.vertical, Metrics.xs)
+        .frame(maxHeight: 260)
+        .fixedSize(horizontal: false, vertical: true)
         .background(Palette.card, in: .rect(cornerRadius: Metrics.innerRadius))
         .overlay {
           RoundedRectangle(cornerRadius: Metrics.innerRadius)
@@ -67,11 +48,16 @@ struct CleanConfirmation: View {
         }
       }
 
-      HStack {
+      HStack(spacing: Metrics.s) {
         Spacer()
         Button("Cancel", action: cancel)
+          .secondaryAction()
+          .controlSize(.large)
           .keyboardShortcut(.cancelAction)
-        Button("Free Up", action: confirm)
+        Button(total > 0 ? "Free Up \(Format.bytes(total))" : "Free Up", action: confirm)
+          .principalAction()
+          .controlSize(.large)
+          .monospacedDigit()
           .keyboardShortcut(.defaultAction)
           .disabled(total == 0 && model.selectedIDs.isEmpty)
       }
@@ -79,31 +65,54 @@ struct CleanConfirmation: View {
     .padding(Metrics.xl)
   }
 
+  private func row(_ finding: Finding) -> some View {
+    HStack(spacing: Metrics.s) {
+      CategoryIcon(finding.category, size: 20)
+      VStack(alignment: .leading, spacing: 1) {
+        Text(finding.title)
+          .lineLimit(1)
+          .truncationMode(.middle)
+        if finding.recovery == .permanent {
+          Label(finding.recovery.explanation, systemImage: finding.recovery.symbol)
+            .font(.caption)
+            .foregroundStyle(finding.recovery.color)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+      }
+      Spacer(minLength: Metrics.s)
+      Text(Format.bytes(finding.bytes))
+        .monospacedDigit()
+        .foregroundStyle(.secondary)
+    }
+    .padding(.vertical, 6)
+    .accessibilityElement(children: .combine)
+  }
+
   private func outcome(_ title: String, symbol: String, detail: String) -> some View {
-    HStack(alignment: .firstTextBaseline, spacing: Metrics.m) {
+    HStack(alignment: .firstTextBaseline, spacing: Metrics.s) {
       Image(systemName: symbol)
         .foregroundStyle(.secondary)
         .frame(width: 20)
         .accessibilityHidden(true)
-      VStack(alignment: .leading, spacing: 2) {
+      VStack(alignment: .leading, spacing: 1) {
         Text(title)
-          .font(.headline)
+          .fontWeight(.medium)
           .monospacedDigit()
         Text(detail)
+          .font(.callout)
           .foregroundStyle(.secondary)
       }
     }
     .accessibilityElement(children: .combine)
   }
 
-  /// The biggest selected findings, leaving out ones inside another selected finding,
-  /// and how many more there are.
-  private var largestSelected: (items: [Finding], others: Int) {
-    guard let scan = model.scan else { return ([], 0) }
+  /// Every selected finding, biggest first, leaving out ones inside another selected
+  /// finding (they go with it).
+  private var selected: [Finding] {
+    guard let scan = model.scan else { return [] }
     let chosen = Set(model.selectedIDs)
-    let top = scan.findings
+    return scan.findings
       .filter { chosen.contains($0.id) && !($0.within.map(chosen.contains) ?? false) }
       .sorted { $0.bytes > $1.bytes }
-    return (Array(top.prefix(Self.shownItems)), max(0, top.count - Self.shownItems))
   }
 }

@@ -7,22 +7,31 @@ import SwiftUI
 struct FindingInspector: View {
   @Environment(AppModel.self) private var model
   var finding: Finding?
-  /// How many rows are highlighted, for the placeholder when it isn't exactly one.
-  var highlightedCount = 0
+  /// The highlighted findings when more than one row is highlighted; their totals
+  /// show instead of a single finding.
+  var highlightedFindings: [Finding] = []
 
   var body: some View {
-    if let finding {
-      ScrollView {
-        content(finding)
-          .padding(Metrics.l)
-          .frame(maxWidth: .infinity, alignment: .leading)
+    ScrollView {
+      Group {
+        if let finding {
+          content(finding)
+        } else if highlightedFindings.count > 1 {
+          SelectionTotals(title: "\(highlightedFindings.count) Items", findings: highlightedFindings)
+        } else {
+          SelectionTotals(title: "Selected", findings: selectedFindings)
+        }
       }
-    } else {
-      Text(highlightedCount > 1 ? "\(highlightedCount) Items" : "No Selection")
-        .font(.title3)
-        .foregroundStyle(.tertiary)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .padding(Metrics.l)
+      .frame(maxWidth: .infinity, alignment: .leading)
     }
+  }
+
+  /// What a clean would take now.
+  private var selectedFindings: [Finding] {
+    guard let scan = model.scan else { return [] }
+    let chosen = Set(model.selectedIDs)
+    return scan.findings.filter { chosen.contains($0.id) }
   }
 
   private func content(_ finding: Finding) -> some View {
@@ -44,13 +53,17 @@ struct FindingInspector: View {
           .fixedSize(horizontal: false, vertical: true)
       }
 
-      section("When it’s removed") {
+      section("After removal") {
         RecoveryBadge(finding.recovery)
         Text(finding.recovery.explanation)
           .foregroundStyle(.secondary)
           .fixedSize(horizontal: false, vertical: true)
+      }
+
+      section("How it’s removed") {
         Label(finding.removalText(model.config), systemImage: finding.removalSymbol(model.config))
           .foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
       }
 
       section(finding.isBlocked ? "Can’t be removed now" : "Selection") {
@@ -96,7 +109,7 @@ struct FindingInspector: View {
                 .truncationMode(.middle)
                 .textSelection(.enabled)
               Spacer(minLength: 0)
-              Button("Show in Finder", systemImage: "folder") {
+              Button("Show in Finder", systemImage: Symbols.showInFinder) {
                 NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
               }
               .labelStyle(.iconOnly)

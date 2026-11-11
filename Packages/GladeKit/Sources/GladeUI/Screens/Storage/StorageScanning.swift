@@ -7,15 +7,15 @@ struct StorageScanning: View {
   var total: Int
 
   var body: some View {
-    VStack(spacing: Metrics.l) {
-      Text("Looking for what can be freed…")
-        .font(.title3)
-        .foregroundStyle(.secondary)
-      ProgressView(value: Double(min(done, total)), total: Double(max(total, 1)))
-        .frame(width: 280)
-        .accessibilityLabel("Scan progress")
-      Button("Stop", role: .cancel) { model.cancelScan() }
+    EmptyState("Looking for what can be freed", symbol: Symbols.scan) {
+      VStack(spacing: Metrics.l) {
+        ProgressView(value: Double(min(done, total)), total: Double(max(total, 1)))
+          .frame(width: 240)
+          .accessibilityLabel("Scan progress")
+          .accessibilityValue("\(done) of \(total)")
+        Button("Stop", role: .cancel) { model.cancelScan() }
+          .secondaryAction()
+      }
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
   }
 }

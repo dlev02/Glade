@@ -7,7 +7,10 @@ struct CleanSummary: View {
   @Environment(AppModel.self) private var model
   var receipt: Receipt
   var done: () -> Void
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @State private var restored: Cleaner.RestoreResult?
+  /// Flips once on appear, so the tick bounces a single time.
+  @State private var appeared = false
 
   var body: some View {
     VStack(alignment: .leading, spacing: Metrics.l) {
@@ -15,6 +18,7 @@ struct CleanSummary: View {
         HStack(spacing: Metrics.s) {
           Image(systemName: "checkmark.circle.fill")
             .foregroundStyle(.green)
+            .symbolEffect(.bounce, options: .nonRepeating, value: appeared)
             .accessibilityHidden(true)
           Text("Freed \(Format.bytes(receipt.removedBytes))")
         }
@@ -60,13 +64,33 @@ struct CleanSummary: View {
         }
       }
 
-      HStack {
+      HStack(spacing: Metrics.s) {
+        if receipt.trashedBytes > 0, restored == nil {
+          Button(trashedCount == 1 ? "Put Back 1 Item" : "Put Back \(trashedCount) Items", systemImage: Symbols.putBack) {
+            restored = model.putBack(receipt)
+          }
+          .secondaryAction()
+          .controlSize(.large)
+        }
         Spacer()
         Button("Done", action: done)
+          .principalAction()
+          .controlSize(.large)
           .keyboardShortcut(.defaultAction)
       }
     }
     .padding(Metrics.xl)
+    .onAppear {
+      if !reduceMotion { appeared = true }
+    }
+  }
+
+  /// How many things went to the Trash, for the Put Back button.
+  private var trashedCount: Int {
+    receipt.entries.filter {
+      if case .trashed = $0.outcome { return true }
+      return false
+    }.count
   }
 
   private var trashSection: some View {
@@ -87,12 +111,6 @@ struct CleanSummary: View {
         } else {
           Text("\(Format.bytes(receipt.trashedBytes)) is in the Trash")
             .monospacedDigit()
-        }
-      }
-      Spacer(minLength: Metrics.s)
-      if restored == nil {
-        Button("Put Back", systemImage: "arrow.uturn.backward") {
-          restored = model.putBack(receipt)
         }
       }
     }

@@ -8,13 +8,13 @@ struct StorageEmptyState: View {
   var body: some View {
     VStack(spacing: 0) {
       if !model.hasFullDiskAccess {
-        StorageAccessBanner()
+        FullDiskAccessBanner()
           .padding(.horizontal, Metrics.l)
           .padding(.top, Metrics.m)
       }
       EmptyState("Nothing scanned yet", symbol: AppModel.Section.storage.symbol) {
-        Button("Scan", systemImage: "magnifyingglass") { model.startScan() }
-          .buttonStyle(.glassProminent)
+        Button("Scan Storage", systemImage: Symbols.scan) { model.startScan() }
+          .principalAction()
           .controlSize(.large)
           .disabled(model.isScanning)
       }
