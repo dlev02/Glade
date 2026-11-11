@@ -54,7 +54,7 @@ public struct GladeScenes: Scene {
     .menuBarExtraStyle(.window)
 
     Settings {
-      SettingsView()
+      SettingsView(initialTab: DemoState.value("demoSettingsTab").flatMap(SettingsTab.init(rawValue:)) ?? .general)
         .environment(model)
         .environment(\.updater, updater)
         .accent(model.tint)

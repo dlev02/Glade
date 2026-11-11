@@ -195,9 +195,24 @@ public final class AppModel {
         sample.apps = Self.demoApps(sample.apps)
         sample.suggestions = SampleData.sampleSuggestions(apps: sample.apps)
         loadSample(sample)
+        // `-demoSetup YES` shows Setup over the sample data.
+        if DemoState.value("demoSetup") != nil { showsSetup = true }
+        // `-demoConversation empty` starts the Assistant with nothing asked yet.
+        if DemoState.value("demoConversation") == "empty" { messages = [] }
+        // `-demoProvider claude` puts that AI first, in memory only.
+        if let first = DemoState.value("demoProvider") {
+          config.assistant.order = [first] + config.assistant.order.filter { $0 != first }
+        }
+        // `-demoAsking YES` shows the assistant at work on the selection.
+        if DemoState.value("demoAsking") != nil { assistantState = .thinking("Looking at what's safe to clear…") }
+        // `-demoScan YES` starts a (made-up) scan straight away.
+        if DemoState.value("demoScan") != nil { startScan() }
         // `-demoAdvice short|long` starts with the assistant's advice showing.
         if let length = defaults.string(forKey: "demoAdvice"), let scan {
           applySampleAdvice(SampleData.sampleAdvice(scan: scan, short: length == "short"))
+          // `-demoAdvice earlier` then changes the selection by hand, so the advice
+          // becomes an earlier selection.
+          if length == "earlier", let first = cleanItems.first { setSelected(first.id, false) }
         }
       }
       return

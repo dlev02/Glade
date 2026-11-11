@@ -60,6 +60,7 @@ struct CleanSummary: View {
     .padding(Metrics.xl)
     .onAppear {
       if !reduceMotion { appeared = true }
+      if DemoState.value("demoClean") == "putback", receipt.trashedBytes > 0 { restored = model.putBack(receipt) }
     }
   }
 

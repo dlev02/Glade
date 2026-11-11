@@ -61,6 +61,24 @@ struct StorageScreen: View {
       .sheet(isPresented: $showsCleanSheet) {
         CleanSheet { showsCleanSheet = false }
       }
+      .task {
+        // `-demoClean confirm|result|putback` opens the clean sheet at that step.
+        guard let step = DemoState.value("demoClean") else { return }
+        try? await Task.sleep(for: .seconds(1))
+        if let title = DemoState.value("demoHighlight"), let id = state.list.groups.flatMap(\.entries).first(where: { $0.finding.title == title })?.id {
+          state.highlighted = [id]
+        }
+        showsCleanSheet = true
+        if step != "confirm" { await model.clean() }
+      }
+      .task {
+        // `-demoHighlight <title>` highlights a row, for the inspector.
+        guard let title = DemoState.value("demoHighlight") else { return }
+        try? await Task.sleep(for: .seconds(1))
+        if let id = state.list.groups.flatMap(\.entries).first(where: { $0.finding.title == title })?.id {
+          state.highlighted = [id]
+        }
+      }
       .alert(
         "Folder protected",
         isPresented: Binding(get: { protectedPath != nil }, set: { if !$0 { protectedPath = nil } })

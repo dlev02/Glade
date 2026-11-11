@@ -7,7 +7,7 @@ struct ProtectionPane: View {
   @Environment(AppModel.self) private var model
   @State private var zones: [ProtectedZone] = ProtectedZones.builtIn
   @State private var pendingUnlock: ProtectedZone?
-  @State private var showsAlwaysProtected = false
+  @State private var showsAlwaysProtected = DemoState.value("demoExpandProtection") != nil
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   var body: some View {

@@ -4,6 +4,7 @@ import SwiftUI
 /// The main window: a sidebar of sections and the selected one beside it.
 public struct RootView: View {
   @Environment(AppModel.self) private var model
+  @Environment(\.openSettings) private var openSettings
   /// The storage list and how it's being viewed, kept here so switching back to
   /// Storage shows it straight away rather than building it again.
   @State private var storage: StorageViewState
@@ -39,6 +40,13 @@ public struct RootView: View {
     .frame(minWidth: 1000, minHeight: 600)
     .accent(model.tint)
     .preferredColorScheme(model.appearance.colorScheme)
+    .task {
+      // `-demoSettingsTab <tab>` opens Settings on that tab, for screenshots.
+      if DemoState.value("demoSettingsTab") != nil {
+        try? await Task.sleep(for: .seconds(1))
+        openSettings()
+      }
+    }
     .sheet(isPresented: $model.showsSetup) {
       SetupView()
         .accent(model.tint)

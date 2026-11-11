@@ -15,7 +15,8 @@ struct AssistantScreen: View {
 
   init(preview: AssistantPreview? = nil, showsDetails: Bool = false) {
     self.preview = preview
-    _showsDetails = State(initialValue: showsDetails)
+    // `-demoDetails YES` opens Details, for screenshots.
+    _showsDetails = State(initialValue: showsDetails || DemoState.value("demoDetails") != nil)
     _runs = State(initialValue: preview?.runs)
   }
 
@@ -91,6 +92,11 @@ struct AssistantScreen: View {
   }
 
   private func loadRuns() async {
+    // Sample data never shows the person's own runs.
+    if model.isDemo {
+      runs = AssistantSnapshots.sampleRuns()
+      return
+    }
     // Reading the records touches files, so keep it off the main thread.
     runs = await Task.detached { Assistant.runs() }.value
   }

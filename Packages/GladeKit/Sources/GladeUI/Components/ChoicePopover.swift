@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// One thing to choose in a `ChoicePopover`.
@@ -103,6 +104,17 @@ public struct ChoicePopover<Value: Hashable>: View {
     .accessibilityLabel(label)
     .accessibilityValue(value)
     .accessibilityHint("Shows the choices")
+    .task {
+      // `-demoChoice <label>` opens this popover, for screenshots.
+      if DemoState.value("demoChoice") == label {
+        // A popover only shows on a window that's on screen, so wait for that.
+        try? await Task.sleep(for: .seconds(1.5))
+        for _ in 0..<60 where !(NSApp.mainWindow?.isOnActiveSpace ?? false) || !NSApp.isActive {
+          try? await Task.sleep(for: .milliseconds(500))
+        }
+        isPresented = true
+      }
+    }
     .popover(isPresented: $isPresented, arrowEdge: arrowEdge) {
       ChoiceList(sections: sections, selection: selection, footer: footer) { chosen in
         selection = chosen

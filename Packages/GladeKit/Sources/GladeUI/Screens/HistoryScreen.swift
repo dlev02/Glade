@@ -79,6 +79,12 @@ struct HistoryScreen: View {
       .inspectorBackground()
       .inspectorColumnWidth(min: 300, ideal: 320, max: 440)
     }
+    .task {
+      // `-demoReceipt first` opens the newest clean's receipt.
+      if DemoState.value("demoReceipt") != nil, selection == nil {
+        selection = (previewReceipts ?? model.receipts).first { !$0.dryRun }?.id
+      }
+    }
     .onChange(of: selection) { old, new in
       if new == nil {
         showsReceipt = false

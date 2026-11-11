@@ -94,7 +94,7 @@ enum AssistantSnapshots {
 
   /// A storage plan, a question that failed and an older plan, as the records of
   /// real runs would hold them.
-  private static func sampleRuns() -> [AssistantRun] {
+  static func sampleRuns() -> [AssistantRun] {
     let now = Date().timeIntervalSinceReferenceDate
     func run(_ id: String, minutesAgo: Double, _ purpose: String, prompt: String, reply: String?, error: String? = nil) -> [String: Any] {
       var run: [String: Any] = [
