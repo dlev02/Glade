@@ -172,6 +172,19 @@ public final class AppModel {
 
   /// Starts background work. Call once when the app launches.
   public func start() {
+    // `-demo YES` shows made-up findings and only well-known apps, for screenshots
+    // that don't reveal anyone's own files.
+    if defaults.bool(forKey: "demo") {
+      isLive = false
+      Task {
+        var sample = await SampleData.capture()
+        let known = ["Xcode", "Safari", "Mail", "Messages", "Music", "Finder", "Simulator", "Simulator devices", "Docker", "Notes", "Photos", "Terminal", "Calendar", "Preview", "TV", "Podcasts", "Maps", "Reminders", "Glade"]
+        sample.apps = sample.apps.filter { app in known.contains(app.name) || app.bundleIdentifier?.hasPrefix("com.apple.") == true }
+        sample.suggestions = []
+        loadSample(sample)
+      }
+      return
+    }
     guard isLive, samplingTask == nil else { return }
     Log.info(.app, "\(Brand.name) \(Brand.version) (\(Brand.build)) started; Full Disk Access \(hasFullDiskAccess ? "on" : "off")")
     if let last = ScanEngine.loadLast(), Date().timeIntervalSince(last.finished) < Cleaner.maximumScanAge {
