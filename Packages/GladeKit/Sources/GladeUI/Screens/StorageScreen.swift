@@ -47,8 +47,15 @@ struct StorageScreen: View {
           .hidden()
       }
       .inspector(isPresented: $state.showsInspector) {
-        FindingInspector(finding: state.highlightedFinding, highlightedFindings: highlightedFindings)
-          .inspectorColumnWidth(min: 260, ideal: 300, max: 420)
+        Group {
+          if model.isScanning {
+            // The last scan's totals would be out of date by the time it finishes.
+            EmptyState("Scanning", symbol: Symbols.scan)
+          } else {
+            FindingInspector(finding: state.highlightedFinding, highlightedFindings: highlightedFindings)
+          }
+        }
+        .inspectorColumnWidth(min: 260, ideal: 300, max: 420)
       }
       .sheet(isPresented: $showsCleanSheet) {
         CleanSheet { showsCleanSheet = false }
