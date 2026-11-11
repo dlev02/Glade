@@ -32,7 +32,7 @@ struct ConversationStart: View {
                   Label(suggestion.question, systemImage: suggestion.symbol)
                     .frame(maxWidth: .infinity)
                 }
-                .secondaryAction()
+                .floatingAction()
                 .controlSize(.large)
                 .accessibilityIdentifier("assistant.chip.\(row).\(Self.suggestions[row].firstIndex { $0.question == suggestion.question } ?? 0)")
               }

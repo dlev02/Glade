@@ -1,87 +1,121 @@
 import SwiftUI
 
-/// The three kinds of button outside toolbars, so each purpose looks the same on
-/// every screen. Toolbars use the system's own items. Rows and menus use `.borderless`.
-/// Never put a glass button inside a glass container: use `filledAction` there.
+/// The kinds of button outside toolbars, so each purpose looks the same on every
+/// screen. Liquid Glass belongs to what floats above the content (toolbars, the clean
+/// bar, the composer, popovers, the prompt chips); buttons that sit in the content
+/// (cards, rows, banners, forms, sheets) are plain filled capsules with words only.
+/// Toolbars use the system's own items. Minor row actions use `.borderless`.
 extension View {
-  /// The one main action on a surface.
+  /// The one main action on a surface: an accent-filled capsule with a white label.
   public func principalAction() -> some View {
-    buttonStyle(.glassProminent).buttonBorderShape(.capsule)
+    buttonStyle(FilledActionStyle()).labelStyle(.titleOnly)
   }
 
-  /// A standalone secondary action.
+  /// A secondary action in the content: a quiet grey capsule with a primary label.
   public func secondaryAction() -> some View {
-    // Untinted glass, so the window's accent doesn't turn it into a second principal button.
-    buttonStyle(SecondaryGlassStyle())
+    buttonStyle(QuietFillStyle()).labelStyle(.titleOnly)
+  }
+
+  /// A button floating over the content on its own, such as the prompt chips on an
+  /// empty Assistant page: neutral glass with a primary label.
+  public func floatingAction() -> some View {
+    buttonStyle(FloatingGlassStyle())
   }
 
   /// The main action when it sits on glass already (the clean bar, the menu bar
-  /// popover): a plain accent-filled capsule, so glass never sits on glass.
+  /// popover). The same filled capsule, so glass never sits on glass.
   public func filledAction() -> some View {
     buttonStyle(FilledActionStyle())
   }
 }
 
-/// An accent-filled capsule with white text that dims when pressed or disabled.
+/// Padding and height for a capsule button at each control size.
+private struct CapsuleMetrics {
+  var horizontal: CGFloat
+  var vertical: CGFloat
+  var height: CGFloat
+
+  init(_ size: ControlSize) {
+    switch size {
+    case .mini, .small: (horizontal, vertical, height) = (10, 2, 22)
+    case .large, .extraLarge: (horizontal, vertical, height) = (16, 7, 34)
+    default: (horizontal, vertical, height) = (12, 4, 28)
+    }
+  }
+}
+
+/// An accent-filled capsule with a white label that dims when pressed or disabled.
 public struct FilledActionStyle: ButtonStyle {
   @Environment(\.isEnabled) private var isEnabled
+  @Environment(\.controlSize) private var controlSize
+  @State private var hovering = false
 
   public init() {}
 
   public func makeBody(configuration: Configuration) -> some View {
+    let metrics = CapsuleMetrics(controlSize)
     configuration.label
-      .font(.body.weight(.semibold))
+      .fontWeight(.semibold)
       .foregroundStyle(.white)
-      .padding(.horizontal, Metrics.l)
-      .padding(.vertical, Metrics.s)
-      .frame(minHeight: 32)
+      .padding(.horizontal, metrics.horizontal)
+      .padding(.vertical, metrics.vertical)
+      .frame(minHeight: metrics.height)
       .background(.tint, in: .capsule)
-      .opacity(isEnabled ? (configuration.isPressed ? 0.8 : 1) : 0.4)
+      .overlay(Capsule().fill(.black.opacity(configuration.isPressed ? 0.18 : hovering ? 0.08 : 0)))
+      .opacity(isEnabled ? 1 : 0.4)
       .contentShape(.capsule)
+      .onHover { hovering = $0 }
       .animation(.snappy(duration: 0.12), value: configuration.isPressed)
+      .animation(.snappy(duration: 0.12), value: hovering)
   }
 }
 
-/// A neutral glass capsule with a primary label. The system's glass button takes the
-/// window's tint, which made every secondary button look like the principal one.
-public struct SecondaryGlassStyle: ButtonStyle {
+/// A quiet grey capsule with a primary label, for secondary actions in the content.
+public struct QuietFillStyle: ButtonStyle {
+  @Environment(\.isEnabled) private var isEnabled
+  @Environment(\.controlSize) private var controlSize
+  @State private var hovering = false
+
+  public init() {}
+
+  public func makeBody(configuration: Configuration) -> some View {
+    let metrics = CapsuleMetrics(controlSize)
+    configuration.label
+      .fontWeight(.medium)
+      .foregroundStyle(.primary)
+      .padding(.horizontal, metrics.horizontal)
+      .padding(.vertical, metrics.vertical)
+      .frame(minHeight: metrics.height)
+      .background(fill(pressed: configuration.isPressed), in: .capsule)
+      .opacity(isEnabled ? 1 : 0.45)
+      .contentShape(.capsule)
+      .onHover { hovering = $0 }
+      .animation(.snappy(duration: 0.12), value: configuration.isPressed)
+      .animation(.snappy(duration: 0.12), value: hovering)
+  }
+
+  private func fill(pressed: Bool) -> AnyShapeStyle {
+    if pressed { return AnyShapeStyle(.fill) }
+    return hovering && isEnabled ? AnyShapeStyle(.fill.secondary) : AnyShapeStyle(.fill.tertiary)
+  }
+}
+
+/// Neutral glass with a primary label, for a button floating over the content.
+public struct FloatingGlassStyle: ButtonStyle {
   @Environment(\.isEnabled) private var isEnabled
   @Environment(\.controlSize) private var controlSize
 
   public init() {}
 
   public func makeBody(configuration: Configuration) -> some View {
+    let metrics = CapsuleMetrics(controlSize)
     configuration.label
       .foregroundStyle(.primary)
-      .padding(.horizontal, horizontalPadding)
-      .padding(.vertical, verticalPadding)
-      .frame(minHeight: minHeight)
+      .padding(.horizontal, metrics.horizontal)
+      .padding(.vertical, metrics.vertical)
+      .frame(minHeight: metrics.height)
       .contentShape(.capsule)
       .glassEffect(.regular.interactive(), in: .capsule)
       .opacity(isEnabled ? (configuration.isPressed ? 0.75 : 1) : 0.45)
-  }
-
-  private var horizontalPadding: CGFloat {
-    switch controlSize {
-    case .mini, .small: 10
-    case .large, .extraLarge: 16
-    default: 12
-    }
-  }
-
-  private var verticalPadding: CGFloat {
-    switch controlSize {
-    case .mini, .small: 2
-    case .large, .extraLarge: 7
-    default: 4
-    }
-  }
-
-  private var minHeight: CGFloat {
-    switch controlSize {
-    case .mini, .small: 22
-    case .large, .extraLarge: 34
-    default: 28
-    }
   }
 }
