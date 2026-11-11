@@ -120,6 +120,9 @@ private struct ChipList: View {
       .padding(6)
     }
     .scrollBounceBehavior(.basedOnSize)
+    // Its own type, not the chip's caption and grey.
+    .font(.body)
+    .foregroundStyle(.primary)
     .frame(width: 300)
     .frame(maxHeight: 320)
     .fixedSize(horizontal: false, vertical: true)
