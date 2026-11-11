@@ -15,8 +15,11 @@ public enum Metrics {
   /// Corner radius of a card. Things inside a card use `innerRadius`.
   public static let cardRadius: CGFloat = 18
   public static let innerRadius: CGFloat = 10
-  /// The widest a column of reading content gets before it stops growing.
-  public static let contentWidth: CGFloat = 920
+  /// The widest a page's content gets before it stops growing; past that it sits in
+  /// the middle of the window. Storage is the exception: its list uses the full width.
+  public static let contentWidth: CGFloat = 960
+  /// History's rows are narrower, so a clean's size sits near its name.
+  public static let listWidth: CGFloat = 720
 }
 
 /// How the app looks: follow the system, or always light or dark.

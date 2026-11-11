@@ -20,10 +20,10 @@ struct OverviewScreen: View {
         }
         SuggestionList()
       }
-      .padding(Metrics.xl)
-      // Lined up with the window title rather than centred, like the other sections.
+      // Centred once the window is wider than the page, like Performance and History.
       .frame(maxWidth: Metrics.contentWidth, alignment: .leading)
-      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(Metrics.xl)
+      .frame(maxWidth: .infinity)
     }
     .navigationTitle("Overview")
     .navigationSubtitle(subtitle)

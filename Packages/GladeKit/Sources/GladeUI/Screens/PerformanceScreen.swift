@@ -33,7 +33,7 @@ struct PerformanceScreen: View {
   var body: some View {
     let readings = readingsOverride?(model) ?? PerformanceReadings(model: model)
     VStack(alignment: .leading, spacing: Metrics.l) {
-      LivePanels(readings: readings, columns: size.width > 0 && size.width < 690 ? 2 : 3)
+      LivePanels(readings: readings, columns: size.width > 0 && size.width < 642 ? 2 : 3)
       if !readings.suggestions.isEmpty {
         SuggestionsCard(suggestions: Array(readings.suggestions.prefix(suggestionLimit)), report: show)
       }
@@ -44,13 +44,13 @@ struct PerformanceScreen: View {
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { tableSpace = $0 }
         .overlay(alignment: .top) { table(readings) }
     }
+    // Centred once the window is wider than the page, like Overview.
+    .frame(maxWidth: Metrics.contentWidth, alignment: .leading)
+    .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }
     .padding(.horizontal, Metrics.xl)
     .padding(.top, Metrics.l)
     .padding(.bottom, Metrics.l)
-    // Lined up with the window title, like Overview.
-    .frame(maxWidth: Metrics.contentWidth, alignment: .leading)
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }
+    .frame(maxWidth: .infinity)
     .onChange(of: filter) { AppsTableMemory.filter = filter }
     .navigationTitle("Performance")
     .navigationSubtitle(StatusLine.text(readings.snapshot))
@@ -102,8 +102,8 @@ struct PerformanceScreen: View {
   /// Fewer suggestions in a short window, so the table keeps room for several rows.
   private var suggestionLimit: Int {
     switch size.height {
-    case 1..<640: 1
-    case 640..<760: 2
+    case 1..<608: 1
+    case 608..<728: 2
     default: 3
     }
   }

@@ -46,11 +46,12 @@ struct HistoryScreen: View {
               }
             }
           }
+          // Narrower than Overview, so a clean's size sits near its name, and centred
+          // once the window is wider than that.
+          .frame(maxWidth: Metrics.listWidth, alignment: .leading)
           .padding(.horizontal, Metrics.l)
           .padding(.vertical, Metrics.m)
-          // The same reading width as Overview, lined up with the title.
-          .frame(maxWidth: Metrics.contentWidth, alignment: .leading)
-          .frame(maxWidth: .infinity, alignment: .leading)
+          .frame(maxWidth: .infinity)
         }
         .focusable()
         .focusEffectDisabled()
