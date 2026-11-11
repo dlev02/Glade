@@ -76,7 +76,7 @@ public enum ProtectedZones {
     ProtectedZone(
       id: "agent-memory",
       title: "Agent Memory, Skills & Sign-ins",
-      reason: "What you’ve taught your AI agents, their settings, and their sign-in files.",
+      reason: "What you’ve taught your AI agents, their settings and their sign-in files.",
       paths: [
         "~/.claude/CLAUDE.md", "~/.claude/settings.json", "~/.claude/settings.local.json",
         "~/.claude/.credentials.json", "~/.claude.json", "~/.claude/skills", "~/.claude/agents",

@@ -132,7 +132,7 @@ struct CleanConfirmation: View {
   /// Names up to three things that can’t be recreated, otherwise counts them.
   private func permanentText(_ items: [Finding]) -> String {
     if items.count <= 3 {
-      return "Can’t be recreated: " + Format.listed(items.map(\.title))
+      return "Can’t be recreated: " + Format.listed(items.map(\.title.keepingDashWithName))
     }
     return "\(items.count) items can’t be recreated"
   }

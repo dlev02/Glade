@@ -57,7 +57,7 @@ public struct EditorExtensionScanner: StorageScanner {
         paths.count == 1
           ? "1 superseded version, \(example)."
           : "\(paths.count) superseded versions, for example \(example).",
-        "Each has a newer version installed, and \(editor.name)'s extensions.json doesn’t load it.",
+        "Each has a newer version installed, and \(editor.name)’s extensions.json doesn’t load it.",
       ]
       if found.marked > 0 {
         evidence.append("\(found.marked == paths.count ? "All" : "\(found.marked)") of them \(editor.name) itself marked obsolete.")

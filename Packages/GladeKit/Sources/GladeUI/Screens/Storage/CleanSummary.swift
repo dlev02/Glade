@@ -206,7 +206,7 @@ struct CleanSummary: View {
         VStack(alignment: .leading, spacing: Metrics.s) {
           ForEach(problems) { entry in
             line(symbol: "exclamationmark.triangle", tint: Palette.warning) {
-              Text(entry.title)
+              Text(entry.title.keepingDashWithName)
                 .lineLimit(1)
                 .truncationMode(.middle)
               Text(reason(entry.outcome))
