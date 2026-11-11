@@ -49,6 +49,12 @@ public struct BarSegment: Identifiable, Hashable, Sendable {
   public var bytes: Int64
   public var color: Color
 
+  /// The slice's colour as a small dot in a key: the catch-all's faint fill is
+  /// strengthened so the dot doesn't vanish.
+  public var legendColor: Color {
+    id == "other" ? Color.primary.opacity(0.38) : color
+  }
+
   public init(id: String, title: String, bytes: Int64, color: Color) {
     self.id = id
     self.title = title
@@ -59,7 +65,8 @@ public struct BarSegment: Identifiable, Hashable, Sendable {
 
 /// The disk as one rounded bar: what's reclaimable by family, everything else in
 /// use, and what's free. Pointing at a slice brightens it, dims the rest a little and
-/// shows its name and size in a small bubble above it; `hovered` is shared with the
+/// shows its name and size in a small bubble above it, in room the bar's owner leaves
+/// clear (`bubbleRoom`), so nothing moves or is covered; `hovered` is shared with the
 /// legend so each lights the other. Every slice is its own accessibility element.
 public struct StorageBar: View {
   var segments: [BarSegment]
@@ -67,7 +74,10 @@ public struct StorageBar: View {
   var height: CGFloat
   @Binding var hovered: String?
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @State private var bubbleHeight: CGFloat = 34
+  @State private var bubbleSize = CGSize(width: 120, height: 28)
+
+  /// How much room the bubble needs above the bar.
+  public static var bubbleRoom: CGFloat { Metrics.xxl }
 
   public init(segments: [BarSegment], total: Int64, height: CGFloat = 22, hovered: Binding<String?> = .constant(nil)) {
     self.segments = segments
@@ -102,11 +112,16 @@ public struct StorageBar: View {
       .clipShape(.capsule)
       .overlay(alignment: .topLeading) {
         if let item = frames.first(where: { $0.segment.id == hovered }) {
-          // Centred over the slice, its arrow just touching the bar's top edge.
-          BarBubble(segment: item.segment)
+          // Over the slice, its arrow just touching the bar's top edge, and kept
+          // within the bar's ends however near one the slice is.
+          let centre = item.x + item.width / 2
+          let half = bubbleSize.width / 2
+          let x = min(max(centre, half), max(half, proxy.size.width - half))
+          let arrowLimit = max(0, half - 14)
+          BarBubble(segment: item.segment, arrowOffset: min(max(centre - x, -arrowLimit), arrowLimit))
             .fixedSize()
-            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { bubbleHeight = $0 }
-            .position(x: item.x + item.width / 2, y: -bubbleHeight / 2 - 2)
+            .onGeometryChange(for: CGSize.self) { $0.size } action: { bubbleSize = $0 }
+            .position(x: x, y: -bubbleSize.height / 2 - 1)
             .allowsHitTesting(false)
             .transition(.opacity)
         }
@@ -132,26 +147,29 @@ public struct StorageBar: View {
   }
 }
 
-/// The small bubble above a pointed-at slice: its name and size, with an arrow.
+/// The small bubble above a pointed-at slice: its name and size, with an arrow that
+/// points at the slice even when the bubble is pushed in from the bar's end.
 private struct BarBubble: View {
   var segment: BarSegment
+  var arrowOffset: CGFloat
 
   var body: some View {
     VStack(spacing: 0) {
       HStack(spacing: 6) {
-        Circle().fill(segment.color).frame(width: 8, height: 8)
+        Circle().fill(segment.legendColor).frame(width: 7, height: 7)
         Text(segment.title)
         Text(Format.bytes(segment.bytes))
           .foregroundStyle(.secondary)
           .monospacedDigit()
       }
-      .font(.callout)
-      .padding(.horizontal, 10)
-      .padding(.vertical, 5)
+      .font(.subheadline)
+      .padding(.horizontal, 9)
+      .padding(.vertical, 4)
       .background(.thickMaterial, in: .capsule)
       Triangle()
         .fill(.thickMaterial)
         .frame(width: 12, height: 6)
+        .offset(x: arrowOffset)
     }
     .compositingGroup()
     .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
@@ -183,7 +201,7 @@ public struct BarLegend: View {
     FlowLayout(spacing: Metrics.l, lineSpacing: Metrics.s) {
       ForEach(segments.filter { $0.bytes > 0 }) { segment in
         HStack(spacing: 6) {
-          Circle().fill(segment.color).frame(width: 8, height: 8)
+          Circle().fill(segment.legendColor).frame(width: 8, height: 8)
           Text(segment.title).foregroundStyle(.secondary)
           Text(Format.bytes(segment.bytes)).monospacedDigit()
         }

@@ -120,7 +120,9 @@ private struct StorageSummary: View {
         }
         .accessibilityElement(children: .combine)
         if let total = volume?.totalBytes {
+          // Room for the bar's hover bubble, so it never covers the line above.
           StorageBar(segments: segments, total: total, hovered: hover)
+            .padding(.top, StorageBar.bubbleRoom - Metrics.l)
           Legend(segments: segments, hovered: hover)
         }
 
@@ -236,7 +238,7 @@ private struct Legend: View {
   private func entry(_ segment: BarSegment) -> some View {
     HStack(spacing: 6) {
       Circle()
-        .fill(segment.color)
+        .fill(segment.legendColor)
         .frame(width: 8, height: 8)
       Text(segment.title)
         .foregroundStyle(hovered == segment.id ? .primary : .secondary)
