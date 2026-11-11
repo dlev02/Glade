@@ -13,7 +13,9 @@ struct AppsTable: View {
   var apps: [AppUsage]
   var logicalCores: Int
   @Binding var filter: AppFilter
-  var search: String
+  @Binding var search: String
+  /// Bumped by ⌘F to put the cursor in the search field.
+  var searchFocus: Int
   @Binding var selection: AppUsage.ID?
   /// Shows the sentence describing what an action did.
   var report: (String) -> Void
@@ -125,6 +127,15 @@ struct AppsTable: View {
       }
       ToolbarItem(placement: .primaryAction) {
         actionsMenu
+      }
+      // A plain toolbar search field rather than `.searchable`, so it stays no wider
+      // than app names need, at the far end after Actions.
+      ToolbarSpacer(.fixed, placement: .primaryAction)
+      ToolbarItem(placement: .primaryAction) {
+        ToolbarSearchField(
+          text: $search, prompt: "Search", focusRequest: searchFocus,
+          identifier: "performance.search", help: "Search apps by name", minWidth: 160, maxWidth: 240
+        )
       }
     }
     .confirmationDialog(

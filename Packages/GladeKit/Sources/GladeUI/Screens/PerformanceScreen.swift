@@ -55,17 +55,6 @@ struct PerformanceScreen: View {
     .onChange(of: filter) { AppsTableMemory.filter = filter }
     .navigationTitle("Performance")
     .navigationSubtitle(StatusLine.text(readings.snapshot))
-    .toolbar {
-      // A plain toolbar search field rather than `.searchable`, so it stays no wider
-      // than the names it searches need.
-      ToolbarSpacer(.fixed, placement: .primaryAction)
-      ToolbarItem(placement: .primaryAction) {
-        ToolbarSearchField(
-          text: $search, prompt: "Search", focusRequest: searchFocus,
-          identifier: "performance.search", help: "Search apps by name", minWidth: 160, maxWidth: 240
-        )
-      }
-    }
     .background {
       // ⌘F puts the cursor in the search field.
       Button("Find") { searchFocus += 1 }
@@ -89,7 +78,7 @@ struct PerformanceScreen: View {
   private func table(_ readings: PerformanceReadings) -> some View {
     let rows = max(3, Int((tableSpace - Self.headerHeight - 4) / Self.rowHeight))
     return AppsTable(
-        apps: readings.apps, logicalCores: readings.logicalCores, filter: $filter, search: search,
+        apps: readings.apps, logicalCores: readings.logicalCores, filter: $filter, search: $search, searchFocus: searchFocus,
         selection: $selection, report: show
       )
       .frame(height: Self.headerHeight + 4 + CGFloat(rows) * Self.rowHeight)

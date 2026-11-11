@@ -15,8 +15,9 @@ struct OptionalColumns: Equatable {
   static var memory: OptionalColumns { AppsTableMemory.columns }
 
   mutating func update(_ rows: [UsageRow]) {
-    // A share that shows as "0%" counts as nothing.
-    let hasGraphics = rows.contains { $0.graphics >= 0.05 }
+    // Under 1% is noise (Glade's own drawing, a blinking cursor), not a reading
+    // worth a column.
+    let hasGraphics = rows.contains { $0.graphics >= 1 }
     let hasLastUsed = rows.contains { !$0.app.isFrontmost && $0.app.lastActive != nil }
     (graphics, emptyGraphics) = Self.step(showing: graphics, has: hasGraphics, empty: emptyGraphics)
     (lastUsed, emptyLastUsed) = Self.step(showing: lastUsed, has: hasLastUsed, empty: emptyLastUsed)
