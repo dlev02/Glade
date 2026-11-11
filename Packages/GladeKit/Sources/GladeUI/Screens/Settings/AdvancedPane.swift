@@ -15,6 +15,7 @@ struct AdvancedPane: View {
         LabeledContent {
           if !model.hasFullDiskAccess {
             Button("Open Settings") { model.openFullDiskAccessSettings() }
+              .secondaryAction()
           }
         } label: {
           Text("Full Disk Access")
@@ -33,7 +34,9 @@ struct AdvancedPane: View {
         LabeledContent("Troubleshooting") {
           HStack {
             Button("Show Log in Finder") { NSWorkspace.shared.activateFileViewerSelecting([GladePaths.logs]) }
+              .secondaryAction()
             Button("Report a Problem…") { showsReport = true }
+              .secondaryAction()
           }
         }
       }
@@ -44,6 +47,7 @@ struct AdvancedPane: View {
         if let check = updater.checkForUpdates {
           LabeledContent("Updates") {
             Button("Check for Updates…", action: check)
+              .secondaryAction()
           }
         }
         if let automatic = updater.automaticallyChecks {

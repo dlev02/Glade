@@ -11,7 +11,8 @@ extension View {
 
   /// A standalone secondary action.
   public func secondaryAction() -> some View {
-    buttonStyle(.glass).buttonBorderShape(.capsule)
+    // Clear tint, so the window's accent doesn't turn it into a second principal button.
+    buttonStyle(.glass).buttonBorderShape(.capsule).tint(.clear)
   }
 
   /// The main action when it sits on glass already (the clean bar, the menu bar

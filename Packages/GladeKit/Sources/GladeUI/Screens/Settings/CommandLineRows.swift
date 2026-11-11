@@ -36,11 +36,14 @@ struct CommandLineRows: View {
       HStack {
         if case .otherCopy = status {
           Button("Update") { run { try await CommandLineTool.install() } }
+            .secondaryAction()
         }
         Button("Remove") { run { try await CommandLineTool.remove() } }
+          .secondaryAction()
       }
     case .notInstalled:
       Button("Install") { run { try await CommandLineTool.install() } }
+        .secondaryAction()
     case .unavailable, .occupied, nil:
       EmptyView()
     }

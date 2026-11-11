@@ -30,6 +30,7 @@ struct AlertsPane: View {
                 NSWorkspace.shared.open(url)
               }
             }
+            .secondaryAction()
           } else {
             Button("Allow Notifications") {
               Task {
@@ -37,6 +38,7 @@ struct AlertsPane: View {
                 askedForNotifications = true
               }
             }
+            .secondaryAction()
           }
         }
       }
