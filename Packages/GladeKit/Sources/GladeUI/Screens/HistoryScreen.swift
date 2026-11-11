@@ -27,20 +27,35 @@ struct HistoryScreen: View {
       if cleans.isEmpty {
         EmptyState("Nothing cleaned yet", symbol: AppModel.Section.history.symbol)
       } else {
-        List(selection: $selection) {
-          HistorySummary(cleans: cleans)
-            .listRowSeparator(.hidden)
-          ForEach(CleanDay.grouped(cleans)) { day in
-            Section(day.title) {
+        ScrollView {
+          LazyVStack(alignment: .leading, spacing: 0) {
+            HistorySummary(cleans: cleans)
+              .padding(.horizontal, Metrics.s)
+            ForEach(CleanDay.grouped(cleans)) { day in
+              Text(day.title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, Metrics.s)
+                .padding(.top, Metrics.l)
+                .padding(.bottom, Metrics.xs)
+                .accessibilityAddTraits(.isHeader)
               ForEach(day.receipts) { receipt in
-                ReceiptRow(receipt: receipt)
-                  .tag(receipt.id)
-                  .listRowSeparator(.hidden)
+                HistoryRow(receipt: receipt, isSelected: selection == receipt.id) {
+                  selection = receipt.id
+                }
               }
             }
-            .listSectionSeparator(.hidden)
           }
+          .padding(.horizontal, Metrics.l)
+          .padding(.vertical, Metrics.m)
+          // The same reading width as Overview, lined up with the title.
+          .frame(maxWidth: Metrics.contentWidth, alignment: .leading)
+          .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .focusable()
+        .focusEffectDisabled()
+        .onKeyPress(.downArrow) { move(1, in: cleans) }
+        .onKeyPress(.upArrow) { move(-1, in: cleans) }
         .onExitCommand {
           selection = nil
         }
@@ -71,6 +86,15 @@ struct HistoryScreen: View {
         showsReceipt = true
       }
     }
+  }
+
+  /// Moves the selection with the arrow keys, in the list's order.
+  private func move(_ step: Int, in cleans: [Receipt]) -> KeyPress.Result {
+    let ordered = CleanDay.grouped(cleans).flatMap(\.receipts)
+    guard !ordered.isEmpty else { return .ignored }
+    let index = ordered.firstIndex { $0.id == selection } ?? (step > 0 ? -1 : ordered.count)
+    selection = ordered[min(max(index + step, 0), ordered.count - 1)].id
+    return .handled
   }
 
   /// Shows or hides the receipt. It sits at the far trailing edge, above the
