@@ -78,18 +78,27 @@ struct AssistantPane: View {
           "Effort", value: model.config.assistant.effort.title, selection: $model.config.assistant.effort,
           choices: Effort.allCases.map { Choice($0, $0.title, subtitle: $0.consequence) }
         )
-        choicePicker(
-          "Second opinion from", value: deepTitle, selection: $model.config.assistant.deepProvider,
-          sections: [
-            ChoiceSection(choices: [Choice(String?.none, "Same", subtitle: "The AI that answered")]),
-            ChoiceSection(choices: ready.map { Choice(Optional($0.id), $0.name) }),
-          ].filter { !$0.choices.isEmpty }
-        )
-        if let deep = deepProvider, deep.takesModel {
-          // The day-to-day model is chosen in each AI's row above; this one is only
-          // for the closer look.
-          LabeledContent("Second opinion model") {
-            ModelField(title: "\(deep.name) closer look", suggestions: deep.models, value: modelBinding(\.deepModels, deep.id))
+        // Who gives the second opinion and with which model, in one row, so its model
+        // can't be taken for the everyday one chosen in each AI's row above. It reads
+        // and writes only the second-opinion setting.
+        LabeledContent("Second opinion") {
+          HStack(spacing: Metrics.l) {
+            ChoicePopover(
+              "Second opinion from", value: deepTitle, selection: $model.config.assistant.deepProvider,
+              sections: [
+                ChoiceSection(choices: [Choice(String?.none, "Same AI", subtitle: "The AI that answered")]),
+                ChoiceSection(choices: ready.map { Choice(Optional($0.id), $0.name) }),
+              ].filter { !$0.choices.isEmpty }
+            )
+            if let deep = deepProvider, deep.takesModel {
+              ModelField(
+                title: "second opinions", suggestions: deep.models,
+                value: modelBinding(\.deepModels, deep.id),
+                // The same AI with its everyday model would only repeat itself, so
+                // that pairing means no second opinion.
+                emptyTitle: model.config.assistant.deepProvider == nil ? "None" : "Default"
+              )
+            }
           }
         }
       }
@@ -128,7 +137,7 @@ struct AssistantPane: View {
   }
 
   private var deepTitle: String {
-    guard let id = model.config.assistant.deepProvider else { return "Same" }
+    guard let id = model.config.assistant.deepProvider else { return "Same AI" }
     return model.providerName(id)
   }
 

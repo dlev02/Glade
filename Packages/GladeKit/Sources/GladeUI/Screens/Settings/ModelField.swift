@@ -7,6 +7,8 @@ struct ModelField: View {
   var title: String
   var suggestions: [String]
   @Binding var value: String
+  /// What an empty value is called: the provider's default, usually.
+  var emptyTitle = "Default"
   @State private var isTyping = false
   @State private var text = ""
   @FocusState private var focused: Bool
@@ -29,7 +31,7 @@ struct ModelField: View {
     } else {
       Menu {
         Picker(title, selection: $value) {
-          Text("Default").tag("")
+          Text(emptyTitle).tag("")
           if !choices.isEmpty { Divider() }
           ForEach(choices, id: \.self) { name in
             Text(ModelName.display(name)).tag(name)
@@ -40,14 +42,14 @@ struct ModelField: View {
         Divider()
         Button("Other…") { isTyping = true }
       } label: {
-        Text(value.isEmpty ? "Default" : ModelName.display(value))
+        Text(value.isEmpty ? emptyTitle : ModelName.display(value))
       }
       .menuStyle(.borderlessButton)
       .menuIndicator(.visible)
       .fixedSize()
       .tint(.secondary)
       .accessibilityLabel("Model for \(title)")
-      .accessibilityValue(value.isEmpty ? "Default" : ModelName.display(value))
+      .accessibilityValue(value.isEmpty ? emptyTitle : ModelName.display(value))
       .help("Choose a model")
     }
   }
