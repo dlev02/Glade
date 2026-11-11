@@ -8,7 +8,7 @@ struct AdviceChips: View {
   @Environment(\.accentMark) private var accentMark
 
   var body: some View {
-    HStack(spacing: 6) {
+    HStack(spacing: Metrics.m) {
       ForEach(AdviceNote.Kind.allCases, id: \.self) { kind in
         let count = kind.notes(in: advice).count
         if count > 0 {
@@ -29,7 +29,8 @@ struct AdviceChips: View {
   }
 }
 
-/// A coloured glyph and grey words on a quiet capsule.
+/// A coloured glyph and grey words, with no capsule, so the first glyph sits on the
+/// same leading edge as the text above it.
 private struct ChipLabelStyle: LabelStyle {
   func makeBody(configuration: Configuration) -> some View {
     HStack(spacing: 4) {
@@ -37,8 +38,5 @@ private struct ChipLabelStyle: LabelStyle {
         .imageScale(.small)
       configuration.title
     }
-    .padding(.horizontal, Metrics.s)
-    .padding(.vertical, 3)
-    .background(.fill.quaternary, in: .capsule)
   }
 }

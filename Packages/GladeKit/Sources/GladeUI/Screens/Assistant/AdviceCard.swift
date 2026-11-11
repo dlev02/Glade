@@ -33,7 +33,6 @@ struct AdviceCard: View {
             .foregroundStyle(.secondary)
         } content: {
           details
-            .padding(.leading, Metrics.m)
         }
       }
     }
@@ -136,7 +135,7 @@ private struct NoteRow: View {
       Image(systemName: note.kind.symbol)
         .foregroundStyle(note.kind.style(mark: accentMark))
         .accessibilityLabel(note.kind.title)
-        .frame(width: 16)
+        .frame(width: 16, alignment: .leading)
       VStack(alignment: .leading, spacing: 1) {
         Text(note.title ?? note.kind.title)
           .font(.callout.weight(.medium))
@@ -146,8 +145,8 @@ private struct NoteRow: View {
           Text(verbatim: note.note.why)
             .font(.callout)
             .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .help(note.note.why)
+            .lineLimit(2)
+            .fixedSize(horizontal: false, vertical: true)
         }
       }
       Spacer(minLength: Metrics.m)

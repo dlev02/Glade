@@ -19,19 +19,21 @@ struct AdviceBanner: View {
         .accessibilityHidden(true)
       VStack(alignment: .leading, spacing: Metrics.s) {
         Text(advice.summary)
+          .foregroundStyle(.primary)
           .lineLimit(4)
+          .fixedSize(horizontal: false, vertical: true)
         HStack(spacing: Metrics.m) {
           AdviceChips(advice: advice)
-          Text(model.responderName(advice.provider))
-            .font(.caption)
-            .foregroundStyle(.secondary)
+          Spacer(minLength: Metrics.m)
+          // Who answered, as quiet metadata at the end of the row.
           if advice.escalated {
             Label("Stronger model", systemImage: "brain")
-              .font(.caption)
-              .foregroundStyle(.secondary)
               .help("A stronger model took a closer look")
           }
+          Text(model.responderName(advice.provider))
         }
+        .font(.caption)
+        .foregroundStyle(.secondary)
         if !advice.rejected.isEmpty {
           AdviceDisclosure(isExpanded: $showsRejected) {
             Text(advice.rejected.count == 1 ? "Glade refused 1" : "Glade refused \(advice.rejected.count)")
@@ -54,7 +56,8 @@ struct AdviceBanner: View {
       }
       Spacer(minLength: 0)
     }
-    .padding(Metrics.l)
+    .padding(.horizontal, Metrics.l)
+    .padding(.vertical, Metrics.m)
     .background(Palette.card, in: .rect(cornerRadius: Metrics.cardRadius))
   }
 }

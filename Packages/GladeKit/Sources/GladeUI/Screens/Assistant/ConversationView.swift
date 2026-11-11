@@ -98,7 +98,7 @@ private struct ThinkingRow: View {
   @Environment(\.accentMark) private var accentMark
 
   var body: some View {
-    HStack(spacing: Metrics.s) {
+    HangingIcon {
       if reduceMotion {
         ProgressView()
           .controlSize(.small)
@@ -108,6 +108,7 @@ private struct ThinkingRow: View {
           .symbolEffect(.variableColor.iterative.dimInactiveLayers, options: .repeating)
           .accessibilityHidden(true)
       }
+    } text: {
       Text(label)
         .foregroundStyle(.secondary)
     }
