@@ -81,7 +81,10 @@ struct HistoryScreen: View {
     }
     .task {
       // `-demoReceipt first` opens the newest clean's receipt.
-      if DemoState.value("demoReceipt") != nil, selection == nil {
+      guard DemoState.value("demoReceipt") != nil else { return }
+      // Sample receipts arrive a moment after launch.
+      for _ in 0..<20 where selection == nil {
+        try? await Task.sleep(for: .milliseconds(500))
         selection = (previewReceipts ?? model.receipts).first { !$0.dryRun }?.id
       }
     }

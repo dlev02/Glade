@@ -64,7 +64,8 @@ struct StorageScreen: View {
       .task {
         // `-demoClean confirm|result|putback` opens the clean sheet at that step.
         guard let step = DemoState.value("demoClean") else { return }
-        try? await Task.sleep(for: .seconds(1))
+        // Sample findings arrive a moment after launch.
+        for _ in 0..<20 where model.cleanItems.isEmpty { try? await Task.sleep(for: .milliseconds(500)) }
         showsCleanSheet = true
         if step != "confirm" { await model.clean() }
       }

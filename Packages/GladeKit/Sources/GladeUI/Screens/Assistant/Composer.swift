@@ -87,7 +87,7 @@ struct Composer: View {
           NotificationCenter.default.post(name: .gladeShowAssistantSettings, object: nil)
         }
       },
-      arrowEdge: .bottom
+      arrowEdge: .top
     )
     .accessibilityIdentifier("composer.provider")
     .help("Which AI answers")
@@ -111,7 +111,7 @@ struct Composer: View {
         typedModel = current
         typesModel = true
       },
-      arrowEdge: .bottom
+      arrowEdge: .top
     )
     .accessibilityIdentifier("composer.model")
     .help("Which model answers")
@@ -128,7 +128,7 @@ struct Composer: View {
       value: "\(model.config.assistant.effort.title) effort",
       selection: $model.config.assistant.effort,
       sections: [ChoiceSection(choices: Effort.allCases.map { Choice($0, $0.title, subtitle: $0.consequence) })],
-      arrowEdge: .bottom
+      arrowEdge: .top
     )
     .accessibilityIdentifier("composer.effort")
     .help("How hard it thinks")

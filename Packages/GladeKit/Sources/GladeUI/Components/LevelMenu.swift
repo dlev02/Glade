@@ -8,11 +8,11 @@ public struct LevelMenu: View {
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   /// Offers "Reset Selection" when the person has changed choices by hand.
   var offersReset: Bool
-  /// Where the popover's arrow sits: `.top` opens it below the trigger, `.bottom`
-  /// above (for the clean bar at the foot of the window).
+  /// The trigger's edge the popover's arrow points from: `.bottom` opens it below
+  /// the trigger, `.top` above (for the clean bar at the foot of the window).
   var arrowEdge: Edge
 
-  public init(offersReset: Bool = true, arrowEdge: Edge = .top) {
+  public init(offersReset: Bool = true, arrowEdge: Edge = .bottom) {
     self.offersReset = offersReset
     self.arrowEdge = arrowEdge
   }

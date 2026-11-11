@@ -68,7 +68,7 @@ public struct ChoicePopover<Value: Hashable>: View {
   ///   - value: The current choice as the control shows it.
   public init(
     _ label: String, value: String, selection: Binding<Value>, sections: [ChoiceSection<Value>],
-    footer: ChoiceFooter? = nil, arrowEdge: Edge = .top
+    footer: ChoiceFooter? = nil, arrowEdge: Edge = .bottom
   ) {
     self.label = label
     self.value = value
