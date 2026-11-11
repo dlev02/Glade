@@ -37,7 +37,7 @@ public struct RootView: View {
     }
     // Wide enough that Storage's toolbar (scope, Scan, Ask, search, inspector) never
     // spills into an overflow menu, even with the inspector open.
-    .frame(minWidth: 1000, minHeight: 600)
+    .frame(minWidth: 1060, minHeight: 600)
     .accent(model.tint)
     .preferredColorScheme(model.appearance.colorScheme)
     .task {
