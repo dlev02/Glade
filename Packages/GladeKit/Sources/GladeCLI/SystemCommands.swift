@@ -209,7 +209,7 @@ struct Context: AsyncParsableCommand {
 
 struct Suggest: AsyncParsableCommand {
   static let configuration = CommandConfiguration(
-    abstract: "Suggest apps to quit or relaunch to free memory, processor or GPU. Changes nothing."
+    abstract: "Suggest apps to quit or relaunch, and idle simulators to shut down, to free memory, processor or GPU. Changes nothing."
   )
 
   @OptionGroup var output: OutputOptions
@@ -226,10 +226,12 @@ struct Suggest: AsyncParsableCommand {
   func run() async throws {
     let sampler = SystemSampler()
     async let snapshotReading = sampler.snapshot()
-    let apps = await sampler.apps()
+    let processes = await sampler.processes()
+    let apps = AppGrouper.group(processes)
+    let simulators = await sampler.simulatorBreakdown(processes: processes).devices
     let snapshot = await snapshotReading
     let context = ActivityContext.current(apps: apps, power: snapshot.power)
-    let suggestions = PerformanceAdvisor.suggestions(snapshot: snapshot, apps: apps, context: context)
+    let suggestions = PerformanceAdvisor.suggestions(snapshot: snapshot, apps: apps, context: context, simulators: simulators)
     let report = Report(
       date: Date(), memoryPressure: snapshot.memory.pressure, memoryUsedBytes: snapshot.memory.usedBytes,
       memoryTotalBytes: snapshot.memory.totalBytes, cpuPercentMeans: cpuPercentMeaning, suggestions: suggestions
@@ -243,7 +245,128 @@ struct Suggest: AsyncParsableCommand {
       for s in suggestions {
         print("• \(s.title)  [\(s.kind.rawValue), \(s.confidence.rawValue) confidence\(s.actionable ? "" : ", look only")]")
         print("  \(s.reason)")
-        print("  id: \(s.appID)")
+        if let udid = s.simulatorUDID {
+          print("  shut down: \(Brand.cli) simulators shutdown \(udid)")
+        } else {
+          print("  id: \(s.appID)")
+        }
+      }
+    }
+  }
+}
+
+struct Simulators: AsyncParsableCommand {
+  static let configuration = CommandConfiguration(
+    abstract: "List booted simulators with their memory and processor use, and shut down idle ones.",
+    discussion: "Shutting a simulator down is like turning a phone off: its apps stop, its apps and data stay.",
+    subcommands: [List.self, Shutdown.self],
+    defaultSubcommand: List.self
+  )
+
+  struct List: AsyncParsableCommand {
+    static let configuration = CommandConfiguration(abstract: "List booted simulators, what each uses, and whether it's idle.")
+
+    @OptionGroup var output: OutputOptions
+
+    struct Report: Encodable {
+      var date: Date
+      var cpuPercentMeans: String
+      var breakdown: SimulatorBreakdown
+    }
+
+    func run() async throws {
+      let breakdown = await SystemSampler().simulatorBreakdown()
+      let report = Report(date: Date(), cpuPercentMeans: cpuPercentMeaning, breakdown: breakdown)
+      emit(report, json: output.json) {
+        if breakdown.devices.isEmpty {
+          print("No simulators are booted.")
+          return
+        }
+        let now = Date()
+        print("\("CPU".leftPadded(6))  \("MEMORY".leftPadded(9))  \("PROCS".leftPadded(5))  \("UP".leftPadded(4))  \("STATE".padding(toLength: 7, withPad: " ", startingAt: 0))  NAME")
+        for s in breakdown.devices {
+          let up = s.bootedAt.map { Elapsed.short(now.timeIntervalSince($0)) } ?? "-"
+          let state = s.state != "Booted" ? s.state : s.isIdle ? "idle" : "in use"
+          let set = s.deviceSet == .standard ? "" : ", \(s.deviceSet.title)"
+          print("\(String(format: "%.1f", s.cpuPercent).leftPadded(6))  \(Format.bytes(s.memoryBytes).leftPadded(9))  \(String(s.processCount).leftPadded(5))  \(up.leftPadded(4))  \(state.padding(toLength: 7, withPad: " ", startingAt: 0))  \(s.name)\(s.system.map { " (\($0)\(set))" } ?? (set.isEmpty ? "" : " (\(set.dropFirst(2)))"))")
+          var details: [String] = []
+          if !s.inUseReasons.isEmpty { details.append(s.inUseReasons.joined(separator: "; ")) }
+          if !s.runningApps.isEmpty { details.append("running \(s.runningApps.joined(separator: ", "))") }
+          if let note = s.note { details.append(note) }
+          details.append(s.udid)
+          print("        \(details.joined(separator: " · "))")
+        }
+        print("")
+        print("Shared simulator services: \(Format.bytes(breakdown.sharedBytes)) in \(breakdown.sharedProcessCount) processes")
+        if !breakdown.unattributedPIDs.isEmpty {
+          print("Not tied to a device: \(Format.bytes(breakdown.unattributedBytes)) in \(breakdown.unattributedPIDs.count) processes")
+        }
+        print("Total: \(Format.bytes(breakdown.totalBytes)) in \(breakdown.totalProcessCount) processes")
+      }
+    }
+  }
+
+  struct Shutdown: AsyncParsableCommand {
+    static let configuration = CommandConfiguration(
+      abstract: "Shut down a booted simulator, or every idle one. Its apps and data are kept.",
+      discussion: "A simulator that looks in use (busy, debugged, shown in Simulator, or likely an IDE's preview) is refused unless --force is given."
+    )
+
+    @OptionGroup var output: OutputOptions
+
+    @Argument(help: "The simulator's UDID or name.")
+    var simulator: String?
+
+    @Flag(name: .long, help: "Shut down every simulator judged idle.")
+    var idle = false
+
+    @Flag(name: .long, help: "Shut it down even though it looks in use.")
+    var force = false
+
+    func validate() throws {
+      if idle == (simulator != nil) { throw ValidationError("Give a simulator's UDID or name, or --idle.") }
+      if idle && force { throw ValidationError("--force applies to one named simulator, not --idle.") }
+    }
+
+    struct Failure: Encodable {
+      var error: String
+      var target: String
+    }
+
+    func run() async throws {
+      defer { _ = Log.recent(limit: 1) }
+      if idle {
+        let results = await SimulatorControl.shutdownIdle()
+        emit(results, json: output.json) {
+          if results.isEmpty { print("Nothing was shut down: no simulator is idle for certain. `\(Brand.cli) simulators` shows why.") }
+          for result in results { print(result.message) }
+        }
+        if results.contains(where: { !$0.succeeded }) { throw ExitCode(1) }
+        return
+      }
+      let target = simulator ?? ""
+      let result: SimulatorActionResult
+      do {
+        let booted = await SystemSampler().simulators()
+        let match = try SimulatorControl.resolve(target, in: booted)
+        if match.inUse && !force {
+          fail("\(match.name) looks in use (\(match.inUseReasons.joined(separator: "; "))). Add --force to shut it down anyway.", target: target)
+          throw ExitCode(2)
+        }
+        result = try await SimulatorControl.shutdown(match)
+      } catch let error as SimulatorControlError {
+        fail(error.errorDescription ?? "\(error)", target: target)
+        throw ExitCode(2)
+      }
+      emit(result, json: output.json) { print(result.message) }
+      if !result.succeeded { throw ExitCode(1) }
+    }
+
+    private func fail(_ message: String, target: String) {
+      if output.json {
+        print(JSONFiles.string(Failure(error: message, target: target)))
+      } else {
+        FileHandle.standardError.write(Data("\(message)\n".utf8))
       }
     }
   }

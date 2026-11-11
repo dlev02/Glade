@@ -13,6 +13,8 @@ public struct PerformanceSuggestion: Codable, Sendable, Identifiable, Hashable {
     case memoryHog
     /// A background app keeping the GPU busy.
     case gpuHog
+    /// A booted simulator nothing is using. Shutting it down keeps its apps and data.
+    case shutDownIdleSimulator
   }
 
   public enum Confidence: String, Codable, Sendable, Comparable {
@@ -40,6 +42,7 @@ public struct PerformanceSuggestion: Codable, Sendable, Identifiable, Hashable {
   /// `<kind>:<appID>`, stable while the situation lasts.
   public var id: String
   public var kind: Kind
+  /// For simulators, `simulator:<UDID>`.
   public var appID: String
   public var appName: String
   /// The process concerned, for runaways inside a multi-process app.
@@ -52,6 +55,10 @@ public struct PerformanceSuggestion: Codable, Sendable, Identifiable, Hashable {
   /// Glade can act on it (quit or relaunch an app). `false` means look, don't touch:
   /// runaways, and processes that aren't apps.
   public var actionable: Bool
+  /// The simulator to shut down, for `shutDownIdleSimulator`.
+  public var simulatorUDID: String? = nil
+  /// Its device set's folder, passed to `SimulatorControl.shutdown(udid:set:)`.
+  public var simulatorSetPath: String? = nil
 }
 
 /// Rule-based suggestions. No model involved, so it can run on every refresh.
@@ -67,8 +74,13 @@ public enum PerformanceAdvisor {
   /// Idle apps using less than this aren't worth mentioning.
   public static let minimumIdleBytes: Int64 = 100_000_000
 
+  /// Idle simulators using less than this aren't worth mentioning.
+  public static let minimumIdleSimulatorBytes: Int64 = 300_000_000
+
+  /// - Parameter simulators: From `SystemSampler.simulators()`. Idle ones become
+  ///   shut-down suggestions, ranked with the app suggestions by memory freed.
   public static func suggestions(
-    snapshot: SystemSnapshot, apps: [AppUsage], context: ActivityContext,
+    snapshot: SystemSnapshot, apps: [AppUsage], context: ActivityContext, simulators: [SimulatorUsage] = [],
     config: GladeConfig = ConfigStore.load(), now: Date = Date()
   ) -> [PerformanceSuggestion] {
     let ram = max(snapshot.memory.totalBytes, 1)
@@ -100,7 +112,43 @@ public enum PerformanceAdvisor {
     var result: [PerformanceSuggestion] = []
     let memory = { (bytes: Int64) in Format.bytes(bytes) }
 
+    // Shut down idle simulators. Each is offered on its own, so the combined "Simulator
+    // devices" row isn't also flagged as a memory hog.
+    let idleSimulators = simulators.filter {
+      $0.isIdle && $0.memoryBytes >= minimumIdleSimulatorBytes
+        && !keep.contains($0.udid.lowercased()) && !keep.contains($0.name.lowercased())
+    }
+    for simulator in idleSimulators {
+      let idleFor = simulator.lastActivity.map { now.timeIntervalSince($0) }
+      // Only boot time known: nothing has started in it since, but it may have been looked at.
+      let sinceBootOnly = simulator.lastActivity != nil && simulator.lastActivity == simulator.bootedAt
+      let label = simulator.system.map { "\(simulator.name) (\($0))" } ?? simulator.name
+      var reason =
+        if let idleFor, sinceBootOnly {
+          "\(label) has been idle since it started \(Durations.phrase(idleFor)) ago and is using \(memory(simulator.memoryBytes))."
+        } else if let idleFor {
+          "\(label) has been idle for \(Durations.phrase(idleFor)) and is using \(memory(simulator.memoryBytes))."
+        } else {
+          "\(label) is booted with nothing using it and is using \(memory(simulator.memoryBytes))."
+        }
+      if simulator.deviceSet != .standard { reason += " It’s in the \(simulator.deviceSet.title) set." }
+      if let note = simulator.note { reason += " \(note)" }
+      var confidence = PerformanceSuggestion.Confidence.medium
+      if !sinceBootOnly && (idleFor ?? 0) >= 2 * 3600 && (simulator.memoryBytes >= 1_000_000_000 || pressured) { confidence = .high }
+      if simulator.note != nil { confidence = .low }
+      let id = "simulator:\(simulator.udid)"
+      result.append(PerformanceSuggestion(
+        id: "\(PerformanceSuggestion.Kind.shutDownIdleSimulator.rawValue):\(id)", kind: .shutDownIdleSimulator,
+        appID: id, appName: simulator.name, pid: nil, title: "Shut down \(simulator.name)", reason: reason,
+        frees: .init(memoryBytes: simulator.memoryBytes, cpuPercent: simulator.cpuPercent, gpuPercent: simulator.gpuPercent),
+        confidence: confidence, actionable: true, simulatorUDID: simulator.udid, simulatorSetPath: simulator.setPath
+      ))
+    }
+    let simulatorRowIDs: Set<String> = ["process:\(AppGrouper.simulatorRowName)", IDEContext.simulatorBundleID]
+
     for app in apps where !protected(app) && !busy(app) {
+      // With a breakdown, the devices are judged one by one above.
+      if !simulators.isEmpty && simulatorRowIDs.contains(app.id) { continue }
       let isApp = app.kind == .app
       let launchedAgo = app.launchDate.map { now.timeIntervalSince($0) } ?? 0
 
