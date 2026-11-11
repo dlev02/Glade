@@ -44,9 +44,12 @@ private struct CapsuleMetrics {
   }
 }
 
-/// An accent-filled capsule with a white label that dims when pressed or disabled.
+/// An accent-filled capsule with a white label that dims when pressed or disabled. In
+/// a window that isn't active it turns grey with a primary label, as the system's
+/// default buttons do.
 public struct FilledActionStyle: ButtonStyle {
   @Environment(\.isEnabled) private var isEnabled
+  @Environment(\.appearsActive) private var appearsActive
   @Environment(\.controlSize) private var controlSize
   @State private var hovering = false
 
@@ -56,11 +59,11 @@ public struct FilledActionStyle: ButtonStyle {
     let metrics = CapsuleMetrics(controlSize)
     configuration.label
       .fontWeight(.semibold)
-      .foregroundStyle(.white)
+      .foregroundStyle(appearsActive ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
       .padding(.horizontal, metrics.horizontal)
       .padding(.vertical, metrics.vertical)
       .frame(minHeight: metrics.height)
-      .background(.tint, in: .capsule)
+      .background(appearsActive ? AnyShapeStyle(.tint) : AnyShapeStyle(.fill.secondary), in: .capsule)
       .overlay(Capsule().fill(.black.opacity(configuration.isPressed ? 0.18 : hovering ? 0.08 : 0)))
       .opacity(isEnabled ? 1 : 0.4)
       .contentShape(.capsule)

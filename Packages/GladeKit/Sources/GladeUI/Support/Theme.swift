@@ -80,6 +80,9 @@ public enum Palette {
   public static let good = Color.green
   public static let warning = Color.orange
   public static let critical = Color.red
+  /// What an accent fill becomes in a window that isn't active: the grey the system
+  /// gives a ticked checkbox there, dark enough to hold a white tick.
+  public static let inactiveFill = Color(nsColor: .systemGray)
 
   /// The colour for a level of load from 0 to 1: calm until it matters.
   public static func load(_ fraction: Double) -> Color {
