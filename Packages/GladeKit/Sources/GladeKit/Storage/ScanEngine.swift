@@ -202,6 +202,7 @@ public enum ScanEngine {
       WorktreeScanner(),
       ProjectScanner(),
       EditorExtensionScanner(),
+      AgentVersionScanner(),
       DownloadsScanner(),
       AppCopyScanner(),
       AppLeftoverScanner(),

@@ -264,6 +264,32 @@ struct SafetyTests {
     }
   }
 
+  /// Old agent versions: the one the command runs, any newer download and the one
+  /// before it must stay, and nothing is offered when the live one is unknown.
+  @Test func oldAgentVersionsKeepTheLiveOnes() throws {
+    let root = home + "/.local/share/claude/versions"
+    let bin = home + "/.local/bin"
+    try FileManager.default.createDirectory(atPath: root, withIntermediateDirectories: true)
+    try FileManager.default.createDirectory(atPath: bin, withIntermediateDirectories: true)
+    let now = Date()
+    for (index, version) in ["1.0.1", "1.0.2", "1.0.3", "1.0.4", "1.0.5"].enumerated() {
+      let path = root + "/" + version
+      try Data(repeating: 5, count: 1024).write(to: URL(fileURLWithPath: path))
+      try FileManager.default.setAttributes([.modificationDate: now.addingTimeInterval(Double(index - 5) * 86_400)], ofItemAtPath: path)
+    }
+    let command = bin + "/claude"
+    #expect(AgentVersionScanner.plan(root: root, command: command) == nil, "no command link: keep everything")
+    // The command runs 1.0.4; 1.0.5 is an update waiting to switch over.
+    try FileManager.default.createSymbolicLink(atPath: command, withDestinationPath: root + "/1.0.4")
+    let plan = try #require(AgentVersionScanner.plan(root: root, command: command))
+    #expect(Set(plan.keep) == Set(["1.0.3", "1.0.4", "1.0.5"].map { root + "/" + $0 }))
+    #expect(plan.remove == ["1.0.1", "1.0.2"].map { root + "/" + $0 })
+    // A link that points somewhere else says nothing about which version is live.
+    try FileManager.default.removeItem(atPath: command)
+    try FileManager.default.createSymbolicLink(atPath: command, withDestinationPath: home + "/elsewhere/claude")
+    #expect(AgentVersionScanner.plan(root: root, command: command) == nil)
+  }
+
   @Test func scannerNeverReportsProtectedPlaces() async {
     let rules = [
       LocationRule(id: "t.caches", category: .appCaches, title: "cache", detail: "", paths: ["~/Library/Caches/*"], split: .each, minimumBytes: 0),
