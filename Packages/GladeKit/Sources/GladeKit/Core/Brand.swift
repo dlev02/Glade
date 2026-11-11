@@ -29,8 +29,12 @@ public enum Brand {
 public enum GladePaths {
   public static var home: String { NSHomeDirectory() }
 
+  /// Set by tests so nothing they do lands in the person's own receipts and history.
+  nonisolated(unsafe) public static var supportOverride: URL?
+
   public static var support: URL {
-    directory(FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    if let supportOverride { return directory(supportOverride) }
+    return directory(FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
       .appendingPathComponent(Brand.name, isDirectory: true))
   }
 

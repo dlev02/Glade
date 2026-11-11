@@ -14,6 +14,8 @@ struct SafetyTests {
   init() throws {
     let base = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().path + "/glade-safety-\(UUID().uuidString.prefix(8))"
     home = base + "/home"
+    // Receipts and logs from these tests belong with the fixture, not in the real History.
+    GladePaths.supportOverride = URL(fileURLWithPath: base + "/support", isDirectory: true)
     outside = base + "/outside"
     let files = [
       "Library/Caches/com.example.app/data.bin",

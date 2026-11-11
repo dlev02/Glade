@@ -20,7 +20,8 @@ struct CleanSummary: View {
             .foregroundStyle(.green)
             .symbolEffect(.bounce, options: .nonRepeating, value: appeared)
             .accessibilityHidden(true)
-          Text("Freed \(Format.bytes(receipt.removedBytes))")
+          // Things in the Trash still take up space until it is emptied, so say moved, not freed.
+          Text(receipt.removedBytes > 0 && receipt.trashedBytes == receipt.removedBytes ? "Moved \(Format.bytes(receipt.removedBytes)) to the Trash" : "Freed \(Format.bytes(receipt.removedBytes))")
         }
         .font(.title2.weight(.semibold))
         HStack(spacing: Metrics.s) {

@@ -65,9 +65,17 @@ public enum Cleaner {
       }
       progress(index, unique.count, finding.title)
       let outcome = await remove(finding, protection: protection, running: running, config: config, dryRun: options.dryRun)
+      // A folder that holds other selected findings counts only what they don't, so a
+      // receipt's total matches the plan's and nothing is counted twice.
+      let inside = unique.compactMap { scan.finding($0) }.filter { other in
+        other.id != finding.id && !other.paths.isEmpty && other.paths.allSatisfy { path in
+          finding.paths.contains { path.hasPrefix($0 + "/") }
+        }
+      }
+      let own = max(0, finding.bytes - inside.reduce(0) { $0 + $1.bytes })
       entries.append(ReceiptEntry(
         id: finding.id, title: finding.title, category: finding.category, paths: finding.paths,
-        bytes: finding.bytes, outcome: outcome
+        bytes: own, outcome: outcome
       ))
       Log.info(.clean, "\(finding.title) [\(finding.ruleID)] \(Format.bytes(finding.bytes)): \(describe(outcome))")
     }
