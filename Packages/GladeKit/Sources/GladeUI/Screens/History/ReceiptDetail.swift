@@ -64,7 +64,7 @@ struct ReceiptDetail: View {
             .font(.title3)
             .foregroundStyle(.secondary)
         }
-        Text("\(name) · \(receipt.date.formatted(date: .abbreviated, time: .shortened))")
+        Text("\(name) · \(receipt.date.formatted(date: .abbreviated, time: .omitted)) at \(receipt.timeText)")
           .foregroundStyle(.secondary)
       }
       .accessibilityElement(children: .combine)

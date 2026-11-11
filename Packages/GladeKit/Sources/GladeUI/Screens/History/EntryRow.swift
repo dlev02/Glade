@@ -11,9 +11,12 @@ struct EntryRow: View {
     HStack(spacing: Metrics.m) {
       CategoryIcon(entry.category)
       VStack(alignment: .leading, spacing: 1) {
+        // Two lines before anything is cut, so a name like "Old installer – Figma.dmg"
+        // reads in full in the narrow inspector.
         Text(entry.title)
-          .lineLimit(1)
+          .lineLimit(2)
           .truncationMode(.middle)
+          .fixedSize(horizontal: false, vertical: true)
           .help(entry.title)
         if showsOutcome {
           Label {

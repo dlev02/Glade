@@ -20,12 +20,20 @@ struct CleanDay: Identifiable {
 
   /// The last grouping, kept so that returning to History draws its first frame
   /// without grouping again. Rebuilt only when the cleans or the day change.
-  private static var cache: (key: [String], day: Date, days: [CleanDay])?
+  private static var cache: (key: [Key], day: Date, days: [CleanDay])?
+
+  /// What a grouping depends on: a receipt with the same id but a new date or new
+  /// entries is grouped again, so rows never show an older copy than the receipt.
+  private struct Key: Equatable {
+    var id: String
+    var date: Date
+    var entries: Int
+  }
 
   /// Groups receipts by day, newest first, reusing the last grouping when nothing
   /// has changed since.
   static func grouped(_ receipts: [Receipt]) -> [CleanDay] {
-    let key = receipts.map(\.id)
+    let key = receipts.map { Key(id: $0.id, date: $0.date, entries: $0.entries.count) }
     let today = Calendar.current.startOfDay(for: Date())
     if let cache, cache.key == key, cache.day == today { return cache.days }
     let days = group(receipts)

@@ -9,6 +9,7 @@ struct ReceiptRow: View {
   var body: some View {
     let name = receipt.initiator.name(providerName: { model.providerName($0) })
     let items = receipt.entries.count == 1 ? "1 item" : "\(receipt.entries.count) items"
+    let time = receipt.timeText
     let amount = [
       receipt.freedBytes > 0 ? "\(Format.bytes(receipt.freedBytes)) freed" : nil,
       receipt.trashedBytes > 0 ? "\(Format.bytes(receipt.trashedBytes)) moved to the Trash" : nil,
@@ -23,7 +24,7 @@ struct ReceiptRow: View {
       VStack(alignment: .leading, spacing: 1) {
         Text(name)
           .lineLimit(1)
-        Text("\(receipt.date.formatted(date: .omitted, time: .shortened)) · \(items)")
+        Text("\(time) · \(items)")
           .font(.callout)
           .foregroundStyle(.secondary)
           .monospacedDigit()
@@ -43,6 +44,11 @@ struct ReceiptRow: View {
     }
     .padding(.vertical, Metrics.xs)
     .accessibilityElement(children: .ignore)
-    .accessibilityLabel("\(name), \(receipt.date.formatted(date: .omitted, time: .shortened)), \(items), \(amount)")
+    .accessibilityLabel("\(name), \(time), \(items), \(amount)")
   }
+}
+
+extension Receipt {
+  /// "1:53 AM": the time of a clean, the same in its row and its receipt.
+  var timeText: String { date.formatted(date: .omitted, time: .shortened) }
 }

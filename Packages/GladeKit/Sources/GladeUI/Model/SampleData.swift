@@ -140,14 +140,19 @@ public struct SampleData: Sendable {
     ]
   }
 
+  /// When the sample cleans are dated from: fixed for the whole run, so every place
+  /// that shows a sample clean's time agrees.
+  private static let receiptsAnchor = Date()
+
   static func sampleReceipts() -> [Receipt] {
     let day: TimeInterval = 86_400
+    let now = receiptsAnchor
     func entry(_ title: String, _ category: StorageCategory, _ gigabytes: Double, _ outcome: RemovalOutcome) -> ReceiptEntry {
       ReceiptEntry(id: UUID().uuidString, title: title, category: category, paths: [], bytes: Int64(gigabytes * 1e9), outcome: outcome)
     }
     return [
       Receipt(
-        id: "A1B2C3D4-0000-0000-0000-000000000001", date: Date().addingTimeInterval(-3600 * 5), initiator: .user, dryRun: false,
+        id: "A1B2C3D4-0000-0000-0000-000000000001", date: now.addingTimeInterval(-3600 * 5), initiator: .user, dryRun: false,
         entries: [
           entry("Build data – Lantern", .xcode, 18.4, .deleted),
           entry("npm cache", .packageCaches, 4.2, .deleted),
@@ -157,7 +162,7 @@ public struct SampleData: Sendable {
         freeBefore: 9_600_000_000, freeAfter: 32_700_000_000
       ),
       Receipt(
-        id: "A1B2C3D4-0000-0000-0000-000000000002", date: Date().addingTimeInterval(-day * 3), initiator: .assistant(provider: "Claude"), dryRun: false,
+        id: "A1B2C3D4-0000-0000-0000-000000000002", date: now.addingTimeInterval(-day * 3), initiator: .assistant(provider: "Claude"), dryRun: false,
         entries: [
           entry("Simulator system · iOS 18.0", .simulators, 8.4, .deleted),
           entry("Claude Code sessions – Developer-Harbor", .agentHistory, 1.1, .deleted),
@@ -166,7 +171,7 @@ public struct SampleData: Sendable {
         freeBefore: 4_100_000_000, freeAfter: 23_400_000_000
       ),
       Receipt(
-        id: "A1B2C3D4-0000-0000-0000-000000000003", date: Date().addingTimeInterval(-day * 9), initiator: .automation(rule: "low storage"), dryRun: false,
+        id: "A1B2C3D4-0000-0000-0000-000000000003", date: now.addingTimeInterval(-day * 9), initiator: .automation(rule: "low storage"), dryRun: false,
         entries: [entry("App caches", .appCaches, 2.3, .deleted), entry("Crash reports", .logs, 0.1, .deleted)],
         freeBefore: 18_900_000_000, freeAfter: 21_300_000_000
       ),
