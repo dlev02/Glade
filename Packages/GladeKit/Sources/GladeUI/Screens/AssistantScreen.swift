@@ -50,7 +50,8 @@ struct AssistantScreen: View {
       .inspector(isPresented: $showsDetails) {
         RunsInspector(runs: runs) { shownRun = $0 }
           .inspectorBackground()
-          .inspectorColumnWidth(min: 260, ideal: 300, max: 400)
+          // `-demoInspectorWidth 260` opens it at that width, for screenshots.
+          .inspectorColumnWidth(min: 260, ideal: DemoState.value("demoInspectorWidth").flatMap(Double.init).map { CGFloat($0) } ?? 300, max: 400)
       }
       .sheet(item: $shownRun) { run in
         RunSheet(run: run)
