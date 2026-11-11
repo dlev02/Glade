@@ -19,7 +19,7 @@ struct ProjectRule: Sendable {
   var siblingExtensions: [String] = []
   /// Entries inside the folder, any one of which must exist.
   var inside: [String] = []
-  /// Names that are also used for source: only counted when git says they're ignored.
+  /// Names that are also used for source: only counted when git says they’re ignored.
   var mustBeIgnored = false
   /// Many small folders per project (Python caches): reported as one finding.
   var grouped = false
@@ -74,7 +74,7 @@ enum ProjectRules {
       detail: "A Python virtual environment for this project; recreating it and reinstalling its packages brings it back.",
       inside: ["pyvenv.cfg"]
     ),
-    // The two Python cache rules share an id so a project's caches add up to one finding.
+    // The two Python cache rules share an id so a project’s caches add up to one finding.
     ProjectRule(
       id: "project.python-caches", names: ["__pycache__"],
       label: "Python caches", category: .buildOutputs, recovery: .automatic, level: .careful,
@@ -111,13 +111,13 @@ enum ProjectRules {
     ProjectRule(
       id: "project.swiftpm", names: [".build"], label: ".build", category: .buildOutputs, recovery: .automatic,
       level: .balanced,
-      detail: "Swift Package Manager's build products and checked-out dependencies, which the next build recreates.",
+      detail: "Swift Package Manager’s build products and checked-out dependencies, which the next build recreates.",
       siblings: ["Package.swift"]
     ),
     ProjectRule(
       id: "project.deriveddata", names: ["DerivedData"], label: "DerivedData", category: .buildOutputs,
       recovery: .automatic, level: .balanced,
-      detail: "Xcode's build products and index for this project, which the next build recreates.",
+      detail: "Xcode’s build products and index for this project, which the next build recreates.",
       siblings: ["Package.swift"], siblingExtensions: ["xcodeproj", "xcworkspace"]
     ),
     ProjectRule(
@@ -127,18 +127,18 @@ enum ProjectRules {
     ),
     ProjectRule(
       id: "project.build", names: ["build"], label: "build", category: .buildOutputs, recovery: .automatic,
-      level: .balanced, detail: "Output of this project's build, which git ignores and the next build recreates.",
+      level: .balanced, detail: "Output of this project’s build, which git ignores and the next build recreates.",
       siblings: ["package.json", "pyproject.toml", "setup.py", "CMakeLists.txt", "meson.build", "pubspec.yaml", "Podfile"] + gradle,
       siblingExtensions: ["xcodeproj", "xcworkspace"], mustBeIgnored: true
     ),
     ProjectRule(
       id: "project.dist", names: ["dist"], label: "dist", category: .buildOutputs, recovery: .automatic,
-      level: .balanced, detail: "Bundled or packaged output of this project's build, which git ignores and the next build recreates.",
+      level: .balanced, detail: "Bundled or packaged output of this project’s build, which git ignores and the next build recreates.",
       siblings: ["package.json", "pyproject.toml", "setup.py"], mustBeIgnored: true
     ),
     ProjectRule(
       id: "project.out", names: ["out"], label: "out", category: .buildOutputs, recovery: .automatic,
-      level: .balanced, detail: "Output of this project's build or export, which git ignores and the next build recreates.",
+      level: .balanced, detail: "Output of this project’s build or export, which git ignores and the next build recreates.",
       siblings: ["package.json"], mustBeIgnored: true
     ),
     ProjectRule(
@@ -155,27 +155,27 @@ enum ProjectRules {
     ProjectRule(
       id: "project.js-caches", names: [".turbo", ".parcel-cache", ".vite", ".angular"], label: "build cache",
       category: .buildOutputs, recovery: .automatic, level: .careful,
-      detail: "A JavaScript build tool's cache, which fills again on the next build.",
+      detail: "A JavaScript build tool’s cache, which fills again on the next build.",
       siblings: ["package.json"]
     ),
     ProjectRule(
       id: "project.cache", names: [".cache"], label: ".cache", category: .buildOutputs, recovery: .automatic,
-      level: .careful, detail: "A JavaScript build tool's cache, which git ignores and the next build fills again.",
+      level: .careful, detail: "A JavaScript build tool’s cache, which git ignores and the next build fills again.",
       siblings: ["package.json"], mustBeIgnored: true
     ),
     ProjectRule(
       id: "project.expo", names: [".expo"], label: ".expo", category: .buildOutputs, recovery: .automatic,
-      level: .balanced, detail: "Expo's local dev-server state for this project, which it recreates the next time you start it.",
+      level: .balanced, detail: "Expo’s local dev-server state for this project, which it recreates the next time you start it.",
       siblings: ["package.json"]
     ),
     ProjectRule(
       id: "project.gradle", names: [".gradle"], label: ".gradle", category: .buildOutputs, recovery: .automatic,
-      level: .balanced, detail: "Gradle's caches for this project, which the next build recreates.",
+      level: .balanced, detail: "Gradle’s caches for this project, which the next build recreates.",
       siblings: gradle + ["gradlew"]
     ),
     ProjectRule(
       id: "project.dart", names: [".dart_tool"], label: ".dart_tool", category: .buildOutputs, recovery: .automatic,
-      level: .balanced, detail: "Dart and Flutter's package setup and build cache, which `flutter pub get` or the next build recreates.",
+      level: .balanced, detail: "Dart and Flutter’s package setup and build cache, which `flutter pub get` or the next build recreates.",
       siblings: ["pubspec.yaml"]
     ),
     ProjectRule(
@@ -206,7 +206,7 @@ enum ProjectRules {
   }()
 
   /// Folders never walked into even when nothing proves what they are: they only ever
-  /// hold installed packages or Xcode's output.
+  /// hold installed packages or Xcode’s output.
   static let prunedNames: Set<String> = ["node_modules", "Pods", "DerivedData", "bower_components", "jspm_packages"]
 
   /// Files whose modification shows someone worked on the project. Install folders
@@ -219,7 +219,7 @@ enum ProjectRules {
     "tox.ini", "pubspec.yaml", "pubspec.lock", "pom.xml", "CMakeLists.txt", "go.mod",
   ] + gradle
 
-  /// Files that list a Python environment's packages so they can be reinstalled.
+  /// Files that list a Python environment’s packages so they can be reinstalled.
   static let pythonDependencyLists = [
     "requirements.txt", "requirements-dev.txt", "pyproject.toml", "Pipfile", "Pipfile.lock",
     "poetry.lock", "uv.lock", "setup.py", "setup.cfg", "environment.yml",

@@ -19,13 +19,13 @@ struct MenuBarView: View {
       readings
       if let suggestion {
         SuggestionRow(suggestion, iconSize: 24, onGlass: true) { outcome = $0 }
-          .padding(.horizontal, Metrics.xs)
+          .padding(.horizontal, Metrics.m)
           .suggestionTransition(reduceMotion: reduceMotion)
       } else if let outcome {
         Text(outcome)
           .font(.callout)
           .foregroundStyle(.secondary)
-          .padding(.horizontal, Metrics.xs)
+          .padding(.horizontal, Metrics.m)
       }
       if model.scan != nil, model.selectedBytes > 0 {
         let free = model.immediateBytes
@@ -69,7 +69,7 @@ struct MenuBarView: View {
         LevelBar(fraction: 1 - disk.freeFraction, color: Palette.load(1 - disk.freeFraction))
       }
     }
-    .padding(.horizontal, Metrics.xs)
+    .padding(.horizontal, Metrics.m)
     .accessibilityElement(children: .combine)
   }
 
@@ -137,6 +137,8 @@ struct MenuBarView: View {
         .accessibilityIdentifier("popover.quit")
     }
     .buttonStyle(PopoverFooterButtonStyle())
+    // The buttons' words sit on the same edge as the readings above them.
+    .padding(.horizontal, Metrics.m - Metrics.s)
   }
 
   private func showWindow() {

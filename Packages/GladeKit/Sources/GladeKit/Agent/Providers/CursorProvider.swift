@@ -1,8 +1,8 @@
 import Foundation
 
-/// Cursor's command-line agent (`cursor-agent -p`). It has no switch to remove its tools,
+/// Cursor’s command-line agent (`cursor-agent -p`). It has no switch to remove its tools,
 /// so each run happens in an empty folder whose `.cursor/cli.json` denies every shell,
-/// read, write, web and MCP permission (deny rules win over the person's allow list), and
+/// read, write, web and MCP permission (deny rules win over the person’s allow list), and
 /// `--force` is never passed. Cursor has no system prompt option, so the system prompt is
 /// put ahead of the prompt under a clear heading.
 ///

@@ -86,7 +86,7 @@ struct GroupHeader: View {
     }
   }
 
-  /// What the group's selection adds to a clean, with nested findings counted once.
+  /// What the group’s selection adds to a clean, with nested findings counted once.
   private var selectedBytes: Int64 {
     let chosen = Set(group.entries.lazy.map(\.id).filter { model.isSelected($0) })
     return group.entries.reduce(0) { sum, entry in

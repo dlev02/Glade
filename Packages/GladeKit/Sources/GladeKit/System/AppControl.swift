@@ -7,7 +7,7 @@ public enum AppControlError: Error, LocalizedError, Equatable {
   /// Part of macOS, or owned by another user.
   case systemApp(String)
   case isGlade
-  /// A running process that isn't an app, so it can't be asked to quit.
+  /// A running process that isn’t an app, so it can’t be asked to quit.
   case notAnApp(String)
   case relaunchFailed(String, reason: String)
 
@@ -128,7 +128,7 @@ public enum AppControl {
           || (path != nil && $0.bundleURL?.path == path)
       }
       if matches.isEmpty {
-        // Allow the bundle's file name ("Visual Studio Code") or a unique prefix of a name.
+        // Allow the bundle’s file name ("Visual Studio Code") or a unique prefix of a name.
         matches = running.filter {
           $0.bundleURL.map { $0.deletingPathExtension().lastPathComponent.lowercased() == lower } ?? false
         }
@@ -152,7 +152,7 @@ public enum AppControl {
     if pid == getpid() || (gladeBundleID != nil && app.bundleIdentifier?.lowercased() == gladeBundleID)
       || name.caseInsensitiveCompare(Brand.name) == .orderedSame
     {
-      Log.info(.system, "Refused to quit \(name): it's \(Brand.name)")
+      Log.info(.system, "Refused to quit \(name): it’s \(Brand.name)")
       throw AppControlError.isGlade
     }
     var owner = proc_bsdshortinfo()
@@ -160,7 +160,7 @@ public enum AppControl {
     let otherUser = proc_pidinfo(pid, PROC_PIDT_SHORTBSDINFO, 0, &owner, size) == size && owner.pbsi_uid != getuid()
     let path = app.bundleURL?.path ?? app.executableURL?.path
     if otherUser || SystemApps.isSystem(path: path, bundleID: app.bundleIdentifier, name: name) {
-      Log.info(.system, "Refused to quit \(name): it's a system app")
+      Log.info(.system, "Refused to quit \(name): it’s a system app")
       throw AppControlError.systemApp(name)
     }
     return Target(pid: pid, name: name, bundleID: app.bundleIdentifier, bundleURL: app.bundleURL)

@@ -1,7 +1,7 @@
 import GladeKit
 import SwiftUI
 
-/// A conversation with the person's own AI about this Mac. The AI has no tools: Glade
+/// A conversation with the person’s own AI about this Mac. The AI has no tools: Glade
 /// describes the Mac to it and checks whatever it suggests against the safety rules.
 struct AssistantScreen: View {
   @Environment(AppModel.self) private var model
@@ -37,7 +37,7 @@ struct AssistantScreen: View {
             .disabled(messages.isEmpty)
         }
         // Declared once in the main toolbar, its own capsule at the trailing edge, the
-        // same as Storage's and History's inspector buttons.
+        // same as Storage’s and History’s inspector buttons.
         ToolbarSpacer(.fixed, placement: .primaryAction)
         ToolbarItem(placement: .primaryAction) {
           Button("Details", systemImage: Symbols.inspector) { showsDetails.toggle() }
@@ -93,7 +93,7 @@ struct AssistantScreen: View {
   }
 
   private func loadRuns() async {
-    // Sample data never shows the person's own runs.
+    // Sample data never shows the person’s own runs.
     if model.isDemo {
       runs = AssistantSnapshots.sampleRuns()
       return

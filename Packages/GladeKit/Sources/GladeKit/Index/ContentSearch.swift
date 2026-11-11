@@ -8,7 +8,7 @@ public struct ContentSearch: Sendable {
   public let embedder: any TextEmbedder
 
   /// Euclidean distance between feature prints under which two pictures count as the
-  /// same picture (Vision's own `distance(to:)` is this value squared). Calibrated on a
+  /// same picture (Vision’s own `distance(to:)` is this value squared). Calibrated on a
   /// 6016-pixel photo: resized, re-compressed, PNG and 95%-cropped copies measured
   /// 0.02–0.10, an 80% crop 0.13, a mirror image 0.17; the same artwork in another
   /// colour 0.28–0.35, a heavy crop 0.48, different pictures 0.55 and up. 0.25 keeps
@@ -57,7 +57,7 @@ public struct ContentSearch: Sendable {
       }
     }
 
-    // Words: passages that contain the query's words, and matches in names and labels.
+    // Words: passages that contain the query’s words, and matches in names and labels.
     let words = Lexicon.words(trimmed)
     var wordScore = [Double](repeating: 0, count: fileCount)
     var wordChunk = [Int](repeating: -1, count: fileCount)
@@ -118,7 +118,7 @@ public struct ContentSearch: Sendable {
 
   // MARK: Lookalikes
 
-  /// Groups of near-identical images and near-identical documents that aren't exact
+  /// Groups of near-identical images and near-identical documents that aren’t exact
   /// copies (the duplicate scan covers those). Report only: nothing is selected for
   /// removal. Pass `.image` or `.document` for one side; documents include PDFs, text
   /// and the other text kinds.
@@ -249,7 +249,7 @@ public struct ContentSearch: Sendable {
     return (offset > 0 ? "…" : "") + piece.trimmingCharacters(in: .whitespaces) + (piece.count == length ? "…" : "")
   }
 
-  /// Each file's average passage vector, normalised.
+  /// Each file’s average passage vector, normalised.
   static func fileMeans(_ snapshot: IndexSnapshot) -> [[Float]?] {
     let dimension = snapshot.dimension
     var sums = [[Float]?](repeating: nil, count: snapshot.files.count)

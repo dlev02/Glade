@@ -1,6 +1,6 @@
 import Foundation
 
-/// The one place the product's name lives, so a rename is a single edit.
+/// The one place the product’s name lives, so a rename is a single edit.
 public enum Brand {
   public static let name = "Glade"
   public static let cli = "glade"
@@ -16,7 +16,7 @@ public enum Brand {
   }
 
   /// The app bundle, found even when Glade was started through the `glade` link, where
-  /// the system's idea of the main bundle is the folder holding the link.
+  /// the system’s idea of the main bundle is the folder holding the link.
   public static let appBundle: Bundle = {
     if Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") != nil { return .main }
     guard let executable = Bundle.main.executableURL?.resolvingSymlinksInPath() else { return .main }
@@ -29,7 +29,7 @@ public enum Brand {
 public enum GladePaths {
   public static var home: String { NSHomeDirectory() }
 
-  /// Set by tests so nothing they do lands in the person's own receipts and history.
+  /// Set by tests so nothing they do lands in the person’s own receipts and history.
   nonisolated(unsafe) public static var supportOverride: URL?
 
   public static var support: URL {

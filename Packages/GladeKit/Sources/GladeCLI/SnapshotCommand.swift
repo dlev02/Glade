@@ -6,7 +6,7 @@ import GladeUI
 /// A development aid: draws a screen of the app to an image file.
 struct Snapshot: AsyncParsableCommand {
   static let configuration = CommandConfiguration(
-    abstract: "Draw one of the app's screens to a PNG, for checking layouts.",
+    abstract: "Draw one of the app’s screens to a PNG, for checking layouts.",
     shouldDisplay: false
   )
 
@@ -25,7 +25,7 @@ struct Snapshot: AsyncParsableCommand {
   @Flag(name: .long, help: "Dark appearance.")
   var dark = false
 
-  @Flag(name: .long, help: "Use this Mac's last scan instead of sample findings.")
+  @Flag(name: .long, help: "Use this Mac’s last scan instead of sample findings.")
   var live = false
 
   @MainActor
@@ -47,7 +47,7 @@ struct Snapshot: AsyncParsableCommand {
 struct ForgetLoginItem: AsyncParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "forget-login-item",
-    abstract: "Remove this copy of the app from the system's login items.",
+    abstract: "Remove this copy of the app from the system’s login items.",
     shouldDisplay: false
   )
 

@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// An AI's answer, rendered from its Markdown: paragraphs, bold, italic, inline code
-/// and links, modest headings, lists with hanging indents on the answer's text edge,
+/// An AI’s answer, rendered from its Markdown: paragraphs, bold, italic, inline code
+/// and links, modest headings, lists with hanging indents on the answer’s text edge,
 /// quiet code blocks with Copy, quotes and simple tables. Everything is selectable;
 /// copying the whole answer elsewhere copies the original Markdown.
 struct MarkdownText: View {

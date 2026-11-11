@@ -4,7 +4,7 @@ import SwiftUI
 /// screen. Liquid Glass belongs to what floats above the content (toolbars, the clean
 /// bar, the composer, popovers, the prompt chips); buttons that sit in the content
 /// (cards, rows, banners, forms, sheets) are plain filled capsules with words only.
-/// Toolbars use the system's own items. Minor row actions use `.borderless`.
+/// Toolbars use the system’s own items. Minor row actions use `.borderless`.
 extension View {
   /// The one main action on a surface: an accent-filled capsule with a white label.
   public func principalAction() -> some View {
@@ -45,7 +45,7 @@ private struct CapsuleMetrics {
 }
 
 /// An accent-filled capsule with a white label that dims when pressed or disabled. In
-/// a window that isn't active it turns grey with a primary label, as the system's
+/// a window that isn’t active it turns grey with a primary label, as the system’s
 /// default buttons do.
 public struct FilledActionStyle: ButtonStyle {
   @Environment(\.isEnabled) private var isEnabled

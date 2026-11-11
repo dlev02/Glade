@@ -127,7 +127,7 @@ public enum Catalog {
     ),
     LocationRule(
       id: "logs.crashes", category: .logs, title: "Crash reports",
-      detail: "Crash and hang reports older than two weeks. Useful only if you're still chasing that crash.",
+      detail: "Crash and hang reports older than two weeks. Useful only if you’re still chasing that crash.",
       paths: ["~/Library/Logs/DiagnosticReports/*", "~/Library/Application Support/CrashReporter/*"],
       olderThanDays: 14, minimumBytes: 1_000_000
     ),
@@ -148,7 +148,7 @@ public enum Catalog {
   static let trash: [LocationRule] = [
     LocationRule(
       id: "trash.user", category: .trash, title: "Trash",
-      detail: "Things you've already thrown away. Emptying it removes them for good.",
+      detail: "Things you’ve already thrown away. Emptying it removes them for good.",
       paths: ["~/.Trash"], recovery: .permanent, risk: .caution, method: .emptyTrash,
       contentsOnly: true, auto: .at(.balanced), minimumBytes: 1_000_000
     ),
@@ -159,7 +159,7 @@ public enum Catalog {
   static let xcode: [LocationRule] = [
     LocationRule(
       id: "xcode.deriveddata", category: .xcode, title: "Build data",
-      detail: "Xcode's build products and indexes for one project. Rebuilt the next time you build it.",
+      detail: "Xcode’s build products and indexes for one project. Rebuilt the next time you build it.",
       paths: ["~/Library/Developer/Xcode/DerivedData/*"], split: .each, titleStyle: .derivedData,
       owner: xcode_, idleDays: 3
     ),
@@ -240,7 +240,7 @@ public enum Catalog {
       used: .accessed, auto: .at(.aggressive), idleDays: 30
     ),
     pkg("bun", "Bun cache", ["~/.bun/install/cache", "~/Library/Caches/bun"], "Packages Bun has downloaded. It fetches them again on the next install."),
-    // Poetry's own `virtualenvs` folder sits beside its caches and holds the
+    // Poetry’s own `virtualenvs` folder sits beside its caches and holds the
     // environments your projects run in, so only the download caches are taken.
     pkg("pip", "pip cache", ["~/Library/Caches/pip", "~/Library/Caches/pypoetry/cache", "~/Library/Caches/pypoetry/artifacts", "~/.cache/pip"], "Python packages already downloaded. pip and Poetry fetch them again when needed."),
     pkg("uv", "uv cache", ["~/.cache/uv", "~/Library/Caches/uv"], "Python packages and builds uv has cached. It fetches them again when needed."),
@@ -271,7 +271,7 @@ public enum Catalog {
       recovery: .reinstall, risk: .caution, used: .accessed
     ),
     pkg("electron", "Electron & native build caches", ["~/Library/Caches/electron", "~/.cache/electron", "~/.cache/electron-builder", "~/Library/Caches/node-gyp", "~/.cache/node-gyp", "~/.node-gyp", "~/Library/Caches/typescript", "~/.cache/prisma", "~/.cache/pre-commit", "~/.cache/turbo"], "Build tools and headers downloaded for Node projects. Fetched again when a build needs them."),
-    // Deno's folder also keeps `location_data`, the local storage of Deno programs, so
+    // Deno’s folder also keeps `location_data`, the local storage of Deno programs, so
     // only its download and compile caches are taken.
     pkg("deno", "Deno cache", [
       "~/Library/Caches/deno/deps", "~/Library/Caches/deno/remote", "~/Library/Caches/deno/npm", "~/Library/Caches/deno/gen",
@@ -311,13 +311,13 @@ public enum Catalog {
     ),
     LocationRule(
       id: "dev.docker-desktop", category: .emulators, title: "Docker disk image",
-      detail: "Docker's virtual disk: images, containers and volumes together.",
+      detail: "Docker’s virtual disk: images, containers and volumes together.",
       paths: [
         "~/Library/Containers/com.docker.docker/Data/vms", "~/Library/Group Containers/HUAQ24HBR6.dev.orbstack/data",
         "~/.orbstack/data", "~/.colima", "~/.lima", "~/.local/share/containers", "~/Library/Application Support/rancher-desktop/lima",
       ],
       recovery: .redownload, risk: .caution, owner: docker, minimumBytes: 100_000_000,
-      reportOnly: "Use the tool's own clean-up (for Docker: `docker system prune`), which knows what's still in use."
+      reportOnly: "Use the tool’s own clean-up (for Docker: `docker system prune`), which knows what’s still in use."
     ),
     LocationRule(
       id: "dev.terraform", category: .developerCaches, title: "Infrastructure tool caches",
@@ -348,20 +348,20 @@ public enum Catalog {
   static let emulators: [LocationRule] = [
     LocationRule(
       id: "emu.claude-vm", category: .emulators, title: "Claude desktop virtual machine",
-      detail: "The Linux environment Claude's desktop app uses for agent tasks. Claude downloads it again when that feature is next used; anything saved only inside it is lost.",
+      detail: "The Linux environment Claude’s desktop app uses for agent tasks. Claude downloads it again when that feature is next used; anything saved only inside it is lost.",
       paths: ["~/Library/Application Support/Claude/vm_bundles/*"], recovery: .redownload, risk: .caution,
       owner: Owner("Claude", bundleIDs: ["com.anthropic.claudefordesktop"]), blockWhileRunning: true,
       method: .trash, used: .accessed, auto: .never, minimumBytes: 100_000_000
     ),
     LocationRule(
       id: "emu.codex-sideload", category: .buildOutputs, title: "Codex sideload builds",
-      detail: "App builds Codex prepared for installing on your devices. They're rebuilt the next time you sideload that app.",
+      detail: "App builds Codex prepared for installing on your devices. They’re rebuilt the next time you sideload that app.",
       paths: ["~/Library/Application Support/Codex/RemoteSideload/artifacts/*"], recovery: .reinstall, risk: .caution,
       olderThanDays: 14, auto: .at(.balanced), minimumBytes: 20_000_000
     ),
     LocationRule(
       id: "emu.android", category: .emulators, title: "Android emulator",
-      detail: "A virtual Android device with its apps and data. You'd have to create and set it up again.",
+      detail: "A virtual Android device with its apps and data. You’d have to create and set it up again.",
       paths: ["~/.android/avd/*.avd"], split: .each, titleStyle: .child, recovery: .reinstall,
       risk: .caution, method: .trash, used: .accessed, idleDays: 60
     ),
@@ -435,14 +435,14 @@ public enum Catalog {
     ),
     LocationRule(
       id: "agent.claude-file-history", category: .agentHistory, title: "Claude Code file checkpoints",
-      detail: "Copies of files Claude saved before editing them, used to rewind a session. Stale ones only matter if you'd rewind that old session.",
+      detail: "Copies of files Claude saved before editing them, used to rewind a session. Stale ones only matter if you’d rewind that old session.",
       paths: ["~/.claude/file-history/*"], recovery: .permanent, risk: .caution,
       olderThanDays: staleAgentDays, auto: .at(.balanced), minimumBytes: 1_000_000
     ),
     LocationRule(
       id: "agent.codex-scratch", category: .agentHistory, title: "Codex working files",
       detail: "Logs and temporary files from Codex runs.",
-      // Not all of `~/.codex/.tmp`: despite the name it holds Codex's synced plugins,
+      // Not all of `~/.codex/.tmp`: despite the name it holds Codex’s synced plugins,
       // its bundled marketplace, backups and lock files. Only scratch clones and
       // abandoned marketplace staging folders are taken from it.
       paths: [
@@ -453,14 +453,14 @@ public enum Catalog {
     ),
     LocationRule(
       id: "agent.gemini-scratch", category: .agentHistory, title: "Gemini CLI history",
-      detail: "Conversation checkpoints and prompt history from Gemini CLI sessions. Stale ones only matter if you'd go back to that old session.",
-      // `~/.gemini/antigravity` is left out: it holds Antigravity's knowledge, skills and conversations.
+      detail: "Conversation checkpoints and prompt history from Gemini CLI sessions. Stale ones only matter if you’d go back to that old session.",
+      // `~/.gemini/antigravity` is left out: it holds Antigravity’s knowledge, skills and conversations.
       paths: ["~/.gemini/tmp/*", "~/.gemini/history/*"],
       recovery: .permanent, risk: .caution, olderThanDays: staleAgentDays, auto: .at(.balanced), minimumBytes: 1_000_000
     ),
     LocationRule(
       id: "agent.editor-workspaces", category: .agentHistory, title: "workspace state",
-      detail: "An editor's saved state for one folder: open tabs, chat history and local undo history. Stale ones belong to projects you haven't opened lately.",
+      detail: "An editor’s saved state for one folder: open tabs, chat history and local undo history. Stale ones belong to projects you haven’t opened lately.",
       paths: [
         "~/Library/Application Support/Cursor/User/workspaceStorage/*", "~/Library/Application Support/Code/User/workspaceStorage/*",
         "~/Library/Application Support/Windsurf/User/workspaceStorage/*", "~/Library/Application Support/Code - Insiders/User/workspaceStorage/*",

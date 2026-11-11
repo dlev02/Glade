@@ -1,7 +1,7 @@
 import GladeKit
 import SwiftUI
 
-/// Small symbols after an app's name for what Activity Monitor doesn't tell you: it's
+/// Small symbols after an app’s name for what Activity Monitor doesn’t tell you: it’s
 /// playing sound, using the microphone, keeping the Mac awake, or kept
 /// running on purpose. Each explains itself on hover and to VoiceOver.
 struct StatusMarks: View {

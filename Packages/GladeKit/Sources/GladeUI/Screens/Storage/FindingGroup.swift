@@ -17,7 +17,7 @@ struct FindingGroup: Identifiable, Hashable {
     self.entries = entries
     let ids = Set(entries.map(\.id))
     totalBytes = entries.reduce(0) { sum, entry in
-      // A nested finding is already inside its container's figure.
+      // A nested finding is already inside its container’s figure.
       if let container = entry.finding.within, ids.contains(container) { return sum }
       return sum + entry.finding.bytes
     }

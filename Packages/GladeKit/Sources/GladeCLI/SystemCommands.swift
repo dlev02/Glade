@@ -264,7 +264,7 @@ struct Simulators: AsyncParsableCommand {
   )
 
   struct List: AsyncParsableCommand {
-    static let configuration = CommandConfiguration(abstract: "List booted simulators, what each uses, and whether it's idle.")
+    static let configuration = CommandConfiguration(abstract: "List booted simulators, what each uses, and whether it’s idle.")
 
     @OptionGroup var output: OutputOptions
 
@@ -309,12 +309,12 @@ struct Simulators: AsyncParsableCommand {
   struct Shutdown: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
       abstract: "Shut down a booted simulator, or every idle one. Its apps and data are kept.",
-      discussion: "A simulator that looks in use (busy, debugged, shown in Simulator, or likely an IDE's preview) is refused unless --force is given."
+      discussion: "A simulator that looks in use (busy, debugged, shown in Simulator, or likely an IDE’s preview) is refused unless --force is given."
     )
 
     @OptionGroup var output: OutputOptions
 
-    @Argument(help: "The simulator's UDID or name.")
+    @Argument(help: "The simulator’s UDID or name.")
     var simulator: String?
 
     @Flag(name: .long, help: "Shut down every simulator judged idle.")
@@ -324,7 +324,7 @@ struct Simulators: AsyncParsableCommand {
     var force = false
 
     func validate() throws {
-      if idle == (simulator != nil) { throw ValidationError("Give a simulator's UDID or name, or --idle.") }
+      if idle == (simulator != nil) { throw ValidationError("Give a simulator’s UDID or name, or --idle.") }
       if idle && force { throw ValidationError("--force applies to one named simulator, not --idle.") }
     }
 
@@ -380,7 +380,7 @@ struct Quit: AsyncParsableCommand {
 
   @OptionGroup var output: OutputOptions
 
-  @Argument(help: "The app's name, bundle identifier, id from `apps`, or pid.")
+  @Argument(help: "The app’s name, bundle identifier, id from `apps`, or pid.")
   var app: String
 
   @Flag(name: .long, help: "End the app immediately. Unsaved work is lost.")
@@ -393,12 +393,12 @@ struct Quit: AsyncParsableCommand {
   var timeout: Double = 10
 
   func validate() throws {
-    if force && relaunch { throw ValidationError("--force and --relaunch can't be combined; relaunch always quits gracefully.") }
+    if force && relaunch { throw ValidationError("--force and --relaunch can’t be combined; relaunch always quits gracefully.") }
   }
 
   func run() async throws {
     // The log file is written on a background queue; reading it back waits for pending
-    // writes, so the action's log line survives the process exiting straight after.
+    // writes, so the action’s log line survives the process exiting straight after.
     defer { _ = Log.recent(limit: 1) }
     let result: AppActionResult
     do {

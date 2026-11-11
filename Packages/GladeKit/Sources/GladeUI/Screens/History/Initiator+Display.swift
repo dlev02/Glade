@@ -12,7 +12,7 @@ extension Initiator {
     }
   }
 
-  /// - Parameter providerName: Turns an AI's identifier into the name people know.
+  /// - Parameter providerName: Turns an AI’s identifier into the name people know.
   func name(providerName: (String) -> String) -> String {
     switch self {
     case .user: "You"

@@ -3,15 +3,15 @@ import Foundation
 import Synchronization
 
 /// The folder of simulators a device belongs to. Xcode and other tools keep their own
-/// sets apart from the ones a person sees in Xcode's device list.
+/// sets apart from the ones a person sees in Xcode’s device list.
 public enum SimulatorDeviceSet: String, Codable, Sendable, CaseIterable {
   /// `~/Library/Developer/CoreSimulator/Devices`, the set Xcode and the Simulator app show.
   case standard
-  /// Xcode's SwiftUI preview devices.
+  /// Xcode’s SwiftUI preview devices.
   case previews
   /// Clones Xcode makes for parallel testing.
   case testing
-  /// The Bitrig IDE's live preview devices.
+  /// The Bitrig IDE’s live preview devices.
   case bitrig
   /// Any other set, named by its folder.
   case other
@@ -45,38 +45,38 @@ public enum SimulatorDeviceSet: String, Codable, Sendable, CaseIterable {
 /// One booted simulator device and what its processes are using.
 public struct SimulatorUsage: Codable, Sendable, Identifiable, Hashable {
   public var udid: String
-  /// "iPad Pro 13-inch (M5)". The UDID when `simctl` couldn't name it.
+  /// "iPad Pro 13-inch (M5)". The UDID when `simctl` couldn’t name it.
   public var name: String
-  /// "iOS 27.2". `nil` when `simctl` couldn't say.
+  /// "iOS 27.2". `nil` when `simctl` couldn’t say.
   public var system: String?
   public var deviceSet: SimulatorDeviceSet
-  /// The set's folder, passed to `simctl --set` for anything outside the standard set.
+  /// The set’s folder, passed to `simctl --set` for anything outside the standard set.
   public var setPath: String
   /// `simctl`'s state, such as "Booted" or "Shutting Down".
   public var state: String
-  /// Summed physical footprint of the device's processes, including the Mac-side
+  /// Summed physical footprint of the device’s processes, including the Mac-side
   /// rendering helpers started for it.
   public var memoryBytes: Int64
   /// Summed share of one core: 100 means one full core.
   public var cpuPercent: Double
-  /// Summed share of the GPU, 0–100. `nil` when the GPU doesn't record it per process.
+  /// Summed share of the GPU, 0–100. `nil` when the GPU doesn’t record it per process.
   public var gpuPercent: Double?
   public var processCount: Int
   public var pids: [Int32]
-  /// When the device's `launchd_sim` started.
+  /// When the device’s `launchd_sim` started.
   public var bootedAt: Date?
   /// When the device was last started, from `simctl`, else `bootedAt`.
   public var lastBooted: Date?
-  /// The latest sign of use Glade saw: boot, an app of the person's launched in it, or
+  /// The latest sign of use Glade saw: boot, an app of the person’s launched in it, or
   /// processor use above `SimulatorTracker.activeCPUPercent`.
   public var lastActivity: Date?
-  /// The device the Simulator app shows in its front window. `false` when Simulator isn't open.
+  /// The device the Simulator app shows in its front window. `false` when Simulator isn’t open.
   public var isShownInSimulatorApp: Bool
   /// Apps the person installed (not built-in ones) that are running in it.
   public var runningApps: [String]
   /// Developer tools working with it right now: "debugger attached to Vesper", "xcodebuild".
   public var attachedTools: [String]
-  /// Something is using it, so it isn't suggested for shutting down.
+  /// Something is using it, so it isn’t suggested for shutting down.
   public var inUse: Bool
   /// Why it counts as in use, in a few words each.
   public var inUseReasons: [String]
@@ -97,7 +97,7 @@ public struct SimulatorBreakdown: Codable, Sendable {
   /// by every device and freed only when the last one shuts down.
   public var sharedBytes: Int64
   public var sharedProcessCount: Int
-  /// Simulator processes Glade couldn't tie to a device or to the shared services.
+  /// Simulator processes Glade couldn’t tie to a device or to the shared services.
   public var unattributedPIDs: [Int32]
   public var unattributedBytes: Int64
   /// Everything above: what the apps listing shows as one row.
@@ -105,7 +105,7 @@ public struct SimulatorBreakdown: Codable, Sendable {
   public var totalProcessCount: Int
 }
 
-/// Reads another process's arguments and environment with `KERN_PROCARGS2`. Works for
+/// Reads another process’s arguments and environment with `KERN_PROCARGS2`. Works for
 /// processes of the same user; returns `nil` for others.
 enum ProcessArguments {
   static let maximumSize: Int = Int(Sysctl.integer("kern.argmax") ?? 1_048_576)
@@ -151,20 +151,20 @@ enum ProcessArguments {
   }
 }
 
-/// Builds simulator breakdowns and remembers what's slow to learn: which device each
+/// Builds simulator breakdowns and remembers what’s slow to learn: which device each
 /// process belongs to, and device names from `simctl`. Owned by a `SystemSampler`.
 final class SimulatorTracker: Sendable {
   /// A device using at least this share of one core over the sample counts as busy.
   static let activeCPUPercent = 15.0
   /// A device busy this recently still counts as in use.
   static let recentBusySeconds: TimeInterval = 5 * 60
-  /// A device started this recently is still settling, so it isn't judged idle.
+  /// A device started this recently is still settling, so it isn’t judged idle.
   static let settlingSeconds: TimeInterval = 120
   /// An IDE used this recently may be showing its preview devices.
   static let recentIDEMinutes = 20.0
   /// Device names are refetched after this long, or sooner when an unknown device boots.
   static let metadataRefresh: TimeInterval = 600
-  /// Mac-side rendering helpers start just before their device's `launchd_sim`.
+  /// Mac-side rendering helpers start just before their device’s `launchd_sim`.
   static let helperStartWindow: TimeInterval = 15
 
   struct DeviceRef: Sendable, Hashable {
@@ -226,7 +226,7 @@ final class SimulatorTracker: Sendable {
       return hit
     }
 
-    // Each device's launchd_sim names its data folder in its arguments.
+    // Each device’s launchd_sim names its data folder in its arguments.
     var launcherDevice: [pid_t: DeviceRef] = [:]
     for launcher in launchers {
       if let hit = cached(launcher), let device = hit.device {
@@ -245,12 +245,12 @@ final class SimulatorTracker: Sendable {
           found = DeviceRef(udid: udid, setPath: Self.setPath(containing: udid))
         }
       }
-      if found == nil { SystemIssues.warn("simulator.launchd.\(launcher.pid)", "launchd_sim pid \(launcher.pid) didn't name its device") }
+      if found == nil { SystemIssues.warn("simulator.launchd.\(launcher.pid)", "launchd_sim pid \(launcher.pid) didn’t name its device") }
       cache[launcher.pid] = Assignment(start: launcher.startTime, device: found)
       if let found { launcherDevice[launcher.pid] = found }
     }
 
-    // Membership matches the apps listing's "Simulator devices" row: anything run from
+    // Membership matches the apps listing’s "Simulator devices" row: anything run from
     // CoreSimulator or a simulator runtime, plus everything under a launchd_sim.
     func ancestorLauncher(_ process: ProcessSample) -> pid_t? {
       var cursor = process.parentPID
@@ -488,7 +488,7 @@ final class SimulatorTracker: Sendable {
   }
 
   /// Names and systems for the booted devices, from one `simctl list` per set. Cached;
-  /// refetched when a device isn't known yet or the cache is old.
+  /// refetched when a device isn’t known yet or the cache is old.
   private func metadata(for devices: [DeviceRef], now: Date) async -> [String: Metadata] {
     let bySet = Dictionary(grouping: devices, by: \.setPath)
     var result: [String: Metadata] = [:]
@@ -551,7 +551,7 @@ struct IDEContext: Sendable {
     /// When it was last in front, from the activity log.
     var lastActive: Date?
     /// In front, used within `SimulatorTracker.recentIDEMinutes`, or never seen in front
-    /// (so Glade can't rule it out).
+    /// (so Glade can’t rule it out).
     var recent: Bool
     /// Seconds since it was last in front; `nil` when Glade has never seen it there.
     var idleFor: TimeInterval?
@@ -559,7 +559,7 @@ struct IDEContext: Sendable {
 
   var bitrig: IDE?
   var xcode: IDE?
-  /// The device in the Simulator app's front window, when Simulator is open.
+  /// The device in the Simulator app’s front window, when Simulator is open.
   var simulatorFrontUDID: String?
 
   static let bitrigBundleIDs: Set<String> = ["app.bitrig.bitrigapp", "app.bitrig.bitrig", "com.bitrig.bitrig"]

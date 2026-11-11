@@ -1,7 +1,7 @@
 import GladeKit
 import SwiftUI
 
-/// The toolbar's scan action, always the first action on the trailing side. While a
+/// The toolbar’s scan action, always the first action on the trailing side. While a
 /// scan runs it keeps the same round button, its symbol turning, and a click stops
 /// the scan.
 struct ScanButton: View {

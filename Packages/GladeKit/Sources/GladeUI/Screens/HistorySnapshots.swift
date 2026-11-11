@@ -10,7 +10,7 @@ enum HistorySnapshots {
       AnyView(NavigationStack { HistoryScreen(selection: model.receipts.first?.id) })
     },
     "history-empty": { _ in AnyView(NavigationStack { HistoryScreen(previewReceipts: []) }) },
-    // The receipt on its own, at the inspector's width (`--width 380`).
+    // The receipt on its own, at the inspector’s width (`--width 380`).
     "history-receipt": { model in
       guard let receipt = model.receipts.first(where: { !$0.dryRun }) else { return AnyView(EmptyView()) }
       return AnyView(ReceiptDetail(receipt: receipt))

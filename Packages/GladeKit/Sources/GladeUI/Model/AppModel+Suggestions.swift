@@ -1,8 +1,8 @@
 import GladeKit
 
-/// Acting on a suggestion, wherever it's shown.
+/// Acting on a suggestion, wherever it’s shown.
 extension AppModel {
-  /// The button title for a suggestion, or `nil` when it's only something to look at.
+  /// The button title for a suggestion, or `nil` when it’s only something to look at.
   public func actionTitle(for suggestion: PerformanceSuggestion) -> String? {
     guard suggestion.actionable else { return nil }
     if isDemo { return suggestion.kind == .shutDownIdleSimulator ? "Shut Down" : "Quit" }

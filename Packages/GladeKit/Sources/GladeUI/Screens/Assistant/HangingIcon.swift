@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Text on the conversation's leading edge with its icon hung in the gutter to the
+/// Text on the conversation’s leading edge with its icon hung in the gutter to the
 /// left, so thinking and problem lines start exactly where answers do.
 struct HangingIcon<Icon: View, Content: View>: View {
   @ViewBuilder var icon: Icon

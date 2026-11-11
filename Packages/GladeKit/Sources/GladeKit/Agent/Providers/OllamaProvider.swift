@@ -85,7 +85,7 @@ public struct OllamaProvider: AgentProvider {
     return reply
   }
 
-  /// The installed model names, or `nil` when the server doesn't answer within a second.
+  /// The installed model names, or `nil` when the server doesn’t answer within a second.
   static func installedModels() async -> [String]? {
     guard let url = base?.appendingPathComponent("api/tags") else { return nil }
     let configuration = URLSessionConfiguration.ephemeral

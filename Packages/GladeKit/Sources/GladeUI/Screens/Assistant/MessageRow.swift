@@ -2,13 +2,13 @@ import AppKit
 import GladeKit
 import SwiftUI
 
-/// One turn: the person's words in a quiet bubble on the right, the assistant's answer
+/// One turn: the person’s words in a quiet bubble on the right, the assistant’s answer
 /// as plain reading text on the left, or a notice when something went wrong.
 /// Answers are rendered from their Markdown; Copy copies the Markdown itself.
 struct MessageRow: View {
   @Environment(AppModel.self) private var model
   var message: AppModel.Message
-  /// This message's advice still describes the selection, so its card can act on it.
+  /// This message’s advice still describes the selection, so its card can act on it.
   var isLiveAdvice: Bool
   var showWhatWasSent: () -> Void
   @State private var isHovered = false

@@ -2,8 +2,8 @@ import AppKit
 import GladeKit
 import SwiftUI
 
-/// Everything about the highlighted finding: what it is, what happens when it's
-/// removed, why it is or isn't selected, the facts behind that, and where it lives.
+/// Everything about the highlighted finding: what it is, what happens when it’s
+/// removed, why it is or isn’t selected, the facts behind that, and where it lives.
 struct FindingInspector: View {
   @Environment(AppModel.self) private var model
   var finding: Finding?
@@ -115,7 +115,7 @@ struct FindingInspector: View {
     }
   }
 
-  /// Why it is or isn't in the clean, unless the reason is only that it rebuilds or
+  /// Why it is or isn’t in the clean, unless the reason is only that it rebuilds or
   /// downloads again, which the badge above already says.
   private func selectionNote(_ finding: Finding) -> String? {
     guard let reason = model.reason(for: finding.id) else { return nil }

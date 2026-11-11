@@ -5,7 +5,7 @@ public enum Verdict: Sendable, Equatable {
   case allowed
   /// Inside (or is) a protected zone.
   case protected(zone: String, title: String)
-  /// Not under the home folder or the user's temporary folders.
+  /// Not under the home folder or the user’s temporary folders.
   case outOfScope
   /// A structural folder such as `~/Library` or `~/Downloads` itself.
   case structural
@@ -60,7 +60,7 @@ public struct Protection: Sendable {
 
   public init(config: GladeConfig = GladeConfig(), home rawHome: String = NSHomeDirectory(), extraScopes: [String]? = nil) {
     // Every rule is expanded against the same normalised home, so a home folder
-    // reached through an alias (/var → /private/var) can't slip past the rules.
+    // reached through an alias (/var → /private/var) can’t slip past the rules.
     let home = Protection.clean(rawHome)
     self.home = home
     var active: [ProtectedZone] = ProtectedZones.builtIn.filter { $0.locked || !config.unlockedZones.contains($0.id) }
@@ -71,7 +71,7 @@ public struct Protection: Sendable {
         paths: custom, locked: false, strictInside: true
       ))
     }
-    // With iCloud's Desktop & Documents turned on, those two folders are cloud
+    // With iCloud’s Desktop & Documents turned on, those two folders are cloud
     // storage: removing a file removes it from every device.
     if Protection.isInICloud(home + "/Documents") || Protection.isInICloud(home + "/Desktop") {
       active.append(ProtectedZone(

@@ -1,7 +1,7 @@
 import Foundation
 
 /// The same app more than once: stray copies in Downloads, the Desktop or Documents of
-/// an app that's installed, and two versions side by side in Applications.
+/// an app that’s installed, and two versions side by side in Applications.
 public struct AppCopyScanner: StorageScanner {
   public let id = "app-copies"
   public let title = "Extra copies of apps"
@@ -105,7 +105,7 @@ public struct AppCopyScanner: StorageScanner {
         detail: "\(sorted.count) copies of \(newest.name) are installed. The size shown is what the older ones use; keep the one you open.",
         paths: sorted.map(\.path), bytes: others.bytes, fileCount: others.files, lastUsed: others.lastUsed,
         recovery: .redownload, risk: .caution, owner: Owner(newest.name, bundleIDs: [newest.bundleID]),
-        blockers: [Blocker(.reportOnly, "Remove the one you don't use from Applications yourself.")],
+        blockers: [Blocker(.reportOnly, "Remove the one you don’t use from Applications yourself.")],
         method: .trash, evidence: evidence, autoLevel: nil, idleDaysRequired: 0
       ))
     }

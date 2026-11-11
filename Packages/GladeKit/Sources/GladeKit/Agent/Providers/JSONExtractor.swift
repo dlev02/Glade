@@ -1,10 +1,10 @@
 import Foundation
 
-/// Pulls a JSON object out of a model's reply, which may wrap it in Markdown fences or
+/// Pulls a JSON object out of a model’s reply, which may wrap it in Markdown fences or
 /// put a sentence before it.
 public enum JSONExtractor {
   /// The first balanced `{…}` in the text, skipping braces inside strings, or `nil` when
-  /// there isn't one. The result isn't checked further; parse it to be sure.
+  /// there isn’t one. The result isn’t checked further; parse it to be sure.
   public static func firstObject(in text: String) -> String? {
     let scalars = Array(text.unicodeScalars)
     var index = 0

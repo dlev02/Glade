@@ -70,7 +70,7 @@ struct Advise: AsyncParsableCommand {
 struct Ask: AsyncParsableCommand {
   static let configuration = CommandConfiguration(
     abstract: "Ask your AI a question about this Mac, e.g. \"why is it slow right now?\"",
-    discussion: "Glade gives the AI a snapshot of what's running and what the last scan found. It answers in words and can't take actions."
+    discussion: "Glade gives the AI a snapshot of what’s running and what the last scan found. It answers in words and can’t take actions."
   )
 
   @OptionGroup var output: OutputOptions

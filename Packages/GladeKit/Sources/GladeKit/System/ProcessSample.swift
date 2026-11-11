@@ -11,16 +11,16 @@ public struct ProcessSample: Codable, Sendable, Identifiable, Hashable {
   /// Owned by the person running Glade, so it can be measured fully.
   public var isCurrentUser: Bool
   /// Share of one core: 100 means one full core, like Activity Monitor and `top`.
-  /// `nil` when the process couldn't be read.
+  /// `nil` when the process couldn’t be read.
   public var cpuPercent: Double?
-  /// Physical footprint (Activity Monitor's "Memory"). For restricted processes in a
+  /// Physical footprint (Activity Monitor’s "Memory"). For restricted processes in a
   /// full listing this is resident size from `ps` instead.
   public var memoryBytes: Int64?
   public var threadCount: Int?
   public var startTime: Date?
-  /// Share of the GPU's time, 0–100. `nil` when the GPU doesn't record it per process.
+  /// Share of the GPU’s time, 0–100. `nil` when the GPU doesn’t record it per process.
   public var gpuPercent: Double?
-  /// Owned by another user (root, `_windowserver`), so usage can't be read directly.
+  /// Owned by another user (root, `_windowserver`), so usage can’t be read directly.
   public var isRestricted: Bool
 
   public var id: Int32 { pid }
@@ -58,7 +58,7 @@ struct RawProcess: Sendable {
   var threads: Int?
 }
 
-/// Path and name never change for a process, so they're read once per pid.
+/// Path and name never change for a process, so they’re read once per pid.
 struct ProcessIdentity: Sendable {
   var startKey: UInt64
   var path: String?
@@ -66,7 +66,7 @@ struct ProcessIdentity: Sendable {
 }
 
 /// Reads processes through libproc. Processes owned by other users refuse the task and
-/// usage calls; they're returned with whatever the BSD info call allows.
+/// usage calls; they’re returned with whatever the BSD info call allows.
 enum ProcessTable {
   static let currentUser = getuid()
 
@@ -138,7 +138,7 @@ enum ProcessTable {
     )
   }
 
-  /// The executable's file name, except for tools installed as a bare version number
+  /// The executable’s file name, except for tools installed as a bare version number
   /// (`~/.local/share/claude/versions/2.1.319`), which take the name of the folder above.
   static func displayName(_ path: String) -> String {
     let components = path.split(separator: "/")
@@ -159,7 +159,7 @@ enum ProcessTable {
     return String(decoding: buffer.prefix(Int(length)).map { UInt8(bitPattern: $0) }, as: UTF8.self)
   }
 
-  /// One `ps` call for the usage of processes libproc can't read. `/bin/ps` is setuid
+  /// One `ps` call for the usage of processes libproc can’t read. `/bin/ps` is setuid
   /// root, so it sees everything. Only used for full listings, never in a periodic loop.
   static func psUsage() async -> [pid_t: (rssBytes: Int64, cpuPercent: Double)] {
     guard let result = try? await Shell.run("/bin/ps", ["-axo", "pid=,rss=,pcpu="], timeout: 5, quiet: true), result.succeeded else {

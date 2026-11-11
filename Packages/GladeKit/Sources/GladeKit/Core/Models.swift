@@ -65,15 +65,15 @@ public enum StorageCategory: String, Codable, Sendable, CaseIterable, Identifiab
   }
 }
 
-/// What it takes to get something back after it's removed.
+/// What it takes to get something back after it’s removed.
 public enum Recovery: String, Codable, Sendable, CaseIterable {
-  /// The owning app or tool rebuilds it by itself the next time it's needed.
+  /// The owning app or tool rebuilds it by itself the next time it’s needed.
   case automatic
   /// It downloads again when needed, which costs time and bandwidth.
   case redownload
   /// It comes back when you run a command or reinstall (for example `npm install`).
   case reinstall
-  /// Nothing recreates it. Once it leaves the Trash it's gone.
+  /// Nothing recreates it. Once it leaves the Trash it’s gone.
   case permanent
 
   public var title: String {
@@ -116,7 +116,7 @@ public enum Risk: String, Codable, Sendable, CaseIterable, Comparable {
 
 // MARK: - Findings
 
-/// The app or tool that owns a location, used to tell whether it's in use.
+/// The app or tool that owns a location, used to tell whether it’s in use.
 public struct Owner: Codable, Sendable, Hashable {
   public var name: String
   public var bundleIDs: [String]
@@ -129,7 +129,7 @@ public struct Owner: Codable, Sendable, Hashable {
   }
 }
 
-/// A reason something can't be removed right now.
+/// A reason something can’t be removed right now.
 public struct Blocker: Codable, Sendable, Hashable {
   public enum Kind: String, Codable, Sendable {
     case appRunning, uncommittedWork, needsAdmin, needsFullDiskAccess, inUse, reportOnly
@@ -153,7 +153,7 @@ public enum RemovalMethod: Codable, Sendable, Hashable {
   case trash
   /// `xcrun simctl delete <udid>`
   case simulatorDevice(udid: String)
-  /// `xcrun simctl erase <udid>`: wipes a simulator's apps and data but keeps the device.
+  /// `xcrun simctl erase <udid>`: wipes a simulator’s apps and data but keeps the device.
   case simulatorErase(udid: String)
   /// `xcrun simctl delete unavailable`
   case unavailableSimulators
@@ -175,10 +175,10 @@ public struct Finding: Codable, Sendable, Identifiable, Hashable {
   public var ruleID: String
   public var category: StorageCategory
   public var title: String
-  /// One plain sentence: what this is and what happens if it's removed.
+  /// One plain sentence: what this is and what happens if it’s removed.
   public var detail: String
   public var paths: [String]
-  /// Remove what's inside each path but keep the folder itself.
+  /// Remove what’s inside each path but keep the folder itself.
   public var contentsOnly: Bool
   public var bytes: Int64
   public var fileCount: Int
@@ -243,7 +243,7 @@ public struct Finding: Codable, Sendable, Identifiable, Hashable {
     return max(0, Int(now.timeIntervalSince(lastUsed) / 86_400))
   }
 
-  /// Finding identifiers are short hashes so they're easy to pass on a command line
+  /// Finding identifiers are short hashes so they’re easy to pass on a command line
   /// and impossible to mistake for a path.
   public static func makeID(rule: String, path: String) -> String {
     var hash: UInt64 = 0xcbf2_9ce4_8422_2325
@@ -292,7 +292,7 @@ public struct VolumeInfo: Codable, Sendable {
   }
 }
 
-/// A place the scan couldn't read, and why.
+/// A place the scan couldn’t read, and why.
 public struct SkippedArea: Codable, Sendable, Hashable {
   public var path: String
   public var reason: String
@@ -337,7 +337,7 @@ public struct ScanResult: Codable, Sendable, Identifiable {
 
   public func finding(_ id: String) -> Finding? { findings.first { $0.id == id } }
 
-  /// The scan without the findings a clean removed, so they aren't offered again.
+  /// The scan without the findings a clean removed, so they aren’t offered again.
   public func removing(_ receipt: Receipt) -> ScanResult {
     let gone = Set(receipt.entries.compactMap { entry -> String? in
       switch entry.outcome {
@@ -438,7 +438,7 @@ public struct Receipt: Codable, Sendable, Identifiable {
   }
 
   /// Space actually freed: what was deleted. Things in the Trash still take up space
-  /// until the Trash is emptied, so they don't count here.
+  /// until the Trash is emptied, so they don’t count here.
   public var freedBytes: Int64 {
     entries.reduce(0) {
       if case .deleted = $1.outcome { return $0 + $1.bytes }

@@ -23,7 +23,7 @@ enum Spotlight {
     return MDItemCopyAttribute(item, kMDItemLastUsedDate) as? Date
   }
 
-  /// The first web host among a download's recorded origins. The full address can
+  /// The first web host among a download’s recorded origins. The full address can
   /// carry tokens and is never kept.
   static func host(from origins: [String]) -> String? {
     for origin in origins {
@@ -40,7 +40,7 @@ public struct DownloadsScanner: StorageScanner {
   public let id = "downloads"
   public let title = "Downloads & installers"
 
-  /// Installers idle this long, for an app that's installed, may be selected by a clean level.
+  /// Installers idle this long, for an app that’s installed, may be selected by a clean level.
   static let installerIdleDays = 14
   static let staleDays = 90
   /// Old items at least this big are listed one by one; smaller ones are grouped.
@@ -138,7 +138,7 @@ public struct DownloadsScanner: StorageScanner {
       id: Finding.makeID(rule: "downloads.partial", path: root),
       ruleID: "downloads.partial", category: .downloads,
       title: "Unfinished browser downloads (\(partials.count) \(partials.count == 1 ? "file" : "files"))",
-      detail: "Pieces of downloads that failed or were cancelled, hidden in \(place). They can't be opened; download the file again if you still need it.",
+      detail: "Pieces of downloads that failed or were cancelled, hidden in \(place). They can’t be opened; download the file again if you still need it.",
       paths: partials.map(\.path).sorted(), bytes: total, fileCount: partials.count, lastUsed: dates.max(),
       recovery: .redownload, risk: .personal, method: .trash, evidence: evidence, autoLevel: nil, idleDaysRequired: 0
     )
@@ -170,7 +170,7 @@ public struct DownloadsScanner: StorageScanner {
     return items
   }
 
-  /// Spotlight's last-opened date when it has one, else the later of modified and read;
+  /// Spotlight’s last-opened date when it has one, else the later of modified and read;
   /// for a folder, also the newest thing inside.
   static func lastTouched(_ item: Item, _ measure: Measure) -> Date {
     if let used = item.spotlight.lastUsed {
@@ -202,7 +202,7 @@ public struct DownloadsScanner: StorageScanner {
       evidence.append("\(match.name) is installed (\(match.versionText)); this installer was \(opened) \(ago).")
       let fileVersion = Self.version(in: item.name)
       if let fileVersion, let installed = match.version, fileVersion.compare(installed, options: .numeric) == .orderedDescending {
-        evidence.append("Its name says \(fileVersion), newer than the installed \(installed): it may be an update you haven't installed yet.")
+        evidence.append("Its name says \(fileVersion), newer than the installed \(installed): it may be an update you haven’t installed yet.")
       } else {
         automatic = Self.autoExtensions.contains(ext) && idle >= Self.installerIdleDays
       }
@@ -219,7 +219,7 @@ public struct DownloadsScanner: StorageScanner {
     if let match {
       detail = "An installer for \(match.name), which is already installed. Removing it only matters if you want to reinstall offline; the developer offers it again."
     } else {
-      detail = "An installer or disk image you downloaded. Nothing shows it's still needed, but it may not be available to download again."
+      detail = "An installer or disk image you downloaded. Nothing shows it’s still needed, but it may not be available to download again."
     }
     return Finding(
       id: Finding.makeID(rule: "downloads.installer", path: item.path),
@@ -304,7 +304,7 @@ public struct DownloadsScanner: StorageScanner {
     return Finding(
       id: Finding.makeID(rule: "downloads.stale", path: item.path),
       ruleID: "downloads.stale", category: .downloads, title: item.name,
-      detail: "\(what) that hasn't been opened in \(Format.age(touched, now: context.now).replacingOccurrences(of: " ago", with: "")). Moving it to the Trash frees the space; nothing recreates it.",
+      detail: "\(what) that hasn’t been opened in \(Format.age(touched, now: context.now).replacingOccurrences(of: " ago", with: "")). Moving it to the Trash frees the space; nothing recreates it.",
       paths: [item.path], bytes: measure.bytes, fileCount: max(1, measure.files), lastUsed: touched,
       recovery: .permanent, risk: .personal, method: .trash, evidence: evidence,
       autoLevel: nil, idleDaysRequired: 0
@@ -324,7 +324,7 @@ public struct DownloadsScanner: StorageScanner {
     return Finding(
       id: Finding.makeID(rule: "downloads.older", path: root),
       ruleID: "downloads.older", category: .downloads, title: title,
-      detail: "Small files in \(place) that haven't been opened in over three months. Moving them to the Trash frees the space; nothing recreates them.",
+      detail: "Small files in \(place) that haven’t been opened in over three months. Moving them to the Trash frees the space; nothing recreates them.",
       paths: items.map(\.0.path), bytes: total.bytes, fileCount: total.files, lastUsed: newest,
       recovery: .permanent, risk: .personal, method: .trash, evidence: evidence,
       autoLevel: nil, idleDaysRequired: 0

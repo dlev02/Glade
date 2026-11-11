@@ -44,7 +44,7 @@ public struct MetricTile: View {
         }
         .padding([.horizontal, .top], Metrics.l)
         Spacer(minLength: Metrics.s)
-        // Lifted off the bottom edge so the rounded corners don't cut into the line.
+        // Lifted off the bottom edge so the rounded corners don’t cut into the line.
         Sparkline(values: history, ceiling: ceiling, color: color)
           .frame(height: 40)
           .padding(.bottom, Metrics.s)

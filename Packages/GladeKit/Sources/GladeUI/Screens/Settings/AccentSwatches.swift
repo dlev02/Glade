@@ -4,7 +4,7 @@ import SwiftUI
 
 /// The accent colours as a row of round swatches, the current one marked with a dot
 /// and ringed, plus a rainbow swatch that opens the colours window for one of the
-/// person's own.
+/// person’s own.
 struct AccentSwatches: View {
   @Environment(AppModel.self) private var model
   @State private var colorPanel = ColorPanelBridge()
@@ -25,7 +25,7 @@ struct AccentSwatches: View {
     }
   }
 
-  /// The person's own colour once they've chosen one, otherwise every colour.
+  /// The person’s own colour once they’ve chosen one, otherwise every colour.
   private var customFill: AnyShapeStyle {
     if model.accent == .custom, let color = Color(hex: model.customAccent) {
       return AnyShapeStyle(color.gradient)

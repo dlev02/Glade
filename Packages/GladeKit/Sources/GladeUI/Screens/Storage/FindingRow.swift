@@ -1,7 +1,7 @@
 import GladeKit
 import SwiftUI
 
-/// One finding in the storage list, in columns: whether it's in the clean, what it
+/// One finding in the storage list, in columns: whether it’s in the clean, what it
 /// is and when it was last used, how it comes back, and its size. Where it lives is
 /// in the tooltip and the inspector, and search still finds it by path.
 struct FindingRow: View {
@@ -63,7 +63,7 @@ struct FindingRow: View {
     }
   }
 
-  /// Why it can't be removed, or when it was last used.
+  /// Why it can’t be removed, or when it was last used.
   private func secondLine(_ finding: Finding) -> String? {
     finding.blockers.first?.detail ?? finding.lastUsedText
   }

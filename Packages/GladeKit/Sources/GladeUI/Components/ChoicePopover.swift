@@ -61,16 +61,16 @@ public struct ChoicePopover<Value: Hashable>: View {
   var footer: ChoiceFooter?
   var arrowEdge: Edge
   /// A named coordinate space whose top edge the popover must clear, such as the
-  /// composer's: it then opens above that edge instead of above the control, so it
+  /// composer’s: it then opens above that edge instead of above the control, so it
   /// never covers what sits between them.
   var clears: String?
   @State private var isPresented = false
   @State private var hovering = false
-  /// The control's frame in `clears`, once measured.
+  /// The control’s frame in `clears`, once measured.
   @State private var frameInClearedSpace: CGRect?
 
   /// - Parameters:
-  ///   - label: What's being chosen, for VoiceOver ("Clean level").
+  ///   - label: What’s being chosen, for VoiceOver ("Clean level").
   ///   - value: The current choice as the control shows it.
   public init(
     _ label: String, value: String, selection: Binding<Value>, sections: [ChoiceSection<Value>],
@@ -85,8 +85,8 @@ public struct ChoicePopover<Value: Hashable>: View {
     self.clears = clears
   }
 
-  /// Where the popover's arrow points: the control itself, or, when it must clear a
-  /// container's top edge, a strip of the control's width just above that edge.
+  /// Where the popover’s arrow points: the control itself, or, when it must clear a
+  /// container’s top edge, a strip of the control’s width just above that edge.
   private var anchor: PopoverAttachmentAnchor {
     guard clears != nil, let frame = frameInClearedSpace else { return .rect(.bounds) }
     let gap: CGFloat = 4
@@ -126,7 +126,7 @@ public struct ChoicePopover<Value: Hashable>: View {
     .task {
       // `-demoChoice <label>` opens this popover, for screenshots.
       if DemoState.value("demoChoice") == label {
-        // A popover only shows on a window that's on screen, so wait for that.
+        // A popover only shows on a window that’s on screen, so wait for that.
         try? await Task.sleep(for: .seconds(1.5))
         for _ in 0..<60 where !(NSApp.mainWindow?.isOnActiveSpace ?? false) || !NSApp.isActive {
           try? await Task.sleep(for: .milliseconds(500))
@@ -150,7 +150,7 @@ public struct ChoicePopover<Value: Hashable>: View {
   }
 }
 
-/// The popover's contents. Keeps a highlighted row for the keyboard, starting on the
+/// The popover’s contents. Keeps a highlighted row for the keyboard, starting on the
 /// current choice.
 private struct ChoiceList<Value: Hashable>: View {
   var sections: [ChoiceSection<Value>]
@@ -215,8 +215,8 @@ private struct ChoiceList<Value: Hashable>: View {
     .focusEffectDisabled()
     .focused($isFocused)
     .onAppear {
-      // The tick marks the current choice; the fill is only the pointer's or the
-      // keyboard's place, so nothing is filled until one of them moves.
+      // The tick marks the current choice; the fill is only the pointer’s or the
+      // keyboard’s place, so nothing is filled until one of them moves.
       isFocused = true
     }
     .onKeyPress(.downArrow) { move(1) }
@@ -268,7 +268,7 @@ private struct ChoiceList<Value: Hashable>: View {
   }
 }
 
-/// One roomy row: symbol, title and the line under it, and a tick when it's chosen.
+/// One roomy row: symbol, title and the line under it, and a tick when it’s chosen.
 private struct ChoiceRow: View {
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   var title: String

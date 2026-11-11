@@ -11,7 +11,7 @@ extension Finding {
     }
   }
 
-  /// "Used 3 days ago", or nothing when the scan couldn't tell.
+  /// "Used 3 days ago", or nothing when the scan couldn’t tell.
   var lastUsedText: String? {
     lastUsed.map { "Used \(Format.age($0))" }
   }

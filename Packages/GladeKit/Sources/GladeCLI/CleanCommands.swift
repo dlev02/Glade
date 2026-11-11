@@ -7,7 +7,7 @@ extension CleanLevel: ExpressibleByArgument {}
 struct Plan: AsyncParsableCommand {
   static let configuration = CommandConfiguration(
     abstract: "Show what a clean would remove at a given level. Changes nothing.",
-    discussion: "Uses the last scan, or scans first if there isn't a recent one."
+    discussion: "Uses the last scan, or scans first if there isn’t a recent one."
   )
 
   @OptionGroup var output: OutputOptions
@@ -150,7 +150,7 @@ struct Clean: AsyncParsableCommand {
 struct Undo: ParsableCommand {
   static let configuration = CommandConfiguration(
     abstract: "Put back what a clean moved to the Trash.",
-    discussion: "Without an identifier, uses the most recent clean. Deleted caches can't be put back; they rebuild."
+    discussion: "Without an identifier, uses the most recent clean. Deleted caches can’t be put back; they rebuild."
   )
 
   @OptionGroup var output: OutputOptions
@@ -273,7 +273,7 @@ struct Protect: ParsableCommand {
 }
 
 struct Logs: ParsableCommand {
-  static let configuration = CommandConfiguration(abstract: "Show Glade's recent log lines.")
+  static let configuration = CommandConfiguration(abstract: "Show Glade’s recent log lines.")
 
   @OptionGroup var output: OutputOptions
 
@@ -292,7 +292,7 @@ struct Logs: ParsableCommand {
 }
 
 enum Scans {
-  /// The last scan if it's fresh enough, otherwise a new one.
+  /// The last scan if it’s fresh enough, otherwise a new one.
   static func recent(rescan: Bool, quiet: Bool) async throws -> ScanResult {
     if !rescan, let last = ScanEngine.loadLast(), Date().timeIntervalSince(last.finished) < 3600 {
       return last

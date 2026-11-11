@@ -1,7 +1,7 @@
 import GladeKit
 import SwiftUI
 
-/// Whether Glade learns what files contain, so they can be found by what's in them,
+/// Whether Glade learns what files contain, so they can be found by what’s in them,
 /// and which folders it reads.
 struct SearchPane: View {
   @Environment(AppModel.self) private var model

@@ -25,8 +25,8 @@ public enum ShellError: Error, LocalizedError {
 /// Runs other programs. Every external command Glade launches goes through here, so
 /// each one is logged with its exit status and duration.
 public enum Shell {
-  /// Folders searched for command-line tools. Apps launched from the Dock don't inherit
-  /// the shell's PATH, so the usual install locations are listed explicitly.
+  /// Folders searched for command-line tools. Apps launched from the Dock don’t inherit
+  /// the shell’s PATH, so the usual install locations are listed explicitly.
   public static var searchPaths: [String] {
     let home = NSHomeDirectory()
     let inherited = (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":").map(String.init)

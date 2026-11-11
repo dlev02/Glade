@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// One detail line in a live panel: a label on the left, its value on the right, and
-/// an optional colour dot when it's part of a stacked bar.
+/// an optional colour dot when it’s part of a stacked bar.
 struct PanelFact: View {
   var label: String
   var value: String

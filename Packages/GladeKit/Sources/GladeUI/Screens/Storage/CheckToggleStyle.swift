@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// The storage list's checkbox: a square that fills with the accent, with a small
-/// bounce when someone ticks it. Mixed shows a dash. In a window that isn't active it
-/// turns grey, like the system's own checkboxes and the sidebar's selection. It reads
+/// The storage list’s checkbox: a square that fills with the accent, with a small
+/// bounce when someone ticks it. Mixed shows a dash. In a window that isn’t active it
+/// turns grey, like the system’s own checkboxes and the sidebar’s selection. It reads
 /// to VoiceOver as a toggle with its on, off or mixed state.
 struct CheckToggleStyle: ToggleStyle {
   func makeBody(configuration: Configuration) -> some View {

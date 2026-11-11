@@ -1,15 +1,15 @@
 import Foundation
 
-/// One finding's place in a plan.
+/// One finding’s place in a plan.
 public struct PlanItem: Codable, Sendable, Identifiable {
   public enum Source: String, Codable, Sendable {
     case rules, assistant, person
   }
 
-  /// The finding's identifier.
+  /// The finding’s identifier.
   public var id: String
   public var selected: Bool
-  /// Why it is or isn't selected, in one sentence.
+  /// Why it is or isn’t selected, in one sentence.
   public var reason: String
   public var source: Source
 
@@ -58,7 +58,7 @@ public enum Planner {
     return plan
   }
 
-  /// Recomputes a plan's totals after its selection changes.
+  /// Recomputes a plan’s totals after its selection changes.
   public static func total(_ plan: inout CleanPlan, scan: ScanResult, config: GladeConfig) {
     var bytes: Int64 = 0, immediate: Int64 = 0
     for finding in topLevel(plan.selectedIDs, in: scan) {

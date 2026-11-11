@@ -1,14 +1,14 @@
 import AppKit
 import Foundation
 
-/// What's running right now, so a scan can tell which caches are in use.
+/// What’s running right now, so a scan can tell which caches are in use.
 public struct RunningApps: Sendable {
   public var bundleIDs: Set<String>
   public var processNames: Set<String>
   /// Lowercased app names, for owners known only by the folder they write to.
   public var appNames: Set<String>
-  /// Where each running program was started from, so a toolkit or runtime that's
-  /// running isn't offered for removal.
+  /// Where each running program was started from, so a toolkit or runtime that’s
+  /// running isn’t offered for removal.
   public var executablePaths: [String]
 
   public init(bundleIDs: Set<String> = [], processNames: Set<String> = [], appNames: Set<String> = [], executablePaths: [String] = []) {
@@ -46,7 +46,7 @@ public struct RunningApps: Sendable {
     }
     for name in owner.processNames where processNames.contains(name.lowercased()) { return owner.name }
     // Owners known only by the folder they write to ("claude-cli-nodejs", "aside-memory"):
-    // treat the folder as in use when its name starts with a running app's or tool's name.
+    // treat the folder as in use when its name starts with a running app’s or tool’s name.
     if owner.bundleIDs.isEmpty || owner.bundleIDs.allSatisfy({ !$0.contains(".") }) {
       let folder = Self.normalise(owner.bundleIDs.first ?? owner.name)
       for name in appNames.union(processNames) {
@@ -262,7 +262,7 @@ public enum ScanEngine {
         findings.append(finding)
       }
     }
-    // A finding that sits inside another one (a worktree's node_modules) is still
+    // A finding that sits inside another one (a worktree’s node_modules) is still
     // offered, but its space is already counted by the one that contains it.
     let roots = findings.flatMap { finding in finding.paths.map { ($0 + "/", finding.id) } }
     for index in findings.indices where !findings[index].paths.isEmpty {
@@ -278,7 +278,7 @@ public enum ScanEngine {
     if !fullDiskAccess {
       skipped.append(SkippedArea(
         path: "~/Library and other guarded folders",
-        reason: "Full Disk Access is off, so the Trash, app containers and some app data couldn't be measured."
+        reason: "Full Disk Access is off, so the Trash, app containers and some app data couldn’t be measured."
       ))
     }
     let result = ScanResult(

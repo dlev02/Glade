@@ -2,7 +2,7 @@ import AppKit
 import GladeKit
 import SwiftUI
 
-/// First-run setup on one page: each step shows whether it's done and offers the one
+/// First-run setup on one page: each step shows whether it’s done and offers the one
 /// thing that does it. Nothing is required, so Done always works.
 struct SetupView: View {
   @Environment(AppModel.self) private var model
@@ -158,7 +158,7 @@ struct SetupView: View {
   }
 
   private func loginStep(_ status: SetupStatus) -> some View {
-    // Outside an Applications folder macOS won't register a login item; the switch
+    // Outside an Applications folder macOS won’t register a login item; the switch
     // says so in its tooltip rather than in a line of its own.
     let available = LoginItem.isAvailable || overrides.setup != nil
     return SetupStepRow(
@@ -206,7 +206,7 @@ struct SetupView: View {
   static func assistantDetail(providers: [ProviderStatus]) -> (text: String, instruction: String?) {
     let ready = providers.filter(\.isReady).map(\.name)
     if !ready.isEmpty {
-      return ("\(ready.formatted(.list(type: .and))) \(ready.count == 1 ? "is" : "are") ready.", nil)
+      return ("\(Format.listed(ready)) \(ready.count == 1 ? "is" : "are") ready.", nil)
     }
     for provider in providers {
       if case .needsSignIn(let hint) = provider.state {
@@ -233,7 +233,7 @@ struct SetupView: View {
     }
   }
 
-  /// A menu bar app is most useful when it's always there, so setup switches this on
+  /// A menu bar app is most useful when it’s always there, so setup switches this on
   /// the first time it appears. The person can switch it straight back off.
   private func turnOnLoginOnce() {
     guard overrides.setup == nil, LoginItem.isAvailable, !turnedOnLoginItem else { return }

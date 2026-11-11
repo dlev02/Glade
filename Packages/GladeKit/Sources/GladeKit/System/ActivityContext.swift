@@ -29,7 +29,7 @@ public struct ActivityContext: Codable, Sendable {
   public var frontmostApp: FrontApp?
   /// Seconds since the last key press, click, scroll or mouse movement.
   public var secondsSinceInput: Double
-  /// `nil` when the session state couldn't be read.
+  /// `nil` when the session state couldn’t be read.
   public var isScreenLocked: Bool?
   public var isDisplayAsleep: Bool?
   public var onBattery: Bool

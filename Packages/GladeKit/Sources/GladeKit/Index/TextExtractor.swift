@@ -13,13 +13,13 @@ public struct Extraction: Sendable {
   public var text: String
   /// Words describing an image ("dog", "document", "screenshot").
   public var labels: [String]
-  /// A fingerprint of the file's bytes, to tell exact copies from lookalikes.
+  /// A fingerprint of the file’s bytes, to tell exact copies from lookalikes.
   public var bytesHash: String?
-  /// The image's feature print, when the file is an image.
+  /// The image’s feature print, when the file is an image.
   public var imageVector: [Float]?
 }
 
-/// Why a file couldn't be read. Never carries any of the file's contents.
+/// Why a file couldn’t be read. Never carries any of the file’s contents.
 public enum ExtractionError: Error, CustomStringConvertible, Sendable {
   case unreadable(String)
   case undecodable(String)
@@ -40,7 +40,7 @@ public enum ExtractionError: Error, CustomStringConvertible, Sendable {
 /// memory through `SafeRead` and parsed from there, so nothing here opens a file in a
 /// way that changes it, downloads it, or marks it as recently opened.
 public struct TextExtractor: Sendable {
-  /// Files bigger than this aren't read.
+  /// Files bigger than this aren’t read.
   public static let maxFileBytes: Int64 = 50_000_000
   public static let maxCharacters = 200_000
   public static let maxPDFPages = 200
@@ -68,10 +68,10 @@ public struct TextExtractor: Sendable {
     "json", "jsonc", "xml", "yaml", "yml", "toml", "ini", "cfg", "conf", "sql", "sh", "zsh", "bash", "fish",
     "graphql", "proto", "gradle", "cmake", "dockerfile", "tf", "svelte", "vue",
   ]
-  /// Images Vision can't decode, or that are icons rather than pictures.
+  /// Images Vision can’t decode, or that are icons rather than pictures.
   private static let skippedImages: Set<String> = ["svg", "svgz", "ico", "icns", "pdf"]
 
-  /// The kind of a file judged from its name, or `nil` when its contents can't be read.
+  /// The kind of a file judged from its name, or `nil` when its contents can’t be read.
   public static func kind(for path: String, isDirectory: Bool = false) -> ContentKind? {
     let ext = (path as NSString).pathExtension.lowercased()
     if isDirectory {
@@ -100,7 +100,7 @@ public struct TextExtractor: Sendable {
 
   // MARK: Reading
 
-  /// Reads one file. `deadline` is checked between pages so one huge PDF can't hang a run.
+  /// Reads one file. `deadline` is checked between pages so one huge PDF can’t hang a run.
   public func extract(_ path: String, kind: ContentKind, isPackage: Bool, deadline: Date) async throws -> Extraction {
     let name = (path as NSString).lastPathComponent
     let ext = (name as NSString).pathExtension.lowercased()
@@ -234,8 +234,8 @@ public struct TextExtractor: Sendable {
     }
   }
 
-  /// Loads Vision's models with a tiny blank image. The first request of a run can take
-  /// tens of seconds while models load, which mustn't count against a file's time limit.
+  /// Loads Vision’s models with a tiny blank image. The first request of a run can take
+  /// tens of seconds while models load, which mustn’t count against a file’s time limit.
   public func warmUp() async {
     guard let space = CGColorSpace(name: CGColorSpace.sRGB),
           let context = CGContext(data: nil, width: 64, height: 64, bitsPerComponent: 8, bytesPerRow: 0,

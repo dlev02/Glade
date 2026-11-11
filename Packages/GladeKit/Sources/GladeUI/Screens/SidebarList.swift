@@ -3,9 +3,9 @@ import SwiftUI
 
 /// The sections, drawn by Glade rather than AppKit so the selection takes the colour
 /// the person chose: a rounded fill in the readable accent with a white label while
-/// the window is key, a neutral fill when it isn't. Arrow keys move between
+/// the window is key, a neutral fill when it isn’t. Arrow keys move between
 /// sections, ⌘1–⌘5 still work (from the View menu), and VoiceOver hears which one is
-/// selected. The sidebar's material comes from the split view, as before.
+/// selected. The sidebar’s material comes from the split view, as before.
 struct SidebarList: View {
   @Environment(AppModel.self) private var model
   @FocusState private var focused: Bool
@@ -41,13 +41,13 @@ struct SidebarList: View {
   }
 }
 
-/// Sizes that follow the person's sidebar icon size setting.
+/// Sizes that follow the person’s sidebar icon size setting.
 private struct SidebarMetrics {
   var font: Font
   var icon: CGFloat
   var height: CGFloat
 
-  /// From System Settings › Appearance › Sidebar icon size, which AppKit's own
+  /// From System Settings › Appearance › Sidebar icon size, which AppKit’s own
   /// sidebars read from the same place.
   static var current: SidebarMetrics {
     switch UserDefaults.standard.integer(forKey: "NSTableViewDefaultSizeMode") {
@@ -70,7 +70,7 @@ private struct SidebarRow: View {
 
   var body: some View {
     let selected = model.section == section
-    // Inactive windows show a quiet selection, as the system's own sidebars do.
+    // Inactive windows show a quiet selection, as the system’s own sidebars do.
     let key = activeState == .key
     Button {
       model.section = section

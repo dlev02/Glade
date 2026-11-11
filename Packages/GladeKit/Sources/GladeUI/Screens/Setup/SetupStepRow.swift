@@ -22,7 +22,7 @@ struct SetupStepRow<Action: View>: View {
           .contentTransition(.symbolEffect(.replace))
           .accessibilityHidden(true)
       } else {
-        // Optional steps keep the circle's room empty, so every step's words start
+        // Optional steps keep the circle’s room empty, so every step’s words start
         // on one edge.
         Color.clear.frame(width: 24, height: 1)
       }

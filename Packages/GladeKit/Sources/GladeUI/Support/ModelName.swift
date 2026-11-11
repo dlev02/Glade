@@ -1,6 +1,6 @@
 import Foundation
 
-/// A model's name as its maker writes it: "opus" is shown as "Opus", "gpt-6.1-sol" as
+/// A model’s name as its maker writes it: "opus" is shown as "Opus", "gpt-6.1-sol" as
 /// "GPT-6.1-Sol". The stored identifier never changes; only what people read.
 enum ModelName {
   static func display(_ identifier: String) -> String {

@@ -8,7 +8,7 @@ struct ProviderRow: View {
   @Binding var model: String
   /// Shows the drag handle of a row that can be reordered.
   var showsHandle: Bool
-  /// Leaves the handle's room empty, so rows without one share the text edge of rows
+  /// Leaves the handle’s room empty, so rows without one share the text edge of rows
   /// that have one.
   var reservesHandle = false
 

@@ -34,7 +34,7 @@ public struct AgentHistoryScanner: StorageScanner {
     ),
     Source(
       id: "cursor.sessions", agent: "Cursor", groups: ["~/.cursor/chats", "~/.cursor/projects/*", "~/.cursor/ai-tracking"],
-      detail: "Conversation history from Cursor's agent. Removing it means those conversations can no longer be reopened.",
+      detail: "Conversation history from Cursor’s agent. Removing it means those conversations can no longer be reopened.",
       label: { ($0 as NSString).lastPathComponent }
     ),
     Source(
@@ -49,7 +49,7 @@ public struct AgentHistoryScanner: StorageScanner {
         "~/Library/Application Support/Claude/local-agent-mode-sessions/*/*",
         "~/Library/Application Support/Claude/claude-code-sessions/*/*",
       ],
-      detail: "Working files from Claude desktop's agent sessions. Removing them means those sessions can no longer be reopened.",
+      detail: "Working files from Claude desktop’s agent sessions. Removing them means those sessions can no longer be reopened.",
       label: { path in
         let parts = path.components(separatedBy: "/")
         let kind = parts.contains("claude-code-sessions") ? "code" : "agent mode"

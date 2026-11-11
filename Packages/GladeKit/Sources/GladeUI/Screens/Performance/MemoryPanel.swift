@@ -52,7 +52,7 @@ private struct MemoryPart: Identifiable {
   var color: Color
 }
 
-/// The whole of memory as one thin bar: each kind in use, then what's free.
+/// The whole of memory as one thin bar: each kind in use, then what’s free.
 private struct MemoryBar: View {
   var parts: [MemoryPart]
   var total: Int64

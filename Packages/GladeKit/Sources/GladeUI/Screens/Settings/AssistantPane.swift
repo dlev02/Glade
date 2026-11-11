@@ -59,7 +59,7 @@ struct AssistantPane: View {
           }
         }
       } footer: {
-        // Up here, where it's always in view, rather than at the foot of the pane.
+        // Up here, where it’s always in view, rather than at the foot of the pane.
         Label("Cloud AIs see names, sizes and dates only", systemImage: Symbols.protected)
           .foregroundStyle(.secondary)
       }
@@ -73,13 +73,13 @@ struct AssistantPane: View {
       }
 
       Section {
-        // The same choices, with the same lines under them, as the composer's.
+        // The same choices, with the same lines under them, as the composer’s.
         choicePicker(
           "Effort", value: model.config.assistant.effort.title, selection: $model.config.assistant.effort,
           choices: Effort.allCases.map { Choice($0, $0.title, subtitle: $0.consequence) }
         )
         // Who gives the second opinion and with which model, in one row, so its model
-        // can't be taken for the everyday one chosen in each AI's row above. It reads
+        // can’t be taken for the everyday one chosen in each AI’s row above. It reads
         // and writes only the second-opinion setting.
         LabeledContent("Second opinion") {
           HStack(spacing: Metrics.l) {
@@ -120,7 +120,7 @@ struct AssistantPane: View {
     }
   }
 
-  /// A setting chosen from a quiet popover, like the composer's and the clean level's:
+  /// A setting chosen from a quiet popover, like the composer’s and the clean level’s:
   /// the label on the left, "Medium ⌄" on the right.
   private func choicePicker<Value: Hashable>(
     _ title: String, value: String, selection: Binding<Value>, choices: [Choice<Value>]
@@ -145,7 +145,7 @@ struct AssistantPane: View {
     choice.map(String.init) ?? "No Limit"
   }
 
-  /// Every provider, in the person's order, with any new ones at the end.
+  /// Every provider, in the person’s order, with any new ones at the end.
   private var orderedProviders: [ProviderStatus] {
     let order = model.config.assistant.order
     return order.compactMap { id in model.providers.first { $0.id == id } }

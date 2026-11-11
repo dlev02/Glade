@@ -52,12 +52,12 @@ public struct PerformanceSuggestion: Codable, Sendable, Identifiable, Hashable {
   public var reason: String
   public var frees: Frees
   public var confidence: Confidence
-  /// Glade can act on it (quit or relaunch an app). `false` means look, don't touch:
-  /// runaways, and processes that aren't apps.
+  /// Glade can act on it (quit or relaunch an app). `false` means look, don’t touch:
+  /// runaways, and processes that aren’t apps.
   public var actionable: Bool
   /// The simulator to shut down, for `shutDownIdleSimulator`.
   public var simulatorUDID: String? = nil
-  /// Its device set's folder, passed to `SimulatorControl.shutdown(udid:set:)`.
+  /// Its device set’s folder, passed to `SimulatorControl.shutdown(udid:set:)`.
   public var simulatorSetPath: String? = nil
   /// The numbers in a few words, for a row under the name: "Idle 31 h · 10.3 GB".
   /// `reason` stays the full sentence for the command line and the assistant.
@@ -76,10 +76,10 @@ public enum PerformanceAdvisor {
   public static let workingCPUPercent = 10.0
   /// A process above this share of one core may be stuck.
   public static let runawayCPUPercent = 90.0
-  /// Idle apps using less than this aren't worth mentioning.
+  /// Idle apps using less than this aren’t worth mentioning.
   public static let minimumIdleBytes: Int64 = 100_000_000
 
-  /// Idle simulators using less than this aren't worth mentioning.
+  /// Idle simulators using less than this aren’t worth mentioning.
   public static let minimumIdleSimulatorBytes: Int64 = 300_000_000
 
   /// - Parameter simulators: From `SystemSampler.simulators()`. Idle ones become
@@ -119,7 +119,7 @@ public enum PerformanceAdvisor {
     let memory = { (bytes: Int64) in Format.bytes(bytes) }
 
     // Shut down idle simulators. Each is offered on its own, so the combined "Simulator
-    // devices" row isn't also flagged as a memory hog.
+    // devices" row isn’t also flagged as a memory hog.
     let idleSimulators = simulators.filter {
       $0.isIdle && $0.memoryBytes >= minimumIdleSimulatorBytes
         && !keep.contains($0.udid.lowercased()) && !keep.contains($0.name.lowercased())
@@ -143,7 +143,7 @@ public enum PerformanceAdvisor {
       if !sinceBootOnly && (idleFor ?? 0) >= 2 * 3600 && (simulator.memoryBytes >= 1_000_000_000 || pressured) { confidence = .high }
       if simulator.note != nil { confidence = .low }
       let idleFacts = idleFor.map { "Idle \(shortDuration($0))" } ?? "Not in use"
-      // Every caveat so far is about Bitrig, which can show a simulator Glade can't see.
+      // Every caveat so far is about Bitrig, which can show a simulator Glade can’t see.
       let caveat = simulator.note.map { $0.contains("Bitrig") ? "May be in use by Bitrig" : "May be in use" }
       let id = "simulator:\(simulator.udid)"
       result.append(PerformanceSuggestion(
@@ -177,7 +177,7 @@ public enum PerformanceAdvisor {
           confidence = .low
         }
         if let idleFor {
-          let when = app.lastActive == nil ? "is hidden with no windows open" : "hasn't been used for \(Durations.phrase(idleFor))"
+          let when = app.lastActive == nil ? "is hidden with no windows open" : "hasn’t been used for \(Durations.phrase(idleFor))"
           result.append(make(
             .quitIdleApp, app, title: "Quit \(app.name)",
             reason: "\(app.name) is using \(memory(app.memoryBytes)) and \(when).",

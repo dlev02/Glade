@@ -21,7 +21,7 @@ struct GeneralPane: View {
       }
 
       Section {
-        // Outside an Applications folder macOS won't register a login item; the
+        // Outside an Applications folder macOS won’t register a login item; the
         // tooltip says so.
         Toggle("Open at login", isOn: Binding(get: { opensAtLogin }, set: setOpensAtLogin))
           .disabled(!LoginItem.isAvailable && overrides.opensAtLogin == nil)

@@ -1,7 +1,7 @@
 import GladeKit
 import SwiftUI
 
-/// The storage toolbar's "Ask Claude": has the person's own AI refine the selection.
+/// The storage toolbar’s "Ask Claude": has the person’s own AI refine the selection.
 /// Shows its title as well as its symbol, because an AI action needs a word. While
 /// the AI works the button keeps its exact footprint and label, and only its sparkle
 /// pulses, so nothing in the toolbar moves.

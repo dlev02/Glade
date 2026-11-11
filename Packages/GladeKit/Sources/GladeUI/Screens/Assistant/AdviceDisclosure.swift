@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// A quiet header that folds its content in and out, with a chevron that turns, the
-/// same way Storage's groups do.
+/// same way Storage’s groups do.
 struct AdviceDisclosure<Label: View, Content: View>: View {
   @Binding var isExpanded: Bool
   @ViewBuilder var label: Label

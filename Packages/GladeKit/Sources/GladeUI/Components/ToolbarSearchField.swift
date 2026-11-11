@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 /// The system search field as an ordinary toolbar item. `.searchable` always puts its
-/// field at the very end of the toolbar; this one sits wherever it's declared, so an
+/// field at the very end of the toolbar; this one sits wherever it’s declared, so an
 /// inspector button can follow it. ⌘F focuses it and Esc clears it, as with `.searchable`.
 struct ToolbarSearchField: NSViewRepresentable {
   @Binding var text: String

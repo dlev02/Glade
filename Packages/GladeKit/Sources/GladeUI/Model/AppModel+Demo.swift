@@ -1,8 +1,8 @@
 import Foundation
 import GladeKit
 
-/// Demo mode's stand-in for restoring, which never touches the disk. The simulated
-/// clean is in `AppModel` itself, because it sets the model's own state.
+/// Demo mode’s stand-in for restoring, which never touches the disk. The simulated
+/// clean is in `AppModel` itself, because it sets the model’s own state.
 extension AppModel {
   /// Says every Trash item came back, without moving anything.
   static func pretendRestore(_ receipt: Receipt) -> Cleaner.RestoreResult {

@@ -1,8 +1,8 @@
 import GladeKit
 import SwiftUI
 
-/// Glade's answer to Activity Monitor: what's using memory, the processor and the
-/// graphics chip right now, grouped by app, with what's worth quitting.
+/// Glade’s answer to Activity Monitor: what’s using memory, the processor and the
+/// graphics chip right now, grouped by app, with what’s worth quitting.
 struct PerformanceScreen: View {
   @Environment(AppModel.self) private var model
   @Environment(\.colorScheme) private var colorScheme
@@ -17,7 +17,7 @@ struct PerformanceScreen: View {
 
   /// For snapshots: picks a row to show selected.
   private let preselect: (@MainActor (AppModel) -> AppUsage.ID?)?
-  /// For snapshots: replaces the model's live readings.
+  /// For snapshots: replaces the model’s live readings.
   private let readingsOverride: (@MainActor (AppModel) -> PerformanceReadings)?
 
   /// - Parameter filter: Which rows to list; by default, whatever was chosen last.
@@ -71,7 +71,7 @@ struct PerformanceScreen: View {
     }
   }
 
-  /// A table row's height and the header's, as AppKit draws them, for snapping.
+  /// A table row’s height and the header’s, as AppKit draws them, for snapping.
   private static let rowHeight: CGFloat = 26
   private static let headerHeight: CGFloat = 30
 

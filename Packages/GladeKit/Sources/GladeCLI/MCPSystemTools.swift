@@ -15,8 +15,8 @@ extension MCPTools {
     },
     MCPTool(
       name: "glade_apps",
-      description: "What is using memory, processor and graphics, grouped by app, with what Activity Monitor doesn't show: which app is in front, when each was last used, which are playing audio or keeping the Mac awake. Processor is a share of one core, so it can exceed 100.",
-      schema: #"{"type":"object","properties":{"limit":{"type":"integer","description":"How many apps, largest memory first (default 25)."},"includeSystem":{"type":"boolean","description":"Include macOS's own processes."}},"additionalProperties":false}"#,
+      description: "What is using memory, processor and graphics, grouped by app, with what Activity Monitor doesn’t show: which app is in front, when each was last used, which are playing audio or keeping the Mac awake. Processor is a share of one core, so it can exceed 100.",
+      schema: #"{"type":"object","properties":{"limit":{"type":"integer","description":"How many apps, largest memory first (default 25)."},"includeSystem":{"type":"boolean","description":"Include macOS’s own processes."}},"additionalProperties":false}"#,
       readOnly: true
     ) { arguments in
       let apps = await SystemSampler().apps(full: arguments["includeSystem"]?.bool ?? false)
@@ -27,21 +27,21 @@ extension MCPTools {
     },
     MCPTool(
       name: "glade_simulators",
-      description: "Running iOS, watchOS, tvOS and visionOS simulators with the memory each one holds and whether it looks in use. Simulators are often the largest memory user on a developer's Mac.",
+      description: "Running iOS, watchOS, tvOS and visionOS simulators with the memory each one holds and whether it looks in use. Simulators are often the largest memory user on a developer’s Mac.",
       schema: none, readOnly: true
     ) { _ in
       JSONFiles.string(await SystemSampler().simulators())
     },
     MCPTool(
       name: "glade_context",
-      description: "What the person is doing right now: the app in front, seconds since they last typed or moved the pointer, whether they're gaming, and which apps are busy, playing audio or keeping the Mac awake. Check this before suggesting anything be quit.",
+      description: "What the person is doing right now: the app in front, seconds since they last typed or moved the pointer, whether they’re gaming, and which apps are busy, playing audio or keeping the Mac awake. Check this before suggesting anything be quit.",
       schema: none, readOnly: true
     ) { _ in
       JSONFiles.string(await SystemSampler().context())
     },
     MCPTool(
       name: "glade_suggest",
-      description: "What Glade's own rules would quit or shut down to free memory, with the reason for each. It never suggests the app in front, anything playing audio, anything keeping the Mac awake, or anything doing real work.",
+      description: "What Glade’s own rules would quit or shut down to free memory, with the reason for each. It never suggests the app in front, anything playing audio, anything keeping the Mac awake, or anything doing real work.",
       schema: none, readOnly: true
     ) { _ in
       let sampler = SystemSampler()
@@ -53,8 +53,8 @@ extension MCPTools {
     },
     MCPTool(
       name: "glade_quit",
-      description: "Ask an app to quit, as choosing Quit from its menu would, so it can ask about unsaved work. Tell the person what you're quitting and why first. `force` ends it immediately and loses unsaved work: use it only when the person explicitly asks. macOS's own apps and Glade are refused.",
-      schema: #"{"type":"object","properties":{"app":{"type":"string","description":"The app's name or bundle identifier."},"force":{"type":"boolean"},"relaunch":{"type":"boolean","description":"Quit and open it again."}},"required":["app"],"additionalProperties":false}"#,
+      description: "Ask an app to quit, as choosing Quit from its menu would, so it can ask about unsaved work. Tell the person what you’re quitting and why first. `force` ends it immediately and loses unsaved work: use it only when the person explicitly asks. macOS’s own apps and Glade are refused.",
+      schema: #"{"type":"object","properties":{"app":{"type":"string","description":"The app’s name or bundle identifier."},"force":{"type":"boolean"},"relaunch":{"type":"boolean","description":"Quit and open it again."}},"required":["app"],"additionalProperties":false}"#,
       readOnly: false
     ) { arguments in
       guard let app = arguments["app"]?.string else { throw MCPFailure(message: "app is required.") }
@@ -71,7 +71,7 @@ extension MCPTools {
     MCPTool(
       name: "glade_shutdown_simulator",
       description: "Shut down one simulator by name or identifier, like turning a phone off: its apps stop and its data stays. Refused when the simulator looks in use unless `force` is true.",
-      schema: #"{"type":"object","properties":{"simulator":{"type":"string","description":"The simulator's name or UDID from glade_simulators."},"force":{"type":"boolean"}},"required":["simulator"],"additionalProperties":false}"#,
+      schema: #"{"type":"object","properties":{"simulator":{"type":"string","description":"The simulator’s name or UDID from glade_simulators."},"force":{"type":"boolean"}},"required":["simulator"],"additionalProperties":false}"#,
       readOnly: false
     ) { arguments in
       guard let wanted = arguments["simulator"]?.string else { throw MCPFailure(message: "simulator is required.") }
@@ -83,7 +83,7 @@ extension MCPTools {
     },
     MCPTool(
       name: "glade_show",
-      description: "Open Glade's window on a section, so the person can see what you're talking about: overview, storage, performance, assistant or history. Starts the app if it isn't running. Changes nothing on the Mac.",
+      description: "Open Glade’s window on a section, so the person can see what you’re talking about: overview, storage, performance, assistant or history. Starts the app if it isn’t running. Changes nothing on the Mac.",
       schema: #"{"type":"object","properties":{"section":{"type":"string","enum":["overview","storage","performance","assistant","history"]}},"required":["section"],"additionalProperties":false}"#,
       readOnly: true
     ) { arguments in

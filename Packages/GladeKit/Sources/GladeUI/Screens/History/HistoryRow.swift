@@ -1,8 +1,8 @@
 import GladeKit
 import SwiftUI
 
-/// A clean in the History list, drawn like Storage's rows: a soft fill under the
-/// pointer and a tinted fill, not a solid slab, when it's the one open in the receipt.
+/// A clean in the History list, drawn like Storage’s rows: a soft fill under the
+/// pointer and a tinted fill, not a solid slab, when it’s the one open in the receipt.
 struct HistoryRow: View {
   var receipt: Receipt
   var isSelected: Bool

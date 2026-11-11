@@ -1,12 +1,12 @@
 import Foundation
 
-/// The folders a walk through the person's own files steps around: everything another
+/// The folders a walk through the person’s own files steps around: everything another
 /// scanner owns, everything protected, and everything an app manages as a unit.
 struct PersonalWalk: Sendable {
   let home: String
   let protection: Protection
 
-  /// Folders an app or tool manages as one unit. They're never entered or reported.
+  /// Folders an app or tool manages as one unit. They’re never entered or reported.
   static let packageExtensions: Set<String> = [
     "app", "appex", "bundle", "framework", "plugin", "kext", "xpc", "prefpane", "qlgenerator",
     "mdimporter", "saver", "component", "vst", "vst3", "aaxplugin", "wdgt", "xcarchive", "xcodeproj",
@@ -37,16 +37,16 @@ struct PersonalWalk: Sendable {
   ]
 
   /// Folders inside the personal areas that a media app manages. Removing a file
-  /// inside breaks that app's library.
+  /// inside breaks that app’s library.
   static let managedMediaFolders = [
     "Music/Music", "Music/iTunes", "Music/Audio Music Apps", "Music/GarageBand", "Movies/TV",
     "Movies/Final Cut Backups.localized", "Movies/Motion Templates.localized", "Pictures/Photo Booth Library",
   ]
 
-  /// Whether to step around a folder met during the walk. `depth` is the walk's own.
+  /// Whether to step around a folder met during the walk. `depth` is the walk’s own.
   func shouldPrune(_ entry: WalkEntry) -> Bool {
     if entry.depth == 0 { return false }
-    // Listing a cloud folder that isn't on this Mac would fetch it.
+    // Listing a cloud folder that isn’t on this Mac would fetch it.
     if entry.isDataless { return true }
     let name = entry.name
     if name.hasPrefix(".") { return true }
@@ -219,7 +219,7 @@ public struct LargeFileScanner: StorageScanner {
   }
 }
 
-/// A file's identity on disk. Hard links share one.
+/// A file’s identity on disk. Hard links share one.
 struct FileIdentity: Hashable, Sendable {
   var device: Int32
   var inode: UInt64

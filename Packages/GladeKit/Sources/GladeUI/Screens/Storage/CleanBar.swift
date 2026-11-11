@@ -1,7 +1,7 @@
 import GladeKit
 import SwiftUI
 
-/// The floating bar at the foot of the storage screen: what's selected, how boldly
+/// The floating bar at the foot of the storage screen: what’s selected, how boldly
 /// it was chosen, and the one button that frees it (⌘Return). One layer of glass;
 /// the button inside it is a plain filled capsule.
 struct CleanBar: View {
@@ -27,7 +27,7 @@ struct CleanBar: View {
       .animation(reduceMotion ? nil : .snappy(duration: 0.18), value: free + trash)
       .layoutPriority(-1)
       Spacer(minLength: 0)
-      // On the button's line, so its popover opens over the list and covers nothing
+      // On the button’s line, so its popover opens over the list and covers nothing
       // in the bar.
       LevelMenu(arrowEdge: .top)
         .font(.callout)
@@ -50,12 +50,12 @@ struct CleanBar: View {
   }
 
   /// "19 items · 102 GB to free · 12 GB to the Trash": what is freed now comes first,
-  /// and the Trash is named separately because it frees nothing until it's emptied.
+  /// and the Trash is named separately because it frees nothing until it’s emptied.
   private func summary(count: Int, free: Int64, trash: Int64, short: Bool = false) -> String {
     guard count > 0 else { return "Nothing selected" }
     let items = itemCount(count)
     if short, free > 0, trash > 0 {
-      return "\(items) · \(Format.bytes(free)) + \(Format.bytes(trash)) to Trash"
+      return "\(items) · \(Format.bytes(free)) + \(Format.bytes(trash)) to the Trash"
     }
     var parts = [items]
     if free > 0 { parts.append("\(Format.bytes(free)) to free") }

@@ -7,7 +7,7 @@ public struct Indexer: Sendable {
   public let store: IndexStore
   public let embedder: any TextEmbedder
   public let images: ImageEmbedder
-  /// Seconds one file may take before it's given up on.
+  /// Seconds one file may take before it’s given up on.
   public var perFileTimeout: Double = 30
   /// Characters of each file kept as its snippet.
   static let snippetLength = 300
@@ -27,7 +27,7 @@ public struct Indexer: Sendable {
     var isPackage: Bool
   }
 
-  /// Indexes `config.index.folders`. Entries under those folders that weren't seen are
+  /// Indexes `config.index.folders`. Entries under those folders that weren’t seen are
   /// removed, as are entries anywhere that are gone or have become protected.
   public func run(
     config: GladeConfig,
@@ -184,7 +184,7 @@ public struct Indexer: Sendable {
     var passages = TextChunker.chunks(text)
     let labels = extraction.labels.joined(separator: ", ")
     if passages.isEmpty {
-      // Nothing readable inside: the name (and an image's labels) is still searchable.
+      // Nothing readable inside: the name (and an image’s labels) is still searchable.
       passages = [labels.isEmpty ? extraction.title : "\(extraction.title). \(labels)"]
     }
     let inputs = passages.map { Indexer.embeddingInput(title: extraction.title, labels: labels, passage: $0) }
@@ -216,7 +216,7 @@ public struct Indexer: Sendable {
     return Date().timeIntervalSince(started)
   }
 
-  /// Records a file that couldn't be read, by name only, so later runs skip it until it
+  /// Records a file that couldn’t be read, by name only, so later runs skip it until it
   /// changes instead of failing on it every time.
   private func rememberFailure(_ candidate: Candidate) {
     let name = (candidate.path as NSString).lastPathComponent
@@ -248,7 +248,7 @@ public struct Indexer: Sendable {
     }
   }
 
-  /// Each passage is embedded with the file's title in front, so a passage from "Chicago
+  /// Each passage is embedded with the file’s title in front, so a passage from "Chicago
   /// lease.pdf" still knows it belongs to a lease.
   static func embeddingInput(title: String, labels: String, passage: String) -> String {
     if passage.hasPrefix(title) { return passage }
@@ -290,7 +290,7 @@ public struct Indexer: Sendable {
           if !name.hasPrefix("."), protection.isProtectedName(name) { counts.protected += 1; return .skip }
           return rules.shouldPrune(entry) ? .skip : .proceed
         }
-        // "~$Report.docx" is Office's lock file for an open document, not a document.
+        // "~$Report.docx" is Office’s lock file for an open document, not a document.
         if entry.isSymlink || name.hasPrefix(".") || name.hasPrefix("~$") {
           if protection.isProtectedName(name) { counts.protected += 1 }
           return .proceed

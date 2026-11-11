@@ -1,7 +1,7 @@
 import GladeKit
 import SwiftUI
 
-/// The Settings window: one tab per area, every change applied as it's made.
+/// The Settings window: one tab per area, every change applied as it’s made.
 struct SettingsView: View {
   @State private var tab: SettingsTab
   @State private var showsReport = false

@@ -16,7 +16,7 @@ struct Composer: View {
   @State private var typedModel = ""
   @FocusState private var isFocused: Bool
 
-  /// The composer's own coordinate space; its top edge is the glass's.
+  /// The composer’s own coordinate space; its top edge is the glass’s.
   private static let space = "composer"
 
   var body: some View {
@@ -54,7 +54,7 @@ struct Composer: View {
           .help("Send (Return)")
           .accessibilityIdentifier("composer.send")
       }
-      // The choices' words start on the question's text edge.
+      // The choices' words start on the question’s text edge.
       .padding(.leading, Metrics.xs)
       .font(.callout)
     }
@@ -156,8 +156,8 @@ struct Composer: View {
   }
 }
 
-/// A 28-point circle filled with the accent, greyed while there's nothing to send.
-/// A plain fill, not glass, because it sits on the composer's glass.
+/// A 28-point circle filled with the accent, greyed while there’s nothing to send.
+/// A plain fill, not glass, because it sits on the composer’s glass.
 private struct SendButtonStyle: ButtonStyle {
   @Environment(\.isEnabled) private var isEnabled
 

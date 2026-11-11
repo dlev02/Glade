@@ -31,7 +31,7 @@ public struct LookalikeMember: Codable, Sendable, Hashable {
   public var modified: Date
 }
 
-/// Files that look almost the same but aren't byte-for-byte copies. Report only:
+/// Files that look almost the same but aren’t byte-for-byte copies. Report only:
 /// nothing here is ever selected for removal.
 public struct LookalikeGroup: Codable, Sendable, Identifiable, Hashable {
   public var kind: ContentKind
@@ -66,9 +66,9 @@ public struct IndexReport: Codable, Sendable {
   public var skippedUnchanged = 0
   public var skippedProtected = 0
   public var skippedTooLarge = 0
-  /// Formats Glade can't read the contents of (videos, archives, disk images…).
+  /// Formats Glade can’t read the contents of (videos, archives, disk images…).
   public var skippedUnsupported = 0
-  /// Cloud files whose contents aren't on this Mac.
+  /// Cloud files whose contents aren’t on this Mac.
   public var skippedCloud = 0
   public var failed = 0
   /// Entries removed because the file is gone or became protected.

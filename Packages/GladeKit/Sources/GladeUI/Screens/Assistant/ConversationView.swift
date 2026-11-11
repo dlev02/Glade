@@ -57,7 +57,7 @@ struct ConversationView: View {
         )
       } action: { old, new in
         // Only a scroll changes whether the person is following; content growing
-        // underneath them doesn't.
+        // underneath them doesn’t.
         if old.offset != new.offset || new.gap <= 40 { isAtBottom = new.gap <= 40 }
       }
       .onChange(of: messages.count) {

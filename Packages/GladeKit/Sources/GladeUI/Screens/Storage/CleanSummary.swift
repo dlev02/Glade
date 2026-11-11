@@ -54,7 +54,7 @@ struct CleanSummary: View {
           .controlSize(.large)
         }
         if trashed > 0, !(restored.map(isComplete) ?? false) {
-          // Only opens the Trash in Finder; emptying it is the person's own choice.
+          // Only opens the Trash in Finder; emptying it is the person’s own choice.
           Button("Show Trash") { showTrash() }
             .accessibilityIdentifier("result.showTrash")
             .secondaryAction()
@@ -81,7 +81,7 @@ struct CleanSummary: View {
   private func headline(freed: Int64, trashed: Int64) -> some View {
     let warns = !problems.isEmpty
     if freed == 0, trashed > 0, let restored {
-      // Everything went to the Trash; it's reassuring only once all of it is back.
+      // Everything went to the Trash; it’s reassuring only once all of it is back.
       let complete = isComplete(restored)
       line(
         symbol: complete ? Symbols.putBack : "exclamationmark.triangle.fill",
@@ -118,7 +118,7 @@ struct CleanSummary: View {
     }
   }
 
-  /// Free space before and after, as measured. Left out when it didn't move.
+  /// Free space before and after, as measured. Left out when it didn’t move.
   @ViewBuilder private var freeSpace: some View {
     if receipt.freeAfter != receipt.freeBefore {
       HStack(spacing: Metrics.s) {

@@ -144,15 +144,15 @@ public struct WorktreeScanner: StorageScanner {
   }
 
   /// Folders a protected-file search skips: they hold only installed packages, package
-  /// checkouts and build products, whose own keys, profiles and agent files aren't the
-  /// person's. `SourcePackages` is where Xcode checks out Swift packages, whatever the
+  /// checkouts and build products, whose own keys, profiles and agent files aren’t the
+  /// person’s. `SourcePackages` is where Xcode checks out Swift packages, whatever the
   /// derived-data folder is called.
   static let regenerated: Set<String> = [
     "node_modules", "Pods", ".build", "DerivedData", "SourcePackages", ".venv", "venv", "__pycache__",
     ".next", ".turbo", ".gradle", ".dart_tool", ".tox", "bower_components",
   ]
 
-  /// Built bundles: an app's embedded provisioning profile is a copy, not the original.
+  /// Built bundles: an app’s embedded provisioning profile is a copy, not the original.
   static let builtBundles: Set<String> = ["app", "appex", "framework", "xcframework", "bundle", "dSYM"]
 
   /// Files with protected names (`.env`, keys, agent memory files) and other
@@ -192,7 +192,7 @@ public struct WorktreeScanner: StorageScanner {
     var blockers: [Blocker] = []
     var evidence: [String] = []
 
-    // Read git's bookkeeping before running anything in the worktree.
+    // Read git’s bookkeeping before running anything in the worktree.
     let gitDir = Git.gitDirectory(of: path)
     let indexDate = gitDir.flatMap { FileFacts.modified($0 + "/index") }
 
@@ -206,7 +206,7 @@ public struct WorktreeScanner: StorageScanner {
         evidence.append("Working tree is clean: nothing modified, staged or untracked.")
       }
     } else {
-      blockers.append(Blocker(.uncommittedWork, "Couldn't confirm the working tree is clean."))
+      blockers.append(Blocker(.uncommittedWork, "Couldn’t confirm the working tree is clean."))
     }
 
     // 2. A detached HEAD whose commit nothing else holds would become unreachable.
@@ -217,7 +217,7 @@ public struct WorktreeScanner: StorageScanner {
       )
       let holder = holders.flatMap { $0.succeeded ? $0.stdout.trimmingCharacters(in: .whitespacesAndNewlines) : nil } ?? ""
       if holders?.succeeded != true {
-        blockers.append(Blocker(.uncommittedWork, "Couldn't check whether its detached commit \(shortHead) is kept elsewhere."))
+        blockers.append(Blocker(.uncommittedWork, "Couldn’t check whether its detached commit \(shortHead) is kept elsewhere."))
       } else if holder.isEmpty {
         blockers.append(Blocker(.uncommittedWork, "Detached at \(shortHead), a commit no branch or tag holds; removing the worktree would lose it."))
       } else {
@@ -237,7 +237,7 @@ public struct WorktreeScanner: StorageScanner {
         blockers.append(Blocker(.uncommittedWork, state.1))
       }
     } else {
-      blockers.append(Blocker(.uncommittedWork, "Couldn't find its git folder."))
+      blockers.append(Blocker(.uncommittedWork, "Couldn’t find its git folder."))
     }
 
     // 4. Locked, or someone working in it right now.
@@ -260,7 +260,7 @@ public struct WorktreeScanner: StorageScanner {
       let untracked = await untrackedAmong(found.files, in: path)
       if let example = untracked.first {
         let count = untracked.count == 1 ? "a file" : "\(untracked.count) files"
-        blockers.append(Blocker(.uncommittedWork, "Holds \(count) git doesn't track that Glade protects, such as \(relative(example, to: path))."))
+        blockers.append(Blocker(.uncommittedWork, "Holds \(count) git doesn’t track that Glade protects, such as \(relative(example, to: path))."))
       }
     }
 
@@ -309,7 +309,7 @@ public struct WorktreeScanner: StorageScanner {
     var level: CleanLevel? = .balanced
     if protection.isPersonalArea(path) {
       level = nil
-      evidence.append("In a personal folder, so it's only removed when you choose it.")
+      evidence.append("In a personal folder, so it’s only removed when you choose it.")
     }
     if !blockers.isEmpty { level = nil }
 
@@ -347,7 +347,7 @@ public struct WorktreeScanner: StorageScanner {
     return Int(digits)
   }
 
-  /// Which of these files git doesn't track. All of them when git can't say.
+  /// Which of these files git doesn’t track. All of them when git can’t say.
   static func untrackedAmong(_ files: [String], in worktree: String) async -> [String] {
     let relativePaths = files.map { relative($0, to: worktree) }
     guard let result = await Git.run(["--literal-pathspecs", "ls-files", "-z", "--"] + relativePaths, in: worktree),

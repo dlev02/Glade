@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// One compact live reading in the menu bar popover: a name, a figure, a word on how
-/// it's doing, and a tiny line of its recent history. Three sit side by side in one
+/// it’s doing, and a tiny line of its recent history. Three sit side by side in one
 /// tile, which draws the background.
 struct MenuReading: View {
   var title: String

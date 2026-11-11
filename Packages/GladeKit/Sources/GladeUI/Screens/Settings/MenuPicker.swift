@@ -9,7 +9,7 @@ struct MenuPicker<Value: Hashable>: View {
   var options: [Value]
   var label: (Value) -> String
 
-  /// Keeps the current value in the menu even when it isn't one of the usual
+  /// Keeps the current value in the menu even when it isn’t one of the usual
   /// options, so a value set elsewhere still shows as chosen.
   init(_ title: String, selection: Binding<Value>, options: [Value], label: @escaping (Value) -> String) {
     self.title = title

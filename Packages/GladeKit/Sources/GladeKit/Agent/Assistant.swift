@@ -13,7 +13,7 @@ public struct StorageAdvice: Codable, Sendable {
   public var select: [Note]
   /// Findings the rules selected that should be left alone.
   public var deselect: [Note]
-  /// Personal items worth the person's attention. Never selected.
+  /// Personal items worth the person’s attention. Never selected.
   public var review: [Note]
   /// Suggestions Glade threw out because they broke a safety rule, with the reason.
   public var rejected: [Note]
@@ -65,13 +65,13 @@ public enum AssistantError: Error, LocalizedError {
 /// Asks a model for advice and keeps it inside the safety rules.
 ///
 /// The model sees a description of what Glade found: names, sizes, dates and how each
-/// thing comes back. It answers with finding identifiers only. It can't name a path,
+/// thing comes back. It answers with finding identifiers only. It can’t name a path,
 /// run a command, or select anything the rules forbid; anything it tries is dropped
 /// and recorded.
 public enum Assistant {
   // MARK: Storage
 
-  /// Refines a plan. The assistant may add findings up to the plan's level, take
+  /// Refines a plan. The assistant may add findings up to the plan’s level, take
   /// findings out, and flag personal items for review.
   /// - Parameter goal: What the person asked for, in their words, if anything.
   public static func advise(
@@ -162,7 +162,7 @@ public enum Assistant {
   // MARK: Free-form questions
 
   /// Answers a question about this Mac using a snapshot Glade prepared. The answer is
-  /// text for the person; it can't cause any action.
+  /// text for the person; it can’t cause any action.
   public static func ask(
     _ question: String,
     snapshot: String,
@@ -182,7 +182,7 @@ public enum Assistant {
 
   // MARK: Running
 
-  /// The first provider in the person's preferred order that's ready.
+  /// The first provider in the person’s preferred order that’s ready.
   public static func pick(config: GladeConfig, providers: [any AgentProvider], proactive: Bool) async throws -> any AgentProvider {
     if proactive, let limit = config.assistant.runsPerDay {
       let today = proactiveRunsToday()

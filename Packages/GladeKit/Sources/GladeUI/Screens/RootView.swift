@@ -5,7 +5,7 @@ import SwiftUI
 public struct RootView: View {
   @Environment(AppModel.self) private var model
   @Environment(\.openSettings) private var openSettings
-  /// The storage list and how it's being viewed, kept here so switching back to
+  /// The storage list and how it’s being viewed, kept here so switching back to
   /// Storage shows it straight away rather than building it again.
   @State private var storage: StorageViewState
 
@@ -35,7 +35,7 @@ public struct RootView: View {
       case .history: HistoryScreen()
       }
     }
-    // Wide enough that Storage's toolbar (scope, Scan, Ask, search, inspector) never
+    // Wide enough that Storage’s toolbar (scope, Scan, Ask, search, inspector) never
     // spills into an overflow menu, even with the inspector open.
     .frame(minWidth: 1060, minHeight: 600)
     .accent(model.tint)

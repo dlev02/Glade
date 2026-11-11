@@ -94,7 +94,7 @@ public enum DiagnosticReport {
   }
 
   /// A link that opens a new issue with the essentials filled in. The report itself
-  /// is attached by hand, so the person sees exactly what they're sharing.
+  /// is attached by hand, so the person sees exactly what they’re sharing.
   public static func issueURL(summary: String = "") -> URL? {
     var components = URLComponents(string: Brand.issuesURL)
     let body = """

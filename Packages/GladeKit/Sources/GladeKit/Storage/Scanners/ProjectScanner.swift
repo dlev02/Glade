@@ -1,8 +1,8 @@
 import Foundation
 
 /// Finds dependencies and build outputs inside code projects: folders that a command
-/// or the next build puts back. Each is attributed to its project, and the project's
-/// idle time (not the folder's, which installs keep fresh) decides when a clean level
+/// or the next build puts back. Each is attributed to its project, and the project’s
+/// idle time (not the folder’s, which installs keep fresh) decides when a clean level
 /// may pick it.
 public struct ProjectScanner: StorageScanner {
   public let id = "projects"
@@ -18,9 +18,9 @@ public struct ProjectScanner: StorageScanner {
     var root: String
     var isGit: Bool
     var candidates: [ProjectTree.Candidate]
-    /// The repository's name; for a linked worktree, the repository it belongs to.
+    /// The repository’s name; for a linked worktree, the repository it belongs to.
     var name: String = ""
-    /// For a linked worktree, its own folder name, shown alongside the repository's.
+    /// For a linked worktree, its own folder name, shown alongside the repository’s.
     var worktree: String?
   }
 
@@ -110,7 +110,7 @@ public struct ProjectScanner: StorageScanner {
         gitAnswered = true
         for path in result.stdout.split(separator: "\0") { ignored.insert(String(path)) }
       } else {
-        Log.warning(.scan, "Couldn't ask git what it ignores in \(project.root); leaving its folders alone")
+        Log.warning(.scan, "Couldn’t ask git what it ignores in \(project.root); leaving its folders alone")
       }
     }
 
@@ -122,7 +122,7 @@ public struct ProjectScanner: StorageScanner {
       if accepted { kept.append(candidate) } else { rejected.append((candidate.path as NSString).lastPathComponent) }
     }
     if !rejected.isEmpty {
-      Log.debug(.scan, "\(project.root): left \(rejected.count) folders alone that git doesn't ignore or can't vouch for (\(rejected.prefix(5).joined(separator: ", ")))")
+      Log.debug(.scan, "\(project.root): left \(rejected.count) folders alone that git doesn’t ignore or can’t vouch for (\(rejected.prefix(5).joined(separator: ", ")))")
     }
     guard !kept.isEmpty else { return [] }
 
@@ -169,7 +169,7 @@ public struct ProjectScanner: StorageScanner {
     var source: String
   }
 
-  /// When someone last worked on the project: the newest of the last commit, git's own
+  /// When someone last worked on the project: the newest of the last commit, git’s own
   /// bookkeeping files, the manifests, and the project folders themselves. Never the
   /// files inside the dependency folders, which every install rewrites.
   static func lastWorkedOn(_ project: Project, kept: [ProjectTree.Candidate], lastCommit: Date?) -> Activity {
@@ -206,7 +206,7 @@ public struct ProjectScanner: StorageScanner {
     let shown = project.worktree.map { "\(name) (\($0))" } ?? name
     var evidence = [proof]
     evidence.append(project.isGit
-      ? "Git ignores it, so it isn't part of the project's source."
+      ? "Git ignores it, so it isn’t part of the project’s source."
       : "Not in a git repository.")
     if let days = context.days(since: activity.date) {
       evidence.append("Project last changed \(FileFacts.daysAgo(days)) (\(activity.source)).")

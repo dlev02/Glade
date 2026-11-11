@@ -8,9 +8,9 @@ public enum InUse {
   ///
   /// Chromium-based apps (Slack, Discord, VS Code, Docker Desktop and others) keep a
   /// `SingletonLock` link in their `~/Library/Application Support/<App>` folder while
-  /// they run, pointing at `<host>-<pid>`. Only the link's target is read. A lock that
+  /// they run, pointing at `<host>-<pid>`. Only the link’s target is read. A lock that
   /// names another computer (a migrated Mac) or a process that has exited is stale; a
-  /// lock that can't be read counts as live.
+  /// lock that can’t be read counts as live.
   public static func liveAppLock(for rawPath: String, home: String) -> String? {
     let path = Protection.clean(rawPath)
     let support = Protection.clean(home) + "/Library/Application Support/"

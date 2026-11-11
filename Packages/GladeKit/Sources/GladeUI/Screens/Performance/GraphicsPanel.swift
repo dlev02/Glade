@@ -1,10 +1,10 @@
 import GladeKit
 import SwiftUI
 
-/// How busy the graphics chip is, which chip it is, and the memory it's using.
+/// How busy the graphics chip is, which chip it is, and the memory it’s using.
 struct GraphicsPanel: View {
   var gpu: GPUStats?
-  /// A reading has arrived, even if the GPU didn't publish one.
+  /// A reading has arrived, even if the GPU didn’t publish one.
   var measured: Bool
   var history: [SystemSnapshot]
 

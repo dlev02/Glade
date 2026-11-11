@@ -42,7 +42,7 @@ public struct AppUsage: Codable, Sendable, Identifiable, Hashable {
   public var cpuPercent: Double
   /// Summed physical footprint of members.
   public var memoryBytes: Int64
-  /// Summed share of the GPU, 0–100. `nil` when the GPU doesn't record it per process.
+  /// Summed share of the GPU, 0–100. `nil` when the GPU doesn’t record it per process.
   public var gpuPercent: Double?
   public var threadCount: Int
   /// The member using the most processor right now, for spotting a runaway helper.
@@ -56,32 +56,32 @@ public struct AppUsage: Codable, Sendable, Identifiable, Hashable {
   public var lastActive: Date?
   public var isPlayingAudio: Bool
   public var isCapturingAudio: Bool
-  /// What it's keeping awake for, such as "Playing video" or an export's name.
+  /// What it’s keeping awake for, such as "Playing video" or an export’s name.
   public var preventingSleep: String?
   /// On-screen windows at the normal level.
   public var windowCount: Int
   /// Has a window covering a whole display.
   public var isFullScreen: Bool
-  /// The app's `LSApplicationCategoryType`, such as `public.app-category.games`.
+  /// The app’s `LSApplicationCategoryType`, such as `public.app-category.games`.
   public var category: String?
   public var isGame: Bool
   /// Part of macOS, or owned by another user: never suggested for quitting.
   public var isSystem: Bool
   /// Glade itself.
   public var isGlade: Bool
-  /// Some members belong to another user and couldn't be measured directly.
+  /// Some members belong to another user and couldn’t be measured directly.
   public var hasRestrictedMembers: Bool
 }
 
 /// Folds processes into apps.
 ///
 /// 1. A process inside `Something.app/…` belongs to the outermost `.app` in its path
-///    (Chrome Helper → Google Chrome). Xcode's command-line tools under
+///    (Chrome Helper → Google Chrome). Xcode’s command-line tools under
 ///    `Xcode.app/Contents/Developer` are the exception and stand alone.
 /// 2. An XPC service belongs to the app responsible for it (WebKit → Safari).
 /// 3. Anything else follows its parent chain to an app, stopping at a shell, so tools
 ///    started from a terminal (`node`, `claude`, `xcodebuild`) stay visible as their own rows.
-/// 4. What's left is grouped by name.
+/// 4. What’s left is grouped by name.
 public enum AppGrouper {
   static let shells: Set<String> = ["zsh", "bash", "sh", "fish", "dash", "tcsh", "csh", "ksh", "login", "tmux", "screen", "nu", "sshd", "sshd-session"]
 
@@ -123,7 +123,7 @@ public enum AppGrouper {
     }
 
     // Simulated devices run dozens of processes; they read as one row, under Simulator
-    // when it's open.
+    // when it’s open.
     let simulatorKey: Key =
       launched.first { $0.bundleID == "com.apple.iphonesimulator" }?.bundlePath.map { .bundle($0) } ?? .name(simulatorRowName)
 
@@ -135,7 +135,7 @@ public enum AppGrouper {
       if isSimulator(process.executablePath) {
         found = simulatorKey
       } else if let registered = launchedByPID[process.pid]?.bundlePath, registered.hasSuffix(".app") {
-        // Helpers can register too (a browser's helper app); they still belong to the outer app.
+        // Helpers can register too (a browser’s helper app); they still belong to the outer app.
         found = .bundle(outermost(registered))
       } else if let path = process.executablePath, let bundle = appBundle(in: path) {
         found = .bundle(alias[bundle] ?? bundle)
@@ -256,7 +256,7 @@ public enum AppGrouper {
     return rows
   }
 
-  /// The outermost `.app` in a path, skipping Xcode's toolchain under `Contents/Developer`
+  /// The outermost `.app` in a path, skipping Xcode’s toolchain under `Contents/Developer`
   /// (but not apps inside it, such as Simulator).
   public static func appBundle(in path: String) -> String? {
     // Byte-level search: this runs for every process on every listing.
@@ -309,9 +309,9 @@ public enum AppGrouper {
   }
 }
 
-/// Apple's own processes that must never be quit.
+/// Apple’s own processes that must never be quit.
 public enum SystemApps {
-  /// Where Apple's daemons, agents and core apps live. `/usr/bin` and `/bin` are left out
+  /// Where Apple’s daemons, agents and core apps live. `/usr/bin` and `/bin` are left out
   /// on purpose: tools a person runs from there (`git`, `ssh`, `python3`) are theirs.
   static let prefixes = ["/System/Library/", "/usr/libexec/", "/usr/sbin/", "/usr/lib/", "/sbin/", "/Library/Apple/", "/System/iOSSupport/"]
 

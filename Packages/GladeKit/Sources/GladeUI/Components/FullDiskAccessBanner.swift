@@ -2,7 +2,7 @@ import GladeKit
 import SwiftUI
 
 /// Shown on Overview until Full Disk Access is granted, because without it parts of
-/// the Mac can't be measured. One line; it goes away by itself once access is on,
+/// the Mac can’t be measured. One line; it goes away by itself once access is on,
 /// and the close button hides it for a week.
 public struct FullDiskAccessBanner: View {
   @Environment(AppModel.self) private var model
@@ -50,7 +50,7 @@ public struct FullDiskAccessBanner: View {
   }
 }
 
-/// Storage's quiet reminder: an orange lock at the end of the clean bar that opens the
+/// Storage’s quiet reminder: an orange lock at the end of the clean bar that opens the
 /// Full Disk Access settings.
 struct FullDiskAccessGlyph: View {
   @Environment(AppModel.self) private var model

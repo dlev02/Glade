@@ -5,7 +5,7 @@ import Foundation
 public struct AgentRequest: Sendable {
   public var system: String
   public var prompt: String
-  /// A model name to pass through, or `nil` for the provider's default.
+  /// A model name to pass through, or `nil` for the provider’s default.
   public var model: String?
   public var effort: Effort
   /// Seconds before the run is abandoned.
@@ -51,7 +51,7 @@ public enum AgentError: Error, LocalizedError, Sendable {
   case rateLimited(provider: String, detail: String)
   case timedOut(provider: String, seconds: Int)
   case failed(provider: String, detail: String)
-  /// The reply didn't contain what was asked for.
+  /// The reply didn’t contain what was asked for.
   case badReply(provider: String, detail: String)
 
   public var errorDescription: String? {
@@ -86,7 +86,7 @@ public struct ProviderStatus: Sendable, Codable, Identifiable {
   public var supportsEffort: Bool
   /// Model names worth offering. Empty when the provider has no way to list them.
   public var models: [String]
-  /// Whether this integration has been run for real, or follows the tool's documentation only.
+  /// Whether this integration has been run for real, or follows the tool’s documentation only.
   public var verified: Bool
 
   public init(id: String, name: String, state: State, path: String? = nil, version: String? = nil, isLocal: Bool = false, supportsEffort: Bool = false, models: [String] = [], verified: Bool = true) {
@@ -104,15 +104,15 @@ public struct ProviderStatus: Sendable, Codable, Identifiable {
   public var isReady: Bool { state == .ready }
 }
 
-/// A model Glade can ask for advice: an installed agent command-line tool, or Apple's
+/// A model Glade can ask for advice: an installed agent command-line tool, or Apple’s
 /// on-device model.
 public protocol AgentProvider: Sendable {
   var id: String { get }
   var name: String { get }
   /// Runs entirely on this Mac.
   var isLocal: Bool { get }
-  /// Whether it's installed and signed in. Must be quick and must never start a sign-in flow.
+  /// Whether it’s installed and signed in. Must be quick and must never start a sign-in flow.
   func status() async -> ProviderStatus
-  /// Sends one request and returns the model's final text.
+  /// Sends one request and returns the model’s final text.
   func complete(_ request: AgentRequest) async throws -> AgentReply
 }

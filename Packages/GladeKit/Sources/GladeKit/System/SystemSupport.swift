@@ -24,7 +24,7 @@ enum Sysctl {
 }
 
 /// Logs each kind of system-call failure once per run, so a reader that fails every
-/// few seconds doesn't flood the log.
+/// few seconds doesn’t flood the log.
 enum SystemIssues {
   private static let seen = Mutex<Set<String>>([])
 
@@ -46,7 +46,7 @@ enum MachTime {
     UInt64(Double(ticks) * nanosPerTick)
   }
 
-  /// A clock that stops while the Mac sleeps, like the CPU counters it's compared with.
+  /// A clock that stops while the Mac sleeps, like the CPU counters it’s compared with.
   static func now() -> UInt64 { clock_gettime_nsec_np(CLOCK_UPTIME_RAW) }
 }
 

@@ -3,15 +3,15 @@ import SwiftUI
 
 /// What the assistant said about the selection, how it changed it, and, plainly,
 /// any suggestions Glade refused because they broke a safety rule. It is the storage
-/// list's first row and follows the rows' grid: the sparkle in the checkbox column,
+/// list’s first row and follows the rows' grid: the sparkle in the checkbox column,
 /// the words and chips on the titles' edge, who answered on the sizes' trailing edge.
 struct AdviceBanner: View {
   @Environment(AppModel.self) private var model
   @Environment(\.accentMark) private var accentMark
   var advice: StorageAdvice
-  /// Looks up a finding's title for the chips' lists and the refused suggestions.
+  /// Looks up a finding’s title for the chips' lists and the refused suggestions.
   var title: (String) -> String?
-  /// Shows a finding's row in the list, when it's chosen from a chip's list.
+  /// Shows a finding’s row in the list, when it’s chosen from a chip’s list.
   var reveal: ((String) -> Void)?
   @State private var showsRejected = false
 

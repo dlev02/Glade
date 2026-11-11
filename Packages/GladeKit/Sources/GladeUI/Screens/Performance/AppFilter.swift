@@ -4,9 +4,9 @@ import GladeKit
 enum AppFilter: String, CaseIterable, Identifiable {
   /// Apps the person opened.
   case apps
-  /// Apps and standalone processes such as `node`, but not macOS's own.
+  /// Apps and standalone processes such as `node`, but not macOS’s own.
   case everything
-  /// Everything, including macOS's own processes.
+  /// Everything, including macOS’s own processes.
   case all
 
   var id: String { rawValue }

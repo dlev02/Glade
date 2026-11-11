@@ -18,7 +18,7 @@ struct Scan: AsyncParsableCommand {
   @Option(name: .long, help: "How many findings to list.")
   var limit = 40
 
-  @Flag(name: .long, help: "Include findings that can't be removed right now.")
+  @Flag(name: .long, help: "Include findings that can’t be removed right now.")
   var includeBlocked = false
 
   func run() async throws {

@@ -1,10 +1,10 @@
 import Foundation
 import FoundationModels
 
-/// Helpers for Apple's on-device model that don't depend on a provider, so prompts can be
+/// Helpers for Apple’s on-device model that don’t depend on a provider, so prompts can be
 /// trimmed to fit its small context before a request is made.
 public enum AppleModel {
-  /// The on-device model's context window in tokens (8192 on macOS 27, 4096 before).
+  /// The on-device model’s context window in tokens (8192 on macOS 27, 4096 before).
   public static var contextTokens: Int { SystemLanguageModel.default.contextSize }
 
   /// How many tokens the text takes for the on-device model. Counted by the model on
@@ -17,7 +17,7 @@ public enum AppleModel {
     return Int((Double(text.utf8.count) / 3.5).rounded(.up))
   }
 
-  /// Plain-English text for a system model that can't be used.
+  /// Plain-English text for a system model that can’t be used.
   static func reason(_ reason: SystemLanguageModel.Availability.UnavailableReason) -> String {
     switch reason {
     case .deviceNotEligible: "This Mac can’t run Apple Intelligence."
@@ -43,7 +43,7 @@ public enum AppleModel {
     }
   }
 
-  /// Maps the framework's errors to `AgentError`.
+  /// Maps the framework’s errors to `AgentError`.
   static func map(_ error: Error, provider: String, timeout: TimeInterval) -> AgentError {
     if let agentError = error as? AgentError { return agentError }
     if #available(macOS 27.0, *), let modelError = error as? LanguageModelError {
@@ -89,7 +89,7 @@ public enum AppleModel {
   static let options = GenerationOptions(temperature: 0.2, maximumResponseTokens: 1500)
 }
 
-/// Apple Intelligence's on-device model. Runs entirely on this Mac, so nothing leaves it.
+/// Apple Intelligence’s on-device model. Runs entirely on this Mac, so nothing leaves it.
 /// Its context is small (8192 tokens on macOS 27), so send it a trimmed prompt: see
 /// `contextTokens` and `AppleModel.tokenCount(_:)`.
 public struct AppleModelProvider: AgentProvider {
@@ -99,7 +99,7 @@ public struct AppleModelProvider: AgentProvider {
 
   public init() {}
 
-  /// The model's context window in tokens, shared by the instructions, prompt and reply.
+  /// The model’s context window in tokens, shared by the instructions, prompt and reply.
   public var contextTokens: Int { AppleModel.contextTokens }
 
   public func status() async -> ProviderStatus {
@@ -140,9 +140,9 @@ public struct AppleModelProvider: AgentProvider {
   }
 }
 
-/// Apple's Private Cloud Compute model (macOS 27 and later). Requests leave this Mac for
-/// Apple's servers, so it isn't local, though Apple designed those servers so that it
-/// can't read or keep what's sent. Apple only lets apps use it with an entitlement it
+/// Apple’s Private Cloud Compute model (macOS 27 and later). Requests leave this Mac for
+/// Apple’s servers, so it isn’t local, though Apple designed those servers so that it
+/// can’t read or keep what’s sent. Apple only lets apps use it with an entitlement it
 /// grants on request; until Glade has one, every call fails, so `status()` reports it
 /// unavailable unless a call has already worked in this process.
 public struct ApplePrivateCloudProvider: AgentProvider {
@@ -162,7 +162,7 @@ public struct ApplePrivateCloudProvider: AgentProvider {
     ProviderCache.shared.set("apple-cloud:probe", [worked ? "yes" : "no"])
   }
 
-  /// The context window in tokens, or `nil` before macOS 27 or when it can't be read.
+  /// The context window in tokens, or `nil` before macOS 27 or when it can’t be read.
   public func contextTokens() async -> Int? {
     guard #available(macOS 27.0, *) else { return nil }
     return try? await PrivateCloudComputeLanguageModel().contextSize

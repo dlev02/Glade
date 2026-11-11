@@ -7,7 +7,7 @@ public struct Measure: Sendable, Equatable {
   public var files: Int = 0
   public var newestModification: Date?
   public var newestAccess: Date?
-  /// Entries that couldn't be read (usually a missing permission).
+  /// Entries that couldn’t be read (usually a missing permission).
   public var unreadable: Int = 0
   /// Something inside is a photo library, backup or similar that must not be split up.
   public var containsStrict: Bool = false
@@ -66,13 +66,13 @@ public struct WalkEntry {
   public var linkCount: Int { Int(status.st_nlink) }
   public var inode: UInt64 { UInt64(status.st_ino) }
   public var device: Int32 { status.st_dev }
-  /// A cloud file whose contents aren't on this Mac. Reading it would download it.
+  /// A cloud file whose contents aren’t on this Mac. Reading it would download it.
   public var isDataless: Bool { status.st_flags & UInt32(SF_DATALESS) != 0 }
 }
 
 public enum WalkDecision {
   case proceed
-  /// Don't look inside this folder.
+  /// Don’t look inside this folder.
   case skip
   case stop
 }
@@ -80,7 +80,7 @@ public enum WalkDecision {
 /// Walks folder trees without following links or crossing onto other disks.
 public enum DiskWalk {
   /// Visits every entry under `roots`, parents before children.
-  /// - Parameter unreadable: Called for anything that couldn't be opened.
+  /// - Parameter unreadable: Called for anything that couldn’t be opened.
   public static func walk(
     _ roots: [String],
     unreadable: ((String) -> Void)? = nil,
@@ -116,7 +116,7 @@ public enum DiskWalk {
   /// Adds up the space used by files and folders.
   /// - Parameters:
   ///   - protection: When given, folders that are protected are left out of the total
-  ///     and libraries that can't be split are flagged.
+  ///     and libraries that can’t be split are flagged.
   ///   - isCancelled: Checked every few thousand entries.
   public static func measure(
     _ paths: [String],
@@ -164,7 +164,7 @@ public enum DiskWalk {
     return result
   }
 
-  /// The immediate children of a folder, or an empty list when it can't be read.
+  /// The immediate children of a folder, or an empty list when it can’t be read.
   public static func children(of path: String) -> [String] {
     (try? FileManager.default.contentsOfDirectory(atPath: path))?.map { path + "/" + $0 } ?? []
   }

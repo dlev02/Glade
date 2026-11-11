@@ -6,7 +6,7 @@ public struct CPUStats: Codable, Sendable, Hashable {
   public var totalPercent: Double
   public var userPercent: Double
   public var systemPercent: Double
-  /// Busy share of each core, 0–100, in the kernel's core order.
+  /// Busy share of each core, 0–100, in the kernel’s core order.
   public var perCorePercent: [Double]
   public var logicalCores: Int
   public var performanceCores: Int?
@@ -47,7 +47,7 @@ public enum MemoryPressure: String, Codable, Sendable, Comparable {
 /// Memory, counted the way Activity Monitor counts it.
 public struct MemoryStats: Codable, Sendable, Hashable {
   public var totalBytes: Int64
-  /// App memory + wired + compressed: Activity Monitor's "Memory Used".
+  /// App memory + wired + compressed: Activity Monitor’s "Memory Used".
   public var usedBytes: Int64
   public var appBytes: Int64
   public var wiredBytes: Int64
@@ -58,7 +58,7 @@ public struct MemoryStats: Codable, Sendable, Hashable {
   public var swapUsedBytes: Int64
   public var swapTotalBytes: Int64
   public var pressure: MemoryPressure
-  /// The kernel's own estimate of how much memory is free, 0–100.
+  /// The kernel’s own estimate of how much memory is free, 0–100.
   public var freePercent: Int?
 
   public init(
@@ -139,7 +139,7 @@ public struct SystemSnapshot: Codable, Sendable {
   public var intervalSeconds: Double
   public var cpu: CPUStats
   public var memory: MemoryStats
-  /// `nil` when the GPU doesn't publish statistics.
+  /// `nil` when the GPU doesn’t publish statistics.
   public var gpu: GPUStats?
   public var disk: VolumeInfo
   public var thermal: ThermalState

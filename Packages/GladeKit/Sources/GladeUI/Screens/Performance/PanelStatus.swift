@@ -1,7 +1,7 @@
 import GladeKit
 import SwiftUI
 
-/// The few words in a panel's corner saying how things stand, with a symbol so the
+/// The few words in a panel’s corner saying how things stand, with a symbol so the
 /// state never rests on colour alone. Calm states stay quiet; the rest stand out.
 struct PanelStatus: View {
   var text: String
@@ -11,7 +11,7 @@ struct PanelStatus: View {
 
   static let measuring = PanelStatus(text: "Measuring…", symbol: nil, color: .secondary, prominent: false)
 
-  /// The word follows the same thresholds as the line's colour, so a green line never
+  /// The word follows the same thresholds as the line’s colour, so a green line never
   /// says "Busy".
   static func load(_ percent: Double) -> PanelStatus {
     let fraction = percent / 100
@@ -25,7 +25,7 @@ struct PanelStatus: View {
     PanelStatus(text: pressure.title, symbol: nil, color: pressure.color, prominent: pressure != .normal)
   }
 
-  /// One style on every panel: a small dot in the state's colour and a word, the word
+  /// One style on every panel: a small dot in the state’s colour and a word, the word
   /// coloured too once the state needs attention.
   var body: some View {
     HStack(spacing: 5) {

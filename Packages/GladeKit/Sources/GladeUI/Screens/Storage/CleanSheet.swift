@@ -2,7 +2,7 @@ import GladeKit
 import SwiftUI
 
 /// The clean, start to finish, in one sheet: confirm, watch it run, see what
-/// happened. It can't be dismissed while the clean is running.
+/// happened. It can’t be dismissed while the clean is running.
 struct CleanSheet: View {
   @Environment(AppModel.self) private var model
   /// Closes the sheet.

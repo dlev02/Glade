@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The popover's footer buttons: plain text or a symbol, like borderless buttons, with
+/// The popover’s footer buttons: plain text or a symbol, like borderless buttons, with
 /// a soft fill under the pointer so they read as clickable.
 struct PopoverFooterButtonStyle: ButtonStyle {
   @Environment(\.isEnabled) private var isEnabled

@@ -4,7 +4,7 @@ import SwiftUI
 /// How an answer changed the selection: its size and a way to review it, what was
 /// added, left alone or flagged, the first few reasons, and what Glade refused.
 /// Once anything else changes the selection, the card becomes an "Earlier selection"
-/// that folds away and can't be acted on.
+/// that folds away and can’t be acted on.
 struct AdviceCard: View {
   @Environment(AppModel.self) private var model
   @Environment(\.accentMark) private var accentMark
@@ -17,7 +17,7 @@ struct AdviceCard: View {
   @State private var showsAllNotes = DemoState.value("demoExpandAdvice") != nil
 
   private static let noteLimit = 3
-  /// The live card's side padding: the hanging glyphs' gutter and room around them.
+  /// The live card’s side padding: the hanging glyphs' gutter and room around them.
   private static let inset: CGFloat = Metrics.xxl
 
   var body: some View {
@@ -31,9 +31,9 @@ struct AdviceCard: View {
           .padding(.horizontal, Self.inset)
           .padding(.vertical, Metrics.l)
         }
-        // The card's fill reaches outside the answer's text edge, far enough for the
+        // The card’s fill reaches outside the answer’s text edge, far enough for the
         // reasons' glyphs to hang in it, so every line of words starts exactly where
-        // the answer's do.
+        // the answer’s do.
         .padding(.horizontal, -Self.inset)
       } else {
         // No card: an earlier selection is a note in the conversation, not a thing to act on.
@@ -46,13 +46,13 @@ struct AdviceCard: View {
         }
       }
     }
-    // As wide as the answer's column, so the card ends where the text can.
+    // As wide as the answer’s column, so the card ends where the text can.
     .frame(maxWidth: .infinity, alignment: .leading)
   }
 
   private var header: some View {
     HStack(alignment: .center, spacing: Metrics.m) {
-      // The same figures as the clean bar: what's freed now, and the Trash apart.
+      // The same figures as the clean bar: what’s freed now, and the Trash apart.
       let free = model.immediateBytes
       let trash = model.trashBytes
       VStack(alignment: .leading, spacing: 2) {
@@ -176,7 +176,7 @@ private struct NoteRow: View {
   @Environment(\.accentMark) private var accentMark
 
   var body: some View {
-    // The glyph hangs in the gutter, so the reasons' words share the answer's edge.
+    // The glyph hangs in the gutter, so the reasons' words share the answer’s edge.
     HangingIcon {
       Image(systemName: note.kind.symbol)
         .foregroundStyle(note.kind.style(mark: accentMark))

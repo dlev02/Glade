@@ -10,7 +10,7 @@ struct AudioUse: Sendable, Hashable {
   var input = false
 }
 
-/// Everything about what apps are doing that isn't CPU or memory: sound, sleep
+/// Everything about what apps are doing that isn’t CPU or memory: sound, sleep
 /// assertions, windows. Each reader needs no permission prompt.
 struct AppSignals: Sendable {
   var audioByPID: [pid_t: AudioUse] = [:]
@@ -195,13 +195,13 @@ enum LaunchedApps {
 
 /// Finds the app responsible for an XPC service (WebKit content and GPU processes belong
 /// to Safari, Mail and so on). Uses a libsystem function looked up at run time; when it
-/// isn't there, XPC services stand alone.
+/// isn’t there, XPC services stand alone.
 enum Responsibility {
   private typealias Function = @convention(c) (pid_t) -> pid_t
 
   private static let function: Function? = {
     guard let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "responsibility_get_pid_responsible_for_pid") else {
-      SystemIssues.warn("responsibility", "responsibility_get_pid_responsible_for_pid isn't available; XPC services aren't grouped under their app")
+      SystemIssues.warn("responsibility", "responsibility_get_pid_responsible_for_pid isn’t available; XPC services aren’t grouped under their app")
       return nil
     }
     return unsafeBitCast(symbol, to: Function.self)

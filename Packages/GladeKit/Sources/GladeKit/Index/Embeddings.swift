@@ -24,9 +24,9 @@ public enum EmbeddingError: Error, CustomStringConvertible {
   }
 }
 
-/// Apple's built-in contextual embedding (a BERT-style model that ships with macOS),
+/// Apple’s built-in contextual embedding (a BERT-style model that ships with macOS),
 /// mean-pooled over its token vectors. Falls back to the older sentence embedding when
-/// the contextual model's assets can't be fetched. Everything runs on this Mac.
+/// the contextual model’s assets can’t be fetched. Everything runs on this Mac.
 public actor AppleTextEmbedder: TextEmbedder {
   public nonisolated let id: String
   public nonisolated let dimension = 512
@@ -102,7 +102,7 @@ public actor AppleTextEmbedder: TextEmbedder {
     return model
   }
 
-  /// The text's dominant language, falling back to English when it's unclear.
+  /// The text’s dominant language, falling back to English when it’s unclear.
   static func language(of text: String) -> NLLanguage {
     let recognizer = NLLanguageRecognizer()
     recognizer.processString(String(text.prefix(1000)))
@@ -111,7 +111,7 @@ public actor AppleTextEmbedder: TextEmbedder {
   }
 }
 
-/// Vision's image feature print: a vector where near-identical pictures land close
+/// Vision’s image feature print: a vector where near-identical pictures land close
 /// together, whatever their size or compression.
 public struct ImageEmbedder: Sendable {
   public let id = "vision.featureprint.1"
@@ -267,7 +267,7 @@ enum VectorMath {
   }
 }
 
-/// A compact sketch of a text's word triples. Two texts whose sketches mostly agree
+/// A compact sketch of a text’s word triples. Two texts whose sketches mostly agree
 /// share most of their wording, which tells near-identical documents apart from ones
 /// that are merely about the same thing.
 enum MinHash {

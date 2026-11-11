@@ -19,7 +19,7 @@ public struct OpenCodeProvider: AgentProvider {
     let models = await ProviderCache.shared.models(id, executable: path, arguments: ["models"]) { output in
       output.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }.filter { $0.contains("/") }
     }
-    // OpenCode's own free models need no sign-in, so a missing auth file isn't a blocker
+    // OpenCode’s own free models need no sign-in, so a missing auth file isn’t a blocker
     // as long as a model is chosen; `complete` reports when the default model refuses.
     let signedIn = ProviderRun.exists("~/.local/share/opencode/auth.json") || !models.isEmpty
     return ProviderStatus(
@@ -31,7 +31,7 @@ public struct OpenCodeProvider: AgentProvider {
 
   public func complete(_ request: AgentRequest) async throws -> AgentReply {
     let config: [String: Any] = [
-      // `"*": false` leaves the skill tool on, so it's named as well.
+      // `"*": false` leaves the skill tool on, so it’s named as well.
       "agent": ["inert": [
         "mode": "primary", "prompt": request.system,
         "tools": ["*": false, "skill": false],

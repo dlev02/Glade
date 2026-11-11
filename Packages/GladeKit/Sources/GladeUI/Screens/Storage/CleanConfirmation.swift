@@ -18,7 +18,7 @@ struct CleanConfirmation: View {
   /// rows only.
   static let rowHeight: CGFloat = 44
   static let visibleRows = 6
-  /// The list's inner leading inset: icons in the list and in the outcome lines above
+  /// The list’s inner leading inset: icons in the list and in the outcome lines above
   /// it share this edge.
   private static let inset = Metrics.m
 
@@ -50,7 +50,7 @@ struct CleanConfirmation: View {
 
       if !items.isEmpty {
         VStack(alignment: .leading, spacing: Metrics.s) {
-          // The count and, at the other end, what can't be recreated; when that's too
+          // The count and, at the other end, what can’t be recreated; when that’s too
           // long for one line, it goes under the count and wraps.
           ViewThatFits(in: .horizontal) {
             HStack(alignment: .firstTextBaseline, spacing: Metrics.l) {
@@ -106,7 +106,7 @@ struct CleanConfirmation: View {
   }
 
   /// What removing outright means for the items it applies to. When only some of
-  /// them can't be recreated, the red count above the list names the exception.
+  /// them can’t be recreated, the red count above the list names the exception.
   private func removedDetail(_ items: [Finding]) -> String {
     let removed = items.filter { !$0.goesToTrash(model.config) }
     return !removed.isEmpty && removed.allSatisfy { $0.recovery == .permanent }
@@ -129,10 +129,10 @@ struct CleanConfirmation: View {
     }
   }
 
-  /// Names up to three things that can't be recreated, otherwise counts them.
+  /// Names up to three things that can’t be recreated, otherwise counts them.
   private func permanentText(_ items: [Finding]) -> String {
     if items.count <= 3 {
-      return "Can’t be recreated: " + items.map(\.title).formatted(.list(type: .and))
+      return "Can’t be recreated: " + Format.listed(items.map(\.title))
     }
     return "\(items.count) items can’t be recreated"
   }
@@ -166,7 +166,7 @@ struct CleanConfirmation: View {
     } action: { _, more in
       withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) { moreBelow = more }
     }
-    // A soft fade over the last row says there's more below.
+    // A soft fade over the last row says there’s more below.
     .mask {
       VStack(spacing: 0) {
         Color.black
@@ -184,7 +184,7 @@ struct CleanConfirmation: View {
   private func row(_ finding: Finding) -> some View {
     HStack(spacing: Metrics.s) {
       CategoryIcon(finding.category, size: 20)
-      Text(finding.title)
+      Text(finding.title.keepingDashWithName)
         .lineLimit(2)
         .truncationMode(.middle)
         .fixedSize(horizontal: false, vertical: true)

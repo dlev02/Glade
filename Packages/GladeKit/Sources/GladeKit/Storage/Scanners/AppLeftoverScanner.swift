@@ -5,7 +5,7 @@ import Foundation
 /// Only folders named like a bundle identifier are considered, and only when nothing
 /// installed, running or scheduled claims that identifier, its developer or its group.
 /// Plain names ("Slack", "Google") are skipped: command-line tools, drivers and plugins
-/// write there too, and a name alone can't say who owns it.
+/// write there too, and a name alone can’t say who owns it.
 public struct AppLeftoverScanner: StorageScanner {
   public let id = "app-leftovers"
   public let title = "Leftovers from removed apps"
@@ -28,10 +28,10 @@ public struct AppLeftoverScanner: StorageScanner {
   ]
 
   /// Identifiers never reported, even when no app claims them. Each is written by
-  /// something that isn't an app bundle, is shared between many apps, or belongs to
+  /// something that isn’t an app bundle, is shared between many apps, or belongs to
   /// macOS. A trailing `*` matches the identifier and anything below it.
   static let neverReport: [String] = [
-    // macOS and Apple's own components.
+    // macOS and Apple’s own components.
     "com.apple.*", "is.workflow.*", "systemgroup.*",
     // Developer tools without an app bundle.
     "org.swift.*", "org.llvm.*", "org.python.*", "org.nodejs.*", "org.rust-lang.*", "dev.deno.*",
@@ -43,7 +43,7 @@ public struct AppLeftoverScanner: StorageScanner {
     // Password managers: an encrypted vault is never offered, installed or not.
     "com.bitwarden.*", "com.1password.*", "com.agilebits.*", "com.lastpass.*", "com.dashlane.*",
     "org.keepassxc.*", "com.sinew.enpass*", "com.nordsec.nordpass*", "com.proton.pass*", "me.proton.pass*",
-    // SDKs that many apps embed under the SDK's own name.
+    // SDKs that many apps embed under the SDK’s own name.
     "io.sentry.*", "com.crashlytics.*", "io.fabric.*", "com.firebase.*", "com.google.firebase.*",
     "com.facebook.sdk*", "org.sparkle-project.*", "com.sparkle-project.*", "com.segment.*",
     "com.plausiblelabs.*", "com.hockeyapp.*", "com.bugsnag.*", "com.amplitude.*", "com.mixpanel.*",
@@ -76,7 +76,7 @@ public struct AppLeftoverScanner: StorageScanner {
     for (identifier, entry) in grouped.sorted(by: { $0.key < $1.key }) {
       if context.cancel.isCancelled { break }
       if apps.claim(on: identifier, team: entry.team) != nil { continue }
-      // A path that would fail the removal check isn't offered at all.
+      // A path that would fail the removal check isn’t offered at all.
       let locations = entry.locations.filter { context.protection.verdict(forRemoving: $0.path).isAllowed }
       guard !locations.isEmpty else { continue }
       let measure = await context.measure(locations.map(\.path))
@@ -116,7 +116,7 @@ public struct AppLeftoverScanner: StorageScanner {
     return grouped
   }
 
-  /// The identifier a folder is named after, or `nil` when the name isn't shaped like
+  /// The identifier a folder is named after, or `nil` when the name isn’t shaped like
   /// one. Group containers may carry a team prefix (`ABCDE12345.com.vendor.app`) or a
   /// `group.` prefix; saved state and cookie files carry a suffix.
   static func identifier(from name: String, in folder: String) -> (id: String, team: String?)? {
@@ -138,7 +138,7 @@ public struct AppLeftoverScanner: StorageScanner {
     for part in parts {
       guard !part.isEmpty, part.unicodeScalars.allSatisfy({ allowed.contains($0) && $0.isASCII }) else { return nil }
     }
-    // Apple's components sit under other roots too (group.com.apple…, *.apple.*).
+    // Apple’s components sit under other roots too (group.com.apple…, *.apple.*).
     if parts.dropFirst().contains(where: { $0.lowercased() == "apple" }) { return nil }
     return (parts.joined(separator: "."), team)
   }
@@ -203,7 +203,7 @@ public struct AppLeftoverScanner: StorageScanner {
     return Finding(
       id: Finding.makeID(rule: "leftovers.app", path: identifier),
       ruleID: "leftovers.app", category: .appLeftovers, title: "\(name) leftovers",
-      detail: "Settings, caches and data from an app that's no longer installed. Reinstalling the app starts fresh; this can't be brought back once the Trash is emptied.",
+      detail: "Settings, caches and data from an app that’s no longer installed. Reinstalling the app starts fresh; this can’t be brought back once the Trash is emptied.",
       paths: locations.map(\.path), bytes: measure.bytes, fileCount: measure.files, lastUsed: measure.lastUsed,
       recovery: .permanent, risk: .caution, owner: Owner(name, bundleIDs: [display]),
       blockers: blockers, method: .trash, evidence: evidence, autoLevel: nil, idleDaysRequired: 0

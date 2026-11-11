@@ -179,7 +179,7 @@ public struct InstalledApps: Sendable {
       }
     }
     // Third-party taps ("homebrew-autoupdate") install tools that write under the
-    // tap's own identifier.
+    // tap’s own identifier.
     for prefix in ["/opt/homebrew", "/usr/local/Homebrew"] {
       for owner in DiskWalk.children(of: "\(prefix)/Library/Taps") {
         for tap in DiskWalk.children(of: owner) { names.insert((tap as NSString).lastPathComponent.lowercased()) }
@@ -190,7 +190,7 @@ public struct InstalledApps: Sendable {
 
   // MARK: Reading a bundle
 
-  /// Reads an app bundle's identity, its helpers' identifiers and its app groups.
+  /// Reads an app bundle’s identity, its helpers' identifiers and its app groups.
   static func read(_ path: String, standard: Bool, cancel: CancelFlag) -> InstalledApp? {
     if cancel.isCancelled { return nil }
     guard let info = infoPlist(of: path), let bundleID = info["CFBundleIdentifier"] as? String, !bundleID.isEmpty else {
@@ -211,7 +211,7 @@ public struct InstalledApps: Sendable {
     )
   }
 
-  /// A bundle's Info.plist, skipped when it's a cloud placeholder.
+  /// A bundle’s Info.plist, skipped when it’s a cloud placeholder.
   static func infoPlist(of bundle: String) -> [String: Any]? {
     for candidate in ["\(bundle)/Contents/Info.plist", "\(bundle)/Info.plist", "\(bundle)/WrappedBundle/Info.plist"] {
       var info = stat()

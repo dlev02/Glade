@@ -3,7 +3,7 @@ import SwiftUI
 /// A list of folders inside a form section, each removable, with a button to add more.
 struct FolderRows: View {
   @Binding var paths: [String]
-  /// What the open panel's button says, such as "Protect".
+  /// What the open panel’s button says, such as "Protect".
   var prompt: String
   /// Ask before removing, for lists where removing one lowers protection.
   var confirmsRemoval = false

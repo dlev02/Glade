@@ -2,7 +2,7 @@ import Foundation
 import GladeKit
 
 /// Made-up storage findings and real system readings, for rendering screens without
-/// scanning, and for screenshots that don't show anyone's own files.
+/// scanning, and for screenshots that don’t show anyone’s own files.
 public struct SampleData: Sendable {
   public var snapshot: SystemSnapshot
   public var history: [SystemSnapshot]
@@ -14,7 +14,7 @@ public struct SampleData: Sendable {
   public var providers: [ProviderStatus]
   public var messages: [AppModel.Message]
 
-  /// Reads the Mac's live figures and pairs them with invented storage findings.
+  /// Reads the Mac’s live figures and pairs them with invented storage findings.
   public static func capture() async -> SampleData {
     let sampler = SystemSampler()
     _ = await sampler.snapshot()
@@ -73,12 +73,12 @@ public struct SampleData: Sendable {
         "facts": "Idle 3 h · \(Format.bytes(bytes))",
       ])
     }
-    // The engine's initialiser isn't public, so build them the way they arrive from disk.
+    // The engine’s initialiser isn’t public, so build them the way they arrive from disk.
     guard let data = try? JSONSerialization.data(withJSONObject: entries) else { return [] }
     return (try? JSONDecoder().decode([PerformanceSuggestion].self, from: data)) ?? []
   }
 
-  /// Advice as a storage run returns it, after Glade's checks: additions, things left
+  /// Advice as a storage run returns it, after Glade’s checks: additions, things left
   /// alone, personal items to look at and suggestions refused.
   /// - Parameter short: A one-line answer instead of a four-line one.
   public static func sampleAdvice(scan: ScanResult, short: Bool = false) -> StorageAdvice? {
@@ -88,7 +88,7 @@ public struct SampleData: Sendable {
     let summary = short
       ? "I’d add the older speech model, which MacWhisper no longer loads, and leave Atlas alone, since you built it this morning."
       : "I’d clear about **{total}**: build data for projects you haven’t opened in over a month, an iOS 18 simulator system nothing uses, an older speech model, old package downloads and agent sessions from the summer. I left Harbor’s build data alone because you built it this week, and kept the npm cache because you installed packages yesterday. Your CleanShot history, a second copy of a holiday video and an old film are worth a look yourself if you want more space."
-    // Only what the rules didn't already tick is added, and only what they ticked is
+    // Only what the rules didn’t already tick is added, and only what they ticked is
     // left alone, so every chip changes the selection.
     let added = note("Speech models", "MacWhisper now uses a newer model; this one hasn’t loaded in three weeks.")
     let object: [String: Any] = [
@@ -111,7 +111,7 @@ public struct SampleData: Sendable {
   }
 
   /// A written answer with the formatting AIs use, for showing how answers render.
-  /// Its figures come from the sample's own readings, so it agrees with Performance.
+  /// Its figures come from the sample’s own readings, so it agrees with Performance.
   public static func formattedAnswer(snapshot: SystemSnapshot?, apps: [AppUsage]) -> String {
     let hog = apps.first { $0.name == "Docker" }
       ?? apps.filter { $0.kind == .app && !$0.isSystem && !$0.isGlade && !$0.isFrontmost }.max { $0.memoryBytes < $1.memoryBytes }
@@ -128,7 +128,7 @@ public struct SampleData: Sendable {
       1. \(first)
       2. An **iPad Pro simulator** has been idle for 31 hours and uses *10.3 GB*.
 
-      ### What I'd do
+      ### What I’d do
       - \(advice)
       - Shut down the simulator with `xcrun simctl shutdown all`, or from Performance.
 
@@ -208,7 +208,7 @@ public struct SampleData: Sendable {
         project: project, autoLevel: auto, idleDaysRequired: idle
       ))
     }
-    let build = "Xcode's build products and indexes for one project. Rebuilt the next time you build it."
+    let build = "Xcode’s build products and indexes for one project. Rebuilt the next time you build it."
     add("Build data – Lantern", .xcode, 31.2, daysAgo: 41, .automatic, .safe, .careful, idle: 3, path: "Library/Developer/Xcode/DerivedData/Lantern-a", detail: build)
     add("Build data – Atlas", .xcode, 12.6, daysAgo: 0.2, .automatic, .safe, .careful, idle: 3, path: "Library/Developer/Xcode/DerivedData/Atlas-b", detail: build)
     add("Build data – Harbor", .xcode, 6.8, daysAgo: 2, .automatic, .safe, .careful, idle: 3, path: "Library/Developer/Xcode/DerivedData/Harbor-c", detail: build)
@@ -224,7 +224,7 @@ public struct SampleData: Sendable {
     add("Claude Code sessions – Developer-Lantern", .agentHistory, 2.2, daysAgo: 22, .permanent, .caution, .balanced, path: ".claude/projects/lantern", detail: "Conversation transcripts from Claude Code sessions in this folder. Removing them means those sessions can no longer be resumed; your memory and skills are untouched.", evidence: ["184 sessions untouched for 14 days or more.", "12 recent sessions are kept."])
     add("Codex sessions – 2026-08", .agentHistory, 0.9, daysAgo: 74, .permanent, .caution, .balanced, idle: 90, path: ".codex/sessions/2026/08", detail: "Conversation transcripts from Codex sessions. Removing them means those sessions can no longer be resumed.")
     add("node_modules – harbor-web", .projectDependencies, 1.4, daysAgo: 47, .reinstall, .safe, .balanced, idle: 14, path: "Developer/harbor-web/node_modules", detail: "Packages this project installed. `npm install` brings them back.", project: "harbor-web")
-    add("build – Atlas", .buildOutputs, 2.9, daysAgo: 0.3, .automatic, .safe, .balanced, idle: 14, path: "Developer/Atlas/build", detail: "This project's build folder. Rebuilt the next time you build.", project: "Atlas")
+    add("build – Atlas", .buildOutputs, 2.9, daysAgo: 0.3, .automatic, .safe, .balanced, idle: 14, path: "Developer/Atlas/build", detail: "This project’s build folder. Rebuilt the next time you build.", project: "Atlas")
     add("uv cache", .packageCaches, 9.8, daysAgo: 3, .redownload, .safe, .balanced, path: ".cache/uv", detail: "Python packages and builds uv has cached. It fetches them again when needed.")
     add("npm cache", .packageCaches, 4.2, daysAgo: 1, .redownload, .safe, .balanced, path: ".npm/_cacache", detail: "Packages npm has downloaded. It fetches them again on the next install.")
     add("Homebrew downloads", .packageCaches, 1.3, daysAgo: 18, .redownload, .safe, .balanced, idle: 30, path: "Library/Caches/Homebrew", detail: "Installers Homebrew already unpacked. It downloads them again if you reinstall.")
@@ -235,9 +235,9 @@ public struct SampleData: Sendable {
     add("Node 22.4 – mise", .sdks, 0.2, daysAgo: 0, .redownload, .caution, .balanced, path: ".local/share/mise/installs/node/22.4.0", detail: "A version of Node that mise installed. `mise install` downloads it again.", blocked: Blocker(.inUse, "node is running from here."))
     add("Simulator logs", .logs, 0.5, daysAgo: 12, .automatic, .safe, .careful, path: "Library/Logs/CoreSimulator", detail: "Logs from iOS simulators. New ones are written when a simulator runs.")
     add("Superseded extensions – Visual Studio Code", .editorExtensions, 1.4, daysAgo: 30, .automatic, .safe, .careful, path: ".vscode/extensions", detail: "Older versions of extensions the editor no longer loads.")
-    add("Sintel (2010).mkv", .largeFiles, 1.2, daysAgo: 300, .permanent, .personal, nil, path: "Movies/Samples/Sintel (2010).mkv", detail: "A large file you haven't opened in a long time.", method: .trash)
+    add("Sintel (2010).mkv", .largeFiles, 1.2, daysAgo: 300, .permanent, .personal, nil, path: "Movies/Samples/Sintel (2010).mkv", detail: "A large file you haven’t opened in a long time.", method: .trash)
     add("CleanShot capture history", .largeFiles, 21.9, daysAgo: 45, .permanent, .personal, nil, path: "Library/Application Support/CleanShot/media", detail: "Screenshots and recordings CleanShot keeps in its history, older than 30 days. Captures you saved or exported elsewhere are separate files and stay.", method: .trash)
-    add("Figma.dmg", .downloads, 0.4, daysAgo: 88, .redownload, .caution, .balanced, idle: 14, path: "Downloads/Figma.dmg", detail: "An installer for an app that's already installed.", method: .trash, evidence: ["Figma is installed (126.2); this installer was last opened 3 months ago."])
+    add("Figma.dmg", .downloads, 0.4, daysAgo: 88, .redownload, .caution, .balanced, idle: 14, path: "Downloads/Figma.dmg", detail: "An installer for an app that’s already installed.", method: .trash, evidence: ["Figma is installed (126.2); this installer was last opened 3 months ago."])
     add("Hades II", .games, 9.6, daysAgo: 140, .redownload, .caution, nil, path: "Library/Application Support/Steam/steamapps/common/Hades II", detail: "An installed Steam game. Steam downloads it again from your library; cloud saves depend on the game.", method: .trash)
     add("holiday-2025.mov – 2 copies", .duplicates, 2.3, daysAgo: 200, .permanent, .personal, nil, path: "Downloads/holiday-2025 copy.mov", detail: "An identical copy of a file kept elsewhere. The other copy stays.", method: .trash)
 

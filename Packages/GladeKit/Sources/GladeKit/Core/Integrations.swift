@@ -1,14 +1,14 @@
 import Foundation
 
-/// The `glade` command in Terminal. Glade's own executable doubles as the command when
-/// it's started through a symbolic link named `glade`, so installing it only places
-/// that link in a folder on the shell's search path. Nothing here asks for a password.
+/// The `glade` command in Terminal. Glade’s own executable doubles as the command when
+/// it’s started through a symbolic link named `glade`, so installing it only places
+/// that link in a folder on the shell’s search path. Nothing here asks for a password.
 public enum CommandLineTool {
   public enum Status: Sendable, Equatable {
-    /// Glade isn't running from an installed app, so there's nothing to link to.
+    /// Glade isn’t running from an installed app, so there’s nothing to link to.
     case unavailable
     case notInstalled
-    /// - Parameter onPath: The folder is on the shell's search path, so typing `glade` works.
+    /// - Parameter onPath: The folder is on the shell’s search path, so typing `glade` works.
     case installed(path: String, onPath: Bool)
     /// A link from an older or different copy of Glade.
     case otherCopy(path: String, target: String)
@@ -35,13 +35,13 @@ public enum CommandLineTool {
     }
   }
 
-  /// The executable the link points at, or `nil` when Glade isn't running from an `.app`.
+  /// The executable the link points at, or `nil` when Glade isn’t running from an `.app`.
   public static var appExecutable: String? {
     guard Bundle.main.bundlePath.hasSuffix(".app"), let path = Bundle.main.executablePath else { return nil }
     return path
   }
 
-  /// Where the link may go: the person's own folder first, then the shared one if it
+  /// Where the link may go: the person’s own folder first, then the shared one if it
   /// can be written without asking for a password.
   static var folders: [String] {
     var folders = [NSHomeDirectory() + "/.local/bin"]
@@ -139,12 +139,12 @@ public enum CommandLineTool {
     return isGlade ? .otherGlade(absolute) : .foreign
   }
 
-  /// The folders the person's login shell searches. Apps started from the Dock don't
-  /// inherit it, so it's asked for directly.
+  /// The folders the person’s login shell searches. Apps started from the Dock don’t
+  /// inherit it, so it’s asked for directly.
   static func shellSearchPath() async -> [String] {
     let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
     let marker = "__GLADE_PATH__"
-    // Start from the bare system path so only what the shell's own startup files add counts.
+    // Start from the bare system path so only what the shell’s own startup files add counts.
     guard let result = try? await Shell.run(
       shell, ["-l", "-i", "-c", "printf '\(marker)%s\(marker)' \"$PATH\""],
       environment: ["PATH": "/usr/bin:/bin:/usr/sbin:/sbin"], timeout: 5, quiet: true
@@ -156,7 +156,7 @@ public enum CommandLineTool {
   }
 }
 
-/// Lets coding agents use Glade as a set of tools, by registering Glade's MCP server
+/// Lets coding agents use Glade as a set of tools, by registering Glade’s MCP server
 /// with them. It only ever runs the agents' own documented `mcp add`, `remove` and
 /// `get` commands; their settings files are protected and never edited directly.
 public enum AgentConnection {
@@ -184,7 +184,7 @@ public enum AgentConnection {
     case unavailable(reason: String)
   }
 
-  /// The name Glade's server is registered under.
+  /// The name Glade’s server is registered under.
   public static let serverName = Brand.cli
 
   /// The program the agent should start: this copy of Glade. `nil` outside an installed app.
@@ -255,7 +255,7 @@ public enum AgentConnection {
     }
   }
 
-  /// The program the agent starts for Glade's server, read from its `get` output.
+  /// The program the agent starts for Glade’s server, read from its `get` output.
   static func registeredCommand(_ agent: Agent, output: String) -> String? {
     switch agent {
     case .claude:

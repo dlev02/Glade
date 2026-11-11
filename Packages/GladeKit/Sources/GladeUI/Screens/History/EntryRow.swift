@@ -2,7 +2,7 @@ import GladeKit
 import SwiftUI
 
 /// One item in a clean: what it was and its size. The group it sits in says what
-/// happened to it; only items that weren't removed say why.
+/// happened to it; only items that weren’t removed say why.
 struct EntryRow: View {
   var entry: ReceiptEntry
   var showsOutcome = false
@@ -13,7 +13,7 @@ struct EntryRow: View {
       VStack(alignment: .leading, spacing: 1) {
         // Two lines before anything is cut, so a name like "Old installer – Figma.dmg"
         // reads in full in the narrow inspector.
-        Text(entry.title)
+        Text(entry.title.keepingDashWithName)
           .lineLimit(2)
           .truncationMode(.middle)
           .fixedSize(horizontal: false, vertical: true)

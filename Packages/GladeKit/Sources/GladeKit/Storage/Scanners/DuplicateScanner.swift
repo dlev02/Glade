@@ -1,6 +1,6 @@
 import Foundation
 
-/// Byte-identical files in the person's own folders.
+/// Byte-identical files in the person’s own folders.
 ///
 /// Files are grouped by length, then by a fingerprint of their first and last 64 KB,
 /// and only then hashed in full, so most files are never read at all.
@@ -132,12 +132,12 @@ public struct DuplicateScanner: StorageScanner {
     let library = context.home + "/Library/"
     let yours = ordered.filter { !$0.path.hasPrefix(library) }
     let managed = ordered.filter { $0.path.hasPrefix(library) }
-    // Copies an app keeps of its own files are the app's business, not duplicates of yours.
+    // Copies an app keeps of its own files are the app’s business, not duplicates of yours.
     guard !yours.isEmpty else { return nil }
     let keeper: File
     let removable: [File]
     if yours.count >= 2 {
-      // Keep the best of your copies; an app's own copy is never offered for removal.
+      // Keep the best of your copies; an app’s own copy is never offered for removal.
       keeper = Self.keeperFirst(yours, home: context.home)[0]
       removable = yours.filter { $0.path != keeper.path }
     } else {
@@ -153,12 +153,12 @@ public struct DuplicateScanner: StorageScanner {
     evidence.append("If one is a Finder duplicate of the other, removing it may free less than shown.")
     var blockers: [Blocker] = []
     if let app = ordered.lazy.compactMap({ Self.managingApp($0.path, home: context.home) }).first {
-      blockers.append(Blocker(.reportOnly, "One copy is managed by \(app); clear it from that app's history."))
+      blockers.append(Blocker(.reportOnly, "One copy is managed by \(app); clear it from that app’s history."))
     }
     return Finding(
       id: Finding.makeID(rule: "duplicates.set", path: keeper.path),
       ruleID: "duplicates.set", category: .duplicates, title: "\(name) – \(set.count) copies",
-      detail: "Identical copies of the same file. Removing the extra \(removable.count == 1 ? "copy" : "copies") keeps \(context.tilde(keeper.path)); what's removed can't be brought back once the Trash is emptied.",
+      detail: "Identical copies of the same file. Removing the extra \(removable.count == 1 ? "copy" : "copies") keeps \(context.tilde(keeper.path)); what’s removed can’t be brought back once the Trash is emptied.",
       paths: removable.map(\.path), bytes: removable.reduce(0) { $0 + $1.allocated }, fileCount: removable.count,
       lastUsed: set.map(\.modified).max(), recovery: .permanent, risk: .personal, blockers: blockers,
       method: .trash, evidence: evidence, keeps: keeper.path, autoLevel: nil, idleDaysRequired: 0

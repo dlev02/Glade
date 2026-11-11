@@ -2,7 +2,7 @@ import GladeKit
 import SwiftUI
 
 /// What Glade never touches: the built-in protected areas, which of them can be
-/// lifted, and the person's own protected folders.
+/// lifted, and the person’s own protected folders.
 struct ProtectionPane: View {
   @Environment(AppModel.self) private var model
   @State private var zones: [ProtectedZone] = ProtectedZones.builtIn
@@ -64,7 +64,7 @@ struct ProtectionPane: View {
           .accessibilityIdentifier("protection.alwaysProtected")
         }
       } footer: {
-        Text("Protected areas are never scanned, listed, or shown to an AI.")
+        Text("Protected areas are never scanned, listed or shown to an AI.")
           .foregroundStyle(.secondary)
       }
     }

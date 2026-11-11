@@ -1,8 +1,8 @@
 import Foundation
 
-/// Every model Glade knows how to ask, and quick ways to find one that's ready.
+/// Every model Glade knows how to ask, and quick ways to find one that’s ready.
 public enum AgentProviders {
-  /// In the order they're listed to people: verified first, then documentation-only.
+  /// In the order they’re listed to people: verified first, then documentation-only.
   public static let all: [any AgentProvider] = [
     ClaudeProvider(),
     CodexProvider(),
@@ -18,13 +18,13 @@ public enum AgentProviders {
     all.first { $0.id == id }
   }
 
-  /// Every provider's status, checked at once. A provider that takes longer than
+  /// Every provider’s status, checked at once. A provider that takes longer than
   /// `limit` seconds is reported unavailable rather than holding up the rest.
   public static func statuses(limit: TimeInterval = 8) async -> [ProviderStatus] {
     await statuses(of: all, limit: limit)
   }
 
-  /// The first provider in `order` that's ready, or `nil` when none is.
+  /// The first provider in `order` that’s ready, or `nil` when none is.
   public static func firstReady(order: [String]) async -> (any AgentProvider)? {
     let wanted = order.compactMap(provider(id:))
     let found = await statuses(of: wanted, limit: 8)

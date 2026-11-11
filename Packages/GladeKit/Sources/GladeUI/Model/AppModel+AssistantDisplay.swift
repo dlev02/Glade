@@ -14,9 +14,9 @@ extension AppModel {
     }
   }
 
-  /// The name shown for whoever answered: the same words as the composer's menu.
+  /// The name shown for whoever answered: the same words as the composer’s menu.
   /// With a model, it follows the name: "Claude Code · Opus". The model only shows
-  /// when one was chosen rather than the provider's default.
+  /// when one was chosen rather than the provider’s default.
   func responderName(_ reference: String?, model: String? = nil) -> String {
     let name = responder(reference)?.name ?? reference ?? "Assistant"
     guard let model, !model.isEmpty else { return name }
@@ -38,7 +38,7 @@ extension AppModel {
 }
 
 extension ProviderStatus {
-  /// Apple's models have no choice of model; every other provider takes a name.
+  /// Apple’s models have no choice of model; every other provider takes a name.
   var takesModel: Bool {
     !id.hasPrefix("apple")
   }

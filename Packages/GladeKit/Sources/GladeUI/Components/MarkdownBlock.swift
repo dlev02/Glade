@@ -1,8 +1,8 @@
 import Foundation
 
-/// One block of an AI's Markdown answer. Inline styling (bold, italic, code, links)
+/// One block of an AI’s Markdown answer. Inline styling (bold, italic, code, links)
 /// is left to `AttributedString(markdown:)`; this splits out the block structure it
-/// doesn't handle: headings, lists, code blocks, quotes, rules and tables.
+/// doesn’t handle: headings, lists, code blocks, quotes, rules and tables.
 enum MarkdownBlock: Equatable {
   case paragraph(String)
   case heading(level: Int, text: String)
@@ -13,7 +13,7 @@ enum MarkdownBlock: Equatable {
   case rule
   case table(header: [String], rows: [[String]])
 
-  /// Splits Markdown into blocks. Anything it doesn't recognise stays a paragraph, so
+  /// Splits Markdown into blocks. Anything it doesn’t recognise stays a paragraph, so
   /// nothing an AI wrote is ever dropped.
   static func parse(_ source: String) -> [MarkdownBlock] {
     var blocks: [MarkdownBlock] = []

@@ -80,7 +80,7 @@ public struct SimulatorScanner: StorageScanner {
         findings.append(Finding(
           id: Finding.makeID(rule: "sim.unavailable", path: root), ruleID: "sim.unavailable", category: .simulators,
           title: "Unavailable simulators (\(unavailable.count))",
-          detail: "Simulators whose system version is no longer installed. They can't be started, so nothing is lost by removing them.",
+          detail: "Simulators whose system version is no longer installed. They can’t be started, so nothing is lost by removing them.",
           paths: folders, bytes: measure.bytes, fileCount: measure.files, lastUsed: measure.newestModification,
           recovery: .automatic, risk: .safe, owner: Catalog.simulator, method: .unavailableSimulators,
           evidence: ["Includes \(names)\(unavailable.count > 4 ? " and \(unavailable.count - 4) more" : "")."],

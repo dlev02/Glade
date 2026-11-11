@@ -1,13 +1,13 @@
 import Foundation
 import GladeKit
 
-/// One row of the apps table, with each column's value worked out once so sorting
+/// One row of the apps table, with each column’s value worked out once so sorting
 /// never has to deal with missing figures.
 nonisolated struct UsageRow: Identifiable, Hashable, Sendable {
   let app: AppUsage
-  /// Share of the whole Mac's processor, 0–100.
+  /// Share of the whole Mac’s processor, 0–100.
   let processor: Double
-  /// Share of the GPU, or -1 when it isn't recorded, so unknowns sort last.
+  /// Share of the GPU, or -1 when it isn’t recorded, so unknowns sort last.
   let graphics: Double
   /// The front app sorts as most recent, unknowns as least.
   let lastUsed: Date
@@ -23,7 +23,7 @@ nonisolated struct UsageRow: Identifiable, Hashable, Sendable {
   var name: String { app.name }
   var memory: Int64 { app.memoryBytes }
 
-  /// Quit, Force Quit and Relaunch only work on apps that aren't part of macOS or Glade.
+  /// Quit, Force Quit and Relaunch only work on apps that aren’t part of macOS or Glade.
   var canQuit: Bool { app.kind == .app && !app.isSystem && !app.isGlade }
   var canRelaunch: Bool { canQuit && app.bundlePath != nil }
 

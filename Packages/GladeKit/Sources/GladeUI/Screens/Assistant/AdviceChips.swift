@@ -2,18 +2,18 @@ import GladeKit
 import SwiftUI
 
 /// How advice changed the selection, as small chips: "+2 added", "1 left alone",
-/// "1 to review". Kinds that didn't happen are left out. Given `reveal`, each chip
+/// "1 to review". Kinds that didn’t happen are left out. Given `reveal`, each chip
 /// opens a short list of its findings and reasons, and choosing one shows its row.
 struct AdviceChips: View {
   var advice: StorageAdvice
-  /// The finding's title from the scan, for the chips' lists.
+  /// The finding’s title from the scan, for the chips' lists.
   var title: (String) -> String? = { _ in nil }
-  /// Shows a finding's row in the list. Without it the chips are plain labels.
+  /// Shows a finding’s row in the list. Without it the chips are plain labels.
   var reveal: ((String) -> Void)?
   /// How far below the chips their lists open, so a list never half-covers a line
   /// that sits directly under them.
   var clearBelow: CGFloat = 0
-  /// A chip's height, for placing its list.
+  /// A chip’s height, for placing its list.
   private static let chipHeight: CGFloat = 22
   @Environment(\.accentMark) private var accentMark
   @State private var open: AdviceNote.Kind?
@@ -35,7 +35,7 @@ struct AdviceChips: View {
     .monospacedDigit()
     .accessibilityElement(children: reveal == nil ? .combine : .contain)
     .task {
-      // `-demoAdviceChip added|leftAlone|review` opens that chip's list, for screenshots.
+      // `-demoAdviceChip added|leftAlone|review` opens that chip’s list, for screenshots.
       guard reveal != nil, let name = DemoState.value("demoAdviceChip") else { return }
       try? await Task.sleep(for: .seconds(1))
       open = AdviceNote.Kind.allCases.first { "\($0)" == name }
@@ -76,7 +76,7 @@ struct AdviceChips: View {
   }
 }
 
-/// A chip's findings: each name and its size, with the assistant's reason under it.
+/// A chip’s findings: each name and its size, with the assistant’s reason under it.
 /// Choosing one shows its row in the list.
 private struct ChipList: View {
   @Environment(AppModel.self) private var model
@@ -86,7 +86,7 @@ private struct ChipList: View {
   var choose: (String) -> Void
   @State private var hovered: String?
 
-  /// Each listed finding's size, looked up once.
+  /// Each listed finding’s size, looked up once.
   private var sizes: [String: Int64] {
     let ids = Set(notes.map(\.id))
     var sizes: [String: Int64] = [:]
@@ -146,7 +146,7 @@ private struct ChipList: View {
       .padding(6)
     }
     .scrollBounceBehavior(.basedOnSize)
-    // Its own type, not the chip's caption and grey.
+    // Its own type, not the chip’s caption and grey.
     .font(.body)
     .foregroundStyle(.primary)
     .frame(width: 320)
@@ -155,7 +155,7 @@ private struct ChipList: View {
   }
 }
 
-/// A chip that opens a list: no capsule at rest, so the first glyph keeps the text's
+/// A chip that opens a list: no capsule at rest, so the first glyph keeps the text’s
 /// edge; a faint fill under the pointer or while open.
 private struct ChipButtonStyle: ButtonStyle {
   var isOpen: Bool

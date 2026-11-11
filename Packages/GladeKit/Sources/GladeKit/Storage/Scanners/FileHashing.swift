@@ -3,13 +3,13 @@ import Darwin
 import Foundation
 
 /// Content fingerprints for finding identical files. Reads never follow links, never
-/// open cloud placeholders, and don't change the files' last-opened dates.
+/// open cloud placeholders, and don’t change the files' last-opened dates.
 enum FileHashing {
   /// How much of each end of a file the quick fingerprint reads.
   static let edgeBytes = 64 * 1024
   static let chunkBytes = 1 << 20
 
-  /// SHA-256 of the first and last 64 KB plus the length. Files that differ here can't
+  /// SHA-256 of the first and last 64 KB plus the length. Files that differ here can’t
   /// be identical; files that match still need the full hash.
   static func edgeHash(_ path: String, expectedLength: Int64) -> Data? {
     withoutAccessTimeUpdates {
@@ -30,7 +30,7 @@ enum FileHashing {
     }
   }
 
-  /// SHA-256 of the whole file, read in 1 MB chunks. `nil` when it couldn't be read,
+  /// SHA-256 of the whole file, read in 1 MB chunks. `nil` when it couldn’t be read,
   /// changed length while being read, or the scan was cancelled.
   static func fullHash(_ path: String, expectedLength: Int64, cancel: CancelFlag) -> Data? {
     withoutAccessTimeUpdates {
@@ -51,15 +51,15 @@ enum FileHashing {
     }
   }
 
-  /// Whether a path is a cloud file whose contents aren't on this Mac.
+  /// Whether a path is a cloud file whose contents aren’t on this Mac.
   static func isDataless(_ path: String) -> Bool {
     var info = stat()
     guard lstat(path, &info) == 0 else { return false }
     return info.st_flags & UInt32(SF_DATALESS) != 0
   }
 
-  /// Runs `work` with this thread's reads leaving access times alone, so hashing a file
-  /// doesn't make it look recently opened to later scans.
+  /// Runs `work` with this thread’s reads leaving access times alone, so hashing a file
+  /// doesn’t make it look recently opened to later scans.
   static func withoutAccessTimeUpdates<T>(_ work: () -> T) -> T {
     let previous = getiopolicy_np(IOPOL_TYPE_VFS_ATIME_UPDATES, IOPOL_SCOPE_THREAD)
     _ = setiopolicy_np(IOPOL_TYPE_VFS_ATIME_UPDATES, IOPOL_SCOPE_THREAD, IOPOL_ATIME_UPDATES_OFF)
@@ -82,7 +82,7 @@ enum FileHashing {
         Darwin.close(descriptor)
         return nil
       }
-      // Large reads shouldn't push everything else out of the memory cache.
+      // Large reads shouldn’t push everything else out of the memory cache.
       _ = fcntl(descriptor, F_NOCACHE, 1)
       self.descriptor = descriptor
     }

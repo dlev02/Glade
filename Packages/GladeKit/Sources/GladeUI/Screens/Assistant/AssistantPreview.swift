@@ -1,6 +1,6 @@
 import GladeKit
 
-/// Stand-ins for the model's read-only assistant state, so snapshots can draw states
+/// Stand-ins for the model’s read-only assistant state, so snapshots can draw states
 /// (thinking, an answer with advice, no AI ready) that only a real run would produce.
 /// The running app never sets one.
 struct AssistantPreview {

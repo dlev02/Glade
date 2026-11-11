@@ -3,7 +3,7 @@ import SwiftUI
 
 /// What the host app provides for software updates, which live outside this package.
 public struct UpdaterHooks {
-  /// Opens the updater's "check now" flow. `nil` hides the menu item.
+  /// Opens the updater’s "check now" flow. `nil` hides the menu item.
   public var checkForUpdates: (() -> Void)?
   public var automaticallyChecks: Binding<Bool>?
 
@@ -35,7 +35,7 @@ public struct GladeScenes: Scene {
         .onOpenURL { model.open($0) }
     }
     .defaultSize(width: 1100, height: 740)
-    // `glade://show/<section>` opens this window, even when it's closed.
+    // `glade://show/<section>` opens this window, even when it’s closed.
     .handlesExternalEvents(matching: ["\(AppModel.Section.linkScheme)://show"])
     .commands {
       GladeCommands(model: model, updater: updater)
@@ -63,7 +63,7 @@ public struct GladeScenes: Scene {
   }
 }
 
-/// The menu bar item itself: a small gauge, and free space when that's switched on.
+/// The menu bar item itself: a small gauge, and free space when that’s switched on.
 struct MenuBarLabel: View {
   var model: AppModel
 

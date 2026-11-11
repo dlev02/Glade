@@ -1,7 +1,7 @@
 import GladeKit
 import SwiftUI
 
-/// The Assistant's Details: what cloud AIs can see, and every run Glade has recorded,
+/// The Assistant’s Details: what cloud AIs can see, and every run Glade has recorded,
 /// newest first. Choosing one shows exactly what was sent.
 struct RunsInspector: View {
   /// `nil` until the records have been read.
@@ -10,7 +10,7 @@ struct RunsInspector: View {
   @State private var selection: String?
 
   var body: some View {
-    // The privacy line sits above the list, not in it: a list row keeps one line's
+    // The privacy line sits above the list, not in it: a list row keeps one line’s
     // height at narrow widths, and this must wrap and show in full.
     VStack(alignment: .leading, spacing: 0) {
       privacy

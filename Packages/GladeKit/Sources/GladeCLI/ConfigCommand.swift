@@ -5,7 +5,7 @@ import GladeKit
 struct Config: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "config",
-    abstract: "Show or change Glade's settings.",
+    abstract: "Show or change Glade’s settings.",
     discussion: """
       Settings are addressed by dotted path, for example:
         \(Brand.cli) config set level careful

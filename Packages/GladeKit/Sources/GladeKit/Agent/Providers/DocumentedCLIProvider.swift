@@ -32,14 +32,14 @@ public struct CLISpec: Sendable {
   public var signInHint: String
   public var environment: [String: String] = [:]
   public var models: [String] = []
-  /// Where the integration's details come from.
+  /// Where the integration’s details come from.
   public var documentation: String
 }
 
 extension CLISpec {
   /// Tools whose documentation gives a clean, non-interactive, text-out mode with their
   /// tools held back. Grok Build, Kimi, Amp, Goose and Aider are left out: their headless
-  /// modes either approve tool calls automatically or can't switch tools off.
+  /// modes either approve tool calls automatically or can’t switch tools off.
   public static let documented: [CLISpec] = [
     CLISpec(
       id: "qwen", name: "Qwen Code", executable: "qwen",

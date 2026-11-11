@@ -4,7 +4,7 @@ import Observation
 
 /// What the storage screen is showing: its rows, scope, search, highlighted rows,
 /// folded groups and whether the inspector is open. The window keeps one of these
-/// for as long as it's open, so going back to Storage shows the same list straight
+/// for as long as it’s open, so going back to Storage shows the same list straight
 /// away instead of building it again.
 @Observable
 final class StorageViewState {
@@ -19,7 +19,7 @@ final class StorageViewState {
     didSet { UserDefaults.standard.set(showsInspector, forKey: Self.inspectorKey) }
   }
 
-  /// - Parameter showsInspector: `nil` uses the person's last choice, which starts
+  /// - Parameter showsInspector: `nil` uses the person’s last choice, which starts
   ///   out closed.
   init(scope: StorageScope = .ready, highlighted: String? = nil, showsInspector: Bool? = nil) {
     self.scope = scope

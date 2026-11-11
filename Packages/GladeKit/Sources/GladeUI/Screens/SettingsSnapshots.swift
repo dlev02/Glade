@@ -34,7 +34,7 @@ enum SettingsSnapshots {
     opensAtLogin: true
   )
 
-  /// One "quit this idle app" suggestion for the busiest real app, so the popover's
+  /// One "quit this idle app" suggestion for the busiest real app, so the popover’s
   /// suggestion row can be seen whatever this Mac is doing.
   private static func sampleSuggestion(_ model: AppModel) -> [PerformanceSuggestion] {
     guard let app = model.apps.filter({ $0.kind == .app }).max(by: { $0.memoryBytes < $1.memoryBytes }) else { return [] }

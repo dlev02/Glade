@@ -2,13 +2,13 @@ import GladeKit
 import SwiftUI
 
 /// How boldly a clean selects, as a quiet menu: "Balanced ⌄". The level is a setting
-/// that shapes the selection, not a view switch, so it isn't a segmented control.
+/// that shapes the selection, not a view switch, so it isn’t a segmented control.
 public struct LevelMenu: View {
   @Environment(AppModel.self) private var model
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   /// Offers "Reset Selection" when the person has changed choices by hand.
   var offersReset: Bool
-  /// The trigger's edge the popover's arrow points from: `.bottom` opens it below
+  /// The trigger’s edge the popover’s arrow points from: `.bottom` opens it below
   /// the trigger, `.top` above (for the clean bar at the foot of the window).
   var arrowEdge: Edge
 
@@ -42,7 +42,7 @@ extension CleanLevel {
   /// What the level selects, in a few words, for the menu. It follows `Planner` and
   /// the levels the catalog and scanners give: Careful takes what rebuilds itself once
   /// it has sat idle; Balanced adds package and installer downloads, idle simulators,
-  /// worktrees and stale agent history (which can't be recreated, so its row and the
+  /// worktrees and stale agent history (which can’t be recreated, so its row and the
   /// confirm sheet say so); Aggressive adds installed toolkits and stops waiting.
   public var consequence: String {
     switch self {

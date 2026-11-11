@@ -2,7 +2,7 @@ import AppKit
 import GladeKit
 import SwiftUI
 
-/// One coding agent that can use Glade's tools: whether it's connected, a button to
+/// One coding agent that can use Glade’s tools: whether it’s connected, a button to
 /// connect or disconnect, and the exact command that does it, to copy.
 struct AgentConnectionRow: View {
   var agent: AgentConnection.Agent
@@ -82,7 +82,7 @@ struct AgentConnectionRow: View {
       state = fixed
       return
     }
-    // Sample-data mode never starts the person's own tools.
+    // Sample-data mode never starts the person’s own tools.
     if model.isDemo {
       state = .notConnected
       return

@@ -29,7 +29,7 @@ public struct ProtectedZone: Sendable, Identifiable, Hashable {
 }
 
 public enum ProtectedZones {
-  /// Everything Glade protects out of the box. Order doesn't matter.
+  /// Everything Glade protects out of the box. Order doesn’t matter.
   public static let builtIn: [ProtectedZone] = [
     ProtectedZone(
       id: "credentials",

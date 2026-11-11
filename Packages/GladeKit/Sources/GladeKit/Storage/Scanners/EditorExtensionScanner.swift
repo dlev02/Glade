@@ -1,7 +1,7 @@
 import Foundation
 
 /// Finds old versions of editor extensions that VS Code and its relatives left behind
-/// after updating. Only versions that are neither the newest nor listed in the editor's
+/// after updating. Only versions that are neither the newest nor listed in the editor’s
 /// own `extensions.json` (what it actually loads) are reported.
 public struct EditorExtensionScanner: StorageScanner {
   public let id = "editor-extensions"
@@ -57,7 +57,7 @@ public struct EditorExtensionScanner: StorageScanner {
         paths.count == 1
           ? "1 superseded version, \(example)."
           : "\(paths.count) superseded versions, for example \(example).",
-        "Each has a newer version installed, and \(editor.name)'s extensions.json doesn't load it.",
+        "Each has a newer version installed, and \(editor.name)'s extensions.json doesn’t load it.",
       ]
       if found.marked > 0 {
         evidence.append("\(found.marked == paths.count ? "All" : "\(found.marked)") of them \(editor.name) itself marked obsolete.")
@@ -86,11 +86,11 @@ public struct EditorExtensionScanner: StorageScanner {
     return findings
   }
 
-  /// Folder names of superseded versions, or `nil` when the editor's list of loaded
-  /// extensions can't be read (then nothing is reported for that editor).
+  /// Folder names of superseded versions, or `nil` when the editor’s list of loaded
+  /// extensions can’t be read (then nothing is reported for that editor).
   static func obsolete(in folder: String) -> (folders: [String], marked: Int)? {
     guard let referenced = referencedFolders(folder) else {
-      Log.info(.scan, "Couldn't read \(folder)/extensions.json; leaving its extensions alone")
+      Log.info(.scan, "Couldn’t read \(folder)/extensions.json; leaving its extensions alone")
       return nil
     }
     let listedObsolete = obsoleteList(folder)
@@ -107,7 +107,7 @@ public struct EditorExtensionScanner: StorageScanner {
     for (_, versions) in byID {
       guard let newest = versions.map(\.version).max(by: { compare($0, $1) < 0 }) else { continue }
       // The newest version and anything the editor loads are never included, even
-      // when `.obsolete` names them (an uninstalled extension's only folder, say).
+      // when `.obsolete` names them (an uninstalled extension’s only folder, say).
       for installed in versions {
         if compare(installed.version, newest) == 0 { continue }
         if referenced.contains(installed.folder.lowercased()) { continue }

@@ -7,7 +7,7 @@ import GladeKit
 public struct GladeCommand: AsyncParsableCommand {
   public static let configuration = CommandConfiguration(
     commandName: Brand.cli,
-    abstract: "See what's using your Mac's storage, memory and processors, and clear it safely.",
+    abstract: "See what’s using your Mac’s storage, memory and processors, and clear it safely.",
     discussion: """
       Every command accepts --json for machine-readable output. Nothing is removed \
       without --confirm, and protected areas (credentials, Photos, Mail, Messages, \
@@ -24,7 +24,7 @@ public struct GladeCommand: AsyncParsableCommand {
   public init() {}
 }
 
-/// The entry point shared by the app's executable and the development tool.
+/// The entry point shared by the app’s executable and the development tool.
 public enum CLI {
   /// Parses and runs a command. Exits the process when it finishes.
   public static func run(_ arguments: [String]? = nil) async {
@@ -84,7 +84,7 @@ struct Doctor: AsyncParsableCommand {
     )
     emit(report, json: output.json) {
       print("\(Brand.name) \(report.version)")
-      print("Full Disk Access: \(report.fullDiskAccess ? "granted" : "not granted (some folders can't be measured)")")
+      print("Full Disk Access: \(report.fullDiskAccess ? "granted" : "not granted (some folders can’t be measured)")")
       print("Disk: \(Format.bytes(report.volume.availableBytes)) available of \(Format.bytes(report.volume.totalBytes))")
       print("Protected: \(report.protectedZones.joined(separator: ", "))")
       print("Log: \(report.logFile)")

@@ -32,7 +32,7 @@ enum StorageSnapshots {
     "storage-inspector-permanent": { model in
       panel(FindingInspector(finding: model.scan?.findings.first { $0.recovery == .permanent }))
     },
-    // Open with nothing highlighted: what's selected, by category.
+    // Open with nothing highlighted: what’s selected, by category.
     "storage-inspector-selection": { _ in panel(FindingInspector(finding: nil)) },
     "storage-advice": { model in
       screen(StorageViewState(showsInspector: false), advice: sampleAdvice(model))
@@ -75,7 +75,7 @@ enum StorageSnapshots {
   }
 
   /// Advice as an assistant might give it, about the sample findings. `StorageAdvice`
-  /// has no public initialiser, so it's decoded.
+  /// has no public initialiser, so it’s decoded.
   private static func sampleAdvice(_ model: AppModel) -> StorageAdvice? {
     let findings = model.scan?.findings ?? []
     func id(_ prefix: String) -> String { findings.first { $0.title.hasPrefix(prefix) }?.id ?? prefix }

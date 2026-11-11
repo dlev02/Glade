@@ -12,7 +12,7 @@ public enum Symbols {
   public static let settings = "gearshape"
   /// Anything Glade leaves alone: protected areas, and what cloud AIs never see.
   public static let protected = "lock"
-  /// Folders Glade can't measure until Full Disk Access is on.
+  /// Folders Glade can’t measure until Full Disk Access is on.
   public static let fullDiskAccess = "lock"
   public static let showInFinder = "folder"
   public static let more = "ellipsis"

@@ -48,7 +48,7 @@ public final class AppModel {
 
   public enum AssistantState: Equatable, Sendable {
     case idle
-    /// What it's doing, for a progress label.
+    /// What it’s doing, for a progress label.
     case thinking(String)
     case failed(String)
   }
@@ -74,7 +74,7 @@ public final class AppModel {
   public var config: GladeConfig {
     didSet {
       guard config != oldValue else { return }
-      // Sample data never writes the person's own settings.
+      // Sample data never writes the person’s own settings.
       if !isDemo { ConfigStore.save(config) }
       if config.level != oldValue.level || config.trashEverything != oldValue.trashEverything { rebuildPlan() }
       let automation = config.automation
@@ -90,7 +90,7 @@ public final class AppModel {
     didSet { defaults.set(accent.rawValue, forKey: "accent") }
   }
 
-  /// The person's own accent colour as `#RRGGBB`, used when `accent` is `.custom`.
+  /// The person’s own accent colour as `#RRGGBB`, used when `accent` is `.custom`.
   public var customAccent: String {
     didSet { defaults.set(customAccent, forKey: "customAccent") }
   }
@@ -181,12 +181,12 @@ public final class AppModel {
   /// Starts background work. Call once when the app launches.
   public func start() {
     // `-demo YES` shows made-up findings and only well-known apps, for screenshots
-    // that don't reveal anyone's own files.
+    // that don’t reveal anyone’s own files.
     if defaults.bool(forKey: "demo") {
       isLive = false
       isDemo = true
       // `-demoTrashEverything YES|NO` and `-demoLevel careful|balanced|aggressive` set
-      // up a clean's three outcomes (all to the Trash, all removed, mixed) for
+      // up a clean’s three outcomes (all to the Trash, all removed, mixed) for
       // screenshots, in memory only.
       if defaults.object(forKey: "demoTrashEverything") != nil { config.trashEverything = defaults.bool(forKey: "demoTrashEverything") }
       if let wanted = defaults.string(forKey: "demoLevel"), let level = CleanLevel(rawValue: wanted) { config.level = level }
@@ -214,10 +214,10 @@ public final class AppModel {
           setSelected(cleanItems.filter { !$0.goesToTrash(config) }.map(\.id), false)
         }
         // `-demoAsking YES` shows the assistant at work on the selection.
-        if DemoState.value("demoAsking") != nil { assistantState = .thinking("Looking at what's safe to clear…") }
+        if DemoState.value("demoAsking") != nil { assistantState = .thinking("Looking at what’s safe to clear…") }
         // `-demoScan YES` starts a (made-up) scan straight away.
         if DemoState.value("demoScan") != nil { startScan() }
-        // `-demoAdvice short|long` starts with the assistant's advice showing.
+        // `-demoAdvice short|long` starts with the assistant’s advice showing.
         if let length = defaults.string(forKey: "demoAdvice"), let scan {
           applySampleAdvice(SampleData.sampleAdvice(scan: scan, short: length == "short"))
           // `-demoAdvice earlier` then changes the selection by hand, so the advice
@@ -282,7 +282,7 @@ public final class AppModel {
     if history.count > 180 { history.removeFirst(history.count - 180) }
     tick += 1
 
-    // The per-app breakdown costs a few milliseconds, so only do it when it's on
+    // The per-app breakdown costs a few milliseconds, so only do it when it’s on
     // screen, and then every other reading.
     if detailWatchers > 0, tick % 2 == 0 || apps.isEmpty {
       await refreshApps()
@@ -294,7 +294,7 @@ public final class AppModel {
     }
   }
 
-  /// Sample data shows only well-known apps, never the person's own.
+  /// Sample data shows only well-known apps, never the person’s own.
   private static func demoApps(_ apps: [AppUsage]) -> [AppUsage] {
     let known = ["Xcode", "Safari", "Mail", "Messages", "Music", "Finder", "Simulator", "Simulator devices", "Docker", "Notes", "Photos", "Terminal", "Calendar", "Preview", "TV", "Podcasts", "Maps", "Reminders", "Glade"]
     var shown = apps.filter { app in known.contains(app.name) || app.bundleIdentifier?.hasPrefix("com.apple.") == true }
@@ -317,7 +317,7 @@ public final class AppModel {
     apps = listing
     context = current
     simulators = devices
-    // Sample suggestions stay as they are, so they never name the person's own apps.
+    // Sample suggestions stay as they are, so they never name the person’s own apps.
     if let snapshot, !isDemo {
       suggestions = PerformanceAdvisor.suggestions(
         snapshot: snapshot, apps: listing, context: current, simulators: devices, config: config
@@ -450,7 +450,7 @@ public final class AppModel {
     }
   }
 
-  /// Demo mode only: shows a scan's progress over the sample findings.
+  /// Demo mode only: shows a scan’s progress over the sample findings.
   private func simulateScan(_ sample: ScanResult, cancel: CancelFlag) async {
     let steps = ["Xcode build data", "Simulators", "Package caches", "AI models", "Agent sessions", "Worktrees", "App caches", "Downloads & installers", "Large files", "Logs"]
     let total = sample.findings.filter { $0.within == nil }.reduce(Int64(0)) { $0 + $1.bytes }
@@ -488,13 +488,13 @@ public final class AppModel {
     return plan?.items.first { $0.id == id }?.selected ?? false
   }
 
-  /// Why the plan did or didn't select a finding.
+  /// Why the plan did or didn’t select a finding.
   public func reason(for id: String) -> String? {
     if overrides[id] != nil { return "You chose this." }
     return plan?.items.first { $0.id == id }?.reason
   }
 
-  /// Selects or deselects a finding by hand. Blocked findings can't be selected.
+  /// Selects or deselects a finding by hand. Blocked findings can’t be selected.
   public func setSelected(_ id: String, _ selected: Bool) {
     guard let finding = scan?.finding(id), !(selected && finding.isBlocked) else { return }
     overrides[id] = selected
@@ -523,7 +523,7 @@ public final class AppModel {
     return Planner.topLevel(selectedIDs, in: scan).sorted { $0.bytes > $1.bytes }
   }
 
-  /// The selection's total, with nested folders counted once.
+  /// The selection’s total, with nested folders counted once.
   public var selectedBytes: Int64 { totals.selected }
   /// How much of it is freed straight away.
   public var immediateBytes: Int64 { totals.immediate }
@@ -619,7 +619,7 @@ public final class AppModel {
     receipts.first { $0.id == id }
   }
 
-  /// Moves a clean's Trash items back where they were.
+  /// Moves a clean’s Trash items back where they were.
   @discardableResult
   public func putBack(_ receipt: Receipt) -> Cleaner.RestoreResult {
     if isDemo { return Self.pretendRestore(receipt) }
@@ -632,7 +632,7 @@ public final class AppModel {
     providers = await AgentProviders.statuses()
   }
 
-  /// The provider that would answer right now, in the person's preferred order.
+  /// The provider that would answer right now, in the person’s preferred order.
   public var activeProvider: ProviderStatus? {
     let ordered = config.assistant.order.compactMap { id in providers.first { $0.id == id } }
       + providers.filter { !config.assistant.order.contains($0.id) }
@@ -642,7 +642,7 @@ public final class AppModel {
   /// Asks the assistant to refine the plan at the current level.
   public func adviseStorage(goal: String? = nil) async {
     guard let scan else { return }
-    assistantState = .thinking("Looking at what's safe to clear…")
+    assistantState = .thinking("Looking at what’s safe to clear…")
     // Sample data is never sent to a real AI; a made-up answer arrives instead.
     if isDemo {
       try? await Task.sleep(for: .seconds(2.5))
@@ -701,7 +701,7 @@ public final class AppModel {
     }
   }
 
-  /// Demo mode only: applies made-up advice the way a real run's would be.
+  /// Demo mode only: applies made-up advice the way a real run’s would be.
   private func applySampleAdvice(_ sample: StorageAdvice?) {
     guard let sample, let scan, var updated = plan else { return }
     for note in sample.select { if let index = updated.items.firstIndex(where: { $0.id == note.id }) { updated.items[index].selected = true } }

@@ -1,7 +1,7 @@
 import GladeKit
 import SwiftUI
 
-/// The `glade` command in Terminal: whether it's installed, where, and a button that
+/// The `glade` command in Terminal: whether it’s installed, where, and a button that
 /// installs or removes it.
 struct CommandLineRows: View {
   @Environment(\.screenOverrides) private var overrides

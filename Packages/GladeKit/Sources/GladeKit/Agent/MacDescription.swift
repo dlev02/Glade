@@ -1,6 +1,6 @@
 import Foundation
 
-/// Describes the state of this Mac in plain text for an assistant: what's using
+/// Describes the state of this Mac in plain text for an assistant: what’s using
 /// memory and the processors, what the person is doing, and what the last scan
 /// found. App and process names only; never file contents.
 public enum MacDescription {

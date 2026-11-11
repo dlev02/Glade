@@ -4,14 +4,14 @@ import SwiftUI
 /// Names for the AIs Glade talks to, worked out from the providers it has found, so
 /// the Assistant and History screens describe who answered the same way.
 extension AppModel {
-  /// The provider a message, run or receipt refers to. Records store the provider's
+  /// The provider a message, run or receipt refers to. Records store the provider’s
   /// identifier, older ones its name; either matches.
   func providerStatus(_ reference: String?) -> ProviderStatus? {
     guard let reference else { return nil }
     return providers.first { $0.id == reference || $0.name == reference }
   }
 
-  /// A provider's name for display, falling back to whatever was recorded.
+  /// A provider’s name for display, falling back to whatever was recorded.
   func providerName(_ reference: String?) -> String {
     providerStatus(reference)?.name ?? reference ?? "Assistant"
   }

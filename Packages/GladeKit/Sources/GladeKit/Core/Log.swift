@@ -36,7 +36,7 @@ public struct LogEntry: Codable, Sendable, Identifiable {
 
 /// The single logging helper. Every line goes to the unified system log, an in-memory
 /// ring, and a small rotating file under ~/Library/Logs, with secrets and the home
-/// folder's name scrubbed before anything is stored.
+/// folder’s name scrubbed before anything is stored.
 public enum Log {
   public static func debug(_ category: LogCategory, _ message: @autoclosure () -> String) {
     store.write(.debug, category, message())
@@ -98,7 +98,7 @@ final class LogStore: @unchecked Sendable {
     })
   }
 
-  /// Test runs log to a scratch folder so they don't fill the real log.
+  /// Test runs log to a scratch folder so they don’t fill the real log.
   private let folder: URL = {
     let name = ProcessInfo.processInfo.processName.lowercased()
     if name.contains("xctest") || name.contains("testing-helper") {

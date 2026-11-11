@@ -171,7 +171,7 @@ enum MCPTools {
     MCPTool(
       name: "glade_findings",
       description: "List findings from the most recent scan without scanning again. Use after glade_scan to page through or filter.",
-      schema: #"{"type":"object","properties":{"limit":{"type":"integer"},"category":{"type":"string"},"includeBlocked":{"type":"boolean","description":"Include findings that can't be removed right now."}},"additionalProperties":false}"#,
+      schema: #"{"type":"object","properties":{"limit":{"type":"integer"},"category":{"type":"string"},"includeBlocked":{"type":"boolean","description":"Include findings that can’t be removed right now."}},"additionalProperties":false}"#,
       readOnly: true
     ) { arguments in
       guard let result = ScanEngine.loadLast() else { throw MCPFailure(message: "No scan yet. Call glade_scan first.") }
@@ -223,7 +223,7 @@ enum MCPTools {
     },
     MCPTool(
       name: "glade_undo",
-      description: "Put back everything the most recent clean moved to the Trash. Things that were deleted outright (caches, build data) rebuild by themselves and can't be put back.",
+      description: "Put back everything the most recent clean moved to the Trash. Things that were deleted outright (caches, build data) rebuild by themselves and can’t be put back.",
       schema: noArguments, readOnly: false
     ) { _ in
       guard let receipt = Cleaner.receipts().first else { throw MCPFailure(message: "Nothing has been cleaned yet.") }

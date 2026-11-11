@@ -1,6 +1,6 @@
 import Foundation
 
-/// Any JSON value, for the places where the shape isn't known ahead of time (tool
+/// Any JSON value, for the places where the shape isn’t known ahead of time (tool
 /// arguments from another program).
 public enum JSONValue: Codable, Sendable, Equatable {
   case null
@@ -67,7 +67,7 @@ public enum JSONValue: Codable, Sendable, Equatable {
 
   public var strings: [String]? { array?.compactMap(\.string) }
 
-  /// Parses JSON text. Returns `nil` when it isn't valid JSON.
+  /// Parses JSON text. Returns `nil` when it isn’t valid JSON.
   public static func parse(_ text: String) -> JSONValue? {
     try? JSONDecoder().decode(JSONValue.self, from: Data(text.utf8))
   }

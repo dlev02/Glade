@@ -2,9 +2,9 @@ import Foundation
 
 /// Helpers every command-line provider shares: a throwaway working folder, one guarded
 /// process launch per request, a cache for versions and model lists, and the mapping from
-/// a tool's error text to `AgentError`.
+/// a tool’s error text to `AgentError`.
 enum ProviderRun {
-  /// Runs `body` with a fresh, empty folder that's deleted afterwards, whatever happens.
+  /// Runs `body` with a fresh, empty folder that’s deleted afterwards, whatever happens.
   static func withTemporaryFolder<T: Sendable>(_ label: String, _ body: (URL) async throws -> T) async throws -> T {
     let folder = FileManager.default.temporaryDirectory
       .appendingPathComponent("glade-\(label)-\(UUID().uuidString.prefix(8))", isDirectory: true)
@@ -64,7 +64,7 @@ enum ProviderRun {
     Log.info(.agent, "\(provider) model=\(model ?? "default") exit=\(status) in \(String(format: "%.1f", duration))s failed: \(reason)")
   }
 
-  /// Turns a tool's own error message into the closest `AgentError`.
+  /// Turns a tool’s own error message into the closest `AgentError`.
   static func classify(provider: String, message: String, signInHint: String) -> AgentError {
     let text = message.trimmingCharacters(in: .whitespacesAndNewlines)
     let lower = text.lowercased()
@@ -106,7 +106,7 @@ enum ProviderRun {
   }
 }
 
-/// Values that are slow to learn and don't change while the app runs: tool versions,
+/// Values that are slow to learn and don’t change while the app runs: tool versions,
 /// model lists, one-off probe results.
 final class ProviderCache: @unchecked Sendable {
   static let shared = ProviderCache()
@@ -117,7 +117,7 @@ final class ProviderCache: @unchecked Sendable {
   func value(_ key: String) -> [String]? { lock.withLock { values[key] } }
   func set(_ key: String, _ value: [String]) { lock.withLock { values[key] = value } }
 
-  /// The tool's version, read once per binary path with `--version`.
+  /// The tool’s version, read once per binary path with `--version`.
   func version(of path: String, arguments: [String] = ["--version"]) async -> String? {
     let key = "version:\(path)"
     if let cached = value(key) { return cached.first }

@@ -9,7 +9,7 @@ import IOKit
 /// has used (`AppUsage[].accumulatedGPUTime`, nanoseconds). Other GPUs lack `AppUsage`,
 /// so per-process figures degrade to `nil` there.
 final class GPURegistry: Sendable {
-  /// Retained for the registry's lifetime and released in `deinit`.
+  /// Retained for the registry’s lifetime and released in `deinit`.
   private let accelerators: [io_service_t]
   let name: String?
   let coreCount: Int?
@@ -60,7 +60,7 @@ final class GPURegistry: Sendable {
     return GPUStats(name: name, coreCount: coreCount, utilizationPercent: utilization, inUseMemoryBytes: inUse, allocatedMemoryBytes: allocated)
   }
 
-  /// Total GPU nanoseconds used so far by each process, or `nil` when this GPU doesn't
+  /// Total GPU nanoseconds used so far by each process, or `nil` when this GPU doesn’t
   /// record per-process time. Costs about 1 ms for ~100 Metal clients.
   func processGPUTimes() -> [pid_t: UInt64]? {
     var totals: [pid_t: UInt64] = [:]

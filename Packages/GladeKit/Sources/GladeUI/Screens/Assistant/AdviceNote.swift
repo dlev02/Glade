@@ -51,9 +51,9 @@ struct AdviceNote: Identifiable {
 
   var kind: Kind
   var note: StorageAdvice.Note
-  /// The finding's title from the scan, if it's one Glade knows.
+  /// The finding’s title from the scan, if it’s one Glade knows.
   var title: String?
-  /// The finding's size, if it's one Glade knows.
+  /// The finding’s size, if it’s one Glade knows.
   var bytes: Int64?
 
   var id: String { "\(kind)-\(note.id)" }

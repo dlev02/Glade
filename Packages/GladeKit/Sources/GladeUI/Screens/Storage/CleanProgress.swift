@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The clean while it runs: how far along it is and what it's removing now.
+/// The clean while it runs: how far along it is and what it’s removing now.
 struct CleanProgress: View {
   var done: Int
   var total: Int

@@ -1,7 +1,7 @@
 import GladeKit
 import SwiftUI
 
-/// A protected area's symbol in a small neutral tile, the same size and shape as the
+/// A protected area’s symbol in a small neutral tile, the same size and shape as the
 /// storage category tiles. One calm treatment for every area: these are all "hands
 /// off", so none should shout louder than another.
 struct ZoneIcon: View {

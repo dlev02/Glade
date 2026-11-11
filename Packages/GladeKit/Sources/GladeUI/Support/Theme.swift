@@ -15,10 +15,10 @@ public enum Metrics {
   /// Corner radius of a card. Things inside a card use `innerRadius`.
   public static let cardRadius: CGFloat = 18
   public static let innerRadius: CGFloat = 10
-  /// The widest a page's content gets before it stops growing; past that it sits in
+  /// The widest a page’s content gets before it stops growing; past that it sits in
   /// the middle of the window. Storage is the exception: its list uses the full width.
   public static let contentWidth: CGFloat = 960
-  /// History's rows are narrower, so a clean's size sits near its name.
+  /// History’s rows are narrower, so a clean’s size sits near its name.
   public static let listWidth: CGFloat = 720
 }
 
@@ -38,7 +38,7 @@ public enum Appearance: String, CaseIterable, Identifiable, Sendable {
   }
 }
 
-/// The accent colours on offer, plus one of the person's own choosing.
+/// The accent colours on offer, plus one of the person’s own choosing.
 public enum Accent: String, CaseIterable, Identifiable, Sendable {
   case glade, blue, indigo, purple, pink, orange, graphite, custom
 
@@ -53,7 +53,7 @@ public enum Accent: String, CaseIterable, Identifiable, Sendable {
     }
   }
 
-  /// - Parameter custom: The person's own colour as a hex string, used for `.custom`.
+  /// - Parameter custom: The person’s own colour as a hex string, used for `.custom`.
   public func color(custom: String = "") -> Color {
     switch self {
     case .glade: Palette.glade
@@ -69,7 +69,7 @@ public enum Accent: String, CaseIterable, Identifiable, Sendable {
 }
 
 public enum Palette {
-  /// The app's own green: calmer and a touch cooler than the system green.
+  /// The app’s own green: calmer and a touch cooler than the system green.
   public static let glade = Color(light: 0x1C9A68, dark: 0x3FD897)
   /// The surface cards sit on.
   public static let card = Color(nsColor: .controlBackgroundColor)
@@ -80,7 +80,7 @@ public enum Palette {
   public static let good = Color.green
   public static let warning = Color.orange
   public static let critical = Color.red
-  /// What an accent fill becomes in a window that isn't active: the grey the system
+  /// What an accent fill becomes in a window that isn’t active: the grey the system
   /// gives a ticked checkbox there, dark enough to hold a white tick.
   public static let inactiveFill = Color(nsColor: .systemGray)
 
@@ -125,7 +125,7 @@ public enum CategoryFamily: String, CaseIterable, Identifiable, Sendable {
     }
   }
 
-  /// The colour for a symbol on the family's pale tile: yellow and teal are too light
+  /// The colour for a symbol on the family’s pale tile: yellow and teal are too light
   /// to read on their own tint in light mode, so they darken there.
   public var glyphColor: Color {
     switch self {
@@ -204,7 +204,7 @@ extension Recovery {
   /// What happens after removal, for a tooltip or a detail line.
   public var explanation: String {
     switch self {
-    case .automatic: "The app or tool that made this rebuilds it when it's next needed."
+    case .automatic: "The app or tool that made this rebuilds it when it’s next needed."
     case .redownload: "It downloads again when needed, which takes time and bandwidth."
     case .reinstall: "It comes back when you reinstall or rebuild."
     case .permanent: "Nothing recreates this once it’s gone."
@@ -263,7 +263,7 @@ extension EnvironmentValues {
 }
 
 extension View {
-  /// Applies the person's accent: the readable fill as the tint, and the bright
+  /// Applies the person’s accent: the readable fill as the tint, and the bright
   /// mark in the environment.
   public func accent(_ accent: Color) -> some View {
     tint(accent.readableFill).environment(\.accentMark, accent)
@@ -296,9 +296,17 @@ extension Font {
     .system(size: size, weight: .semibold)
   }
 
-  /// A large figure that updates while it's watched (memory, processor, graphics):
-  /// steady-width digits so it doesn't jitter.
+  /// A large figure that updates while it’s watched (memory, processor, graphics):
+  /// steady-width digits so it doesn’t jitter.
   public static func liveFigure(_ size: CGFloat = 34) -> Font {
     figure(size).monospacedDigit()
+  }
+}
+
+extension String {
+  /// The same text with a no-break space before each dash, so a wrapped name like
+  /// "Old installer – Figma.dmg" never starts its second line with the dash.
+  public var keepingDashWithName: String {
+    replacingOccurrences(of: " \u{2013} ", with: "\u{00A0}\u{2013} ")
   }
 }

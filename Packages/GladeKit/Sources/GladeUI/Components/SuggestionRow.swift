@@ -9,7 +9,7 @@ public struct SuggestionRow: View {
   @Environment(\.accentMark) private var accentMark
   var suggestion: PerformanceSuggestion
   var iconSize: CGFloat
-  /// The row sits on glass (the menu bar popover), so its button can't be glass too.
+  /// The row sits on glass (the menu bar popover), so its button can’t be glass too.
   var onGlass: Bool
   /// Shows the sentence describing what happened.
   var report: (String) -> Void

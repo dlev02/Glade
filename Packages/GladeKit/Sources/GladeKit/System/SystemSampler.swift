@@ -7,7 +7,7 @@ import Synchronization
 /// It owns no timers or threads: callers decide how often to sample.
 ///
 /// Use one sampler per cadence (the menu bar loop, a window, a command): two callers
-/// sharing one would each see only the interval since the other's last call.
+/// sharing one would each see only the interval since the other’s last call.
 public final class SystemSampler: Sendable {
   public static let shared = SystemSampler()
 
@@ -57,7 +57,7 @@ public final class SystemSampler: Sendable {
     return snapshotNow()
   }
 
-  /// One reading without waiting. Processor use reads 0 on a sampler's first call.
+  /// One reading without waiting. Processor use reads 0 on a sampler’s first call.
   public func snapshotNow() -> SystemSnapshot {
     let ticks = HostReader.coreTicks()
     let now = MachTime.now()

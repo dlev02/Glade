@@ -2,12 +2,12 @@ import AppKit
 import GladeKit
 import SwiftUI
 
-/// Every running app (and, if asked, every process) with what it's using, sortable,
+/// Every running app (and, if asked, every process) with what it’s using, sortable,
 /// plus the actions a person can take on the selected one.
 ///
 /// Rows are worked out once per refresh, sort or filter change rather than on every
 /// body pass. While the pointer is over the table the order holds still, so a row
-/// doesn't slide out from under a click; figures keep updating in place.
+/// doesn’t slide out from under a click; figures keep updating in place.
 struct AppsTable: View {
   @Environment(AppModel.self) private var model
   var apps: [AppUsage]
@@ -20,7 +20,7 @@ struct AppsTable: View {
   /// Shows the sentence describing what an action did.
   var report: (String) -> Void
 
-  // Start from what was on screen last time, so the first frame isn't empty.
+  // Start from what was on screen last time, so the first frame isn’t empty.
   @State private var rows: [UsageRow] = AppsTableMemory.rows
   @State private var sortOrder = AppsTableMemory.sortOrder
   @State private var isHovering = false
@@ -70,7 +70,7 @@ struct AppsTable: View {
         TableColumn("Last Used", value: \.lastUsed) { row in
           let text = PerformanceFormat.lastUsed(row.app)
           Text(text)
-            // "—" means Glade can't tell, so it recedes.
+            // "—" means Glade can’t tell, so it recedes.
             .foregroundStyle(row.app.isFrontmost ? AnyShapeStyle(.primary) : text == "—" ? AnyShapeStyle(.quaternary) : AnyShapeStyle(.secondary))
             .monospacedDigit()
         }
@@ -153,7 +153,7 @@ struct AppsTable: View {
 
   // MARK: Cells
 
-  /// - Parameter quiet: Nothing to see (0% or no reading), so it's dimmed and the
+  /// - Parameter quiet: Nothing to see (0% or no reading), so it’s dimmed and the
   ///   rows that matter stand out.
   private func figure(_ text: String, _ row: UsageRow, quiet: Bool = false) -> some View {
     Text(text)

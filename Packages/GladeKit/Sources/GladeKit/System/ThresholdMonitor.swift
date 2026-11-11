@@ -9,15 +9,15 @@ public struct ThresholdAlert: Codable, Sendable, Identifiable, Hashable {
   public var id: String
   public var kind: Kind
   public var date: Date
-  /// A short headline, for a notification's title.
+  /// A short headline, for a notification’s title.
   public var title: String
   /// One sentence with the numbers.
   public var body: String
 }
 
-/// Watches snapshots for limits being crossed. Pure bookkeeping: it's handed
+/// Watches snapshots for limits being crossed. Pure bookkeeping: it’s handed
 /// snapshots, costs nothing between them, and decides only whether to raise an alert.
-/// What happens next (a notification, a clean, an assistant check-in) is the caller's.
+/// What happens next (a notification, a clean, an assistant check-in) is the caller’s.
 public actor ThresholdMonitor {
   private var settings: AutomationSettings
   private var cpuHighSince: Date?
@@ -27,7 +27,7 @@ public actor ThresholdMonitor {
   private let stateFile: URL?
 
   /// - Parameter stateFile: Where the "last alerted" times are kept, so restarting
-  ///   the app doesn't repeat an alert. Pass `nil` to keep them in memory only.
+  ///   the app doesn’t repeat an alert. Pass `nil` to keep them in memory only.
   public init(settings: AutomationSettings, stateFile: URL? = GladePaths.support.appendingPathComponent("alerts.json")) {
     self.settings = settings
     self.stateFile = stateFile
@@ -57,7 +57,7 @@ public actor ThresholdMonitor {
       if snapshot.memory.pressure >= .warning {
         let since = pressureSince ?? now
         pressureSince = since
-        // Pressure that lasts a minute is real; a blip isn't.
+        // Pressure that lasts a minute is real; a blip isn’t.
         if now.timeIntervalSince(since) >= 60, mayFire(.memoryPressure, now: now) {
           let level = snapshot.memory.pressure == .critical ? "critically low" : "under pressure"
           alerts.append(make(.memoryPressure, now, "Memory is \(level)", "\(Format.bytes(snapshot.memory.usedBytes)) of \(Format.bytes(snapshot.memory.totalBytes)) is in use, with \(Format.bytes(snapshot.memory.swapUsedBytes)) swapped to disk."))
@@ -72,7 +72,7 @@ public actor ThresholdMonitor {
         let since = cpuHighSince ?? now
         cpuHighSince = since
         if now.timeIntervalSince(since) >= settings.cpuMinutes * 60, mayFire(.sustainedCPU, now: now) {
-          alerts.append(make(.sustainedCPU, now, "The processor has been busy for a while", "It's been above \(Int(settings.cpuPercent))% for \(Int(settings.cpuMinutes)) minutes."))
+          alerts.append(make(.sustainedCPU, now, "The processor has been busy for a while", "It’s been above \(Int(settings.cpuPercent))% for \(Int(settings.cpuMinutes)) minutes."))
         }
       } else {
         cpuHighSince = nil

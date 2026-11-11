@@ -122,7 +122,7 @@ private struct StorageSummary: View {
         }
         .accessibilityElement(children: .combine)
         if let total = volume?.totalBytes {
-          // Room for the bar's hover bubble, so it never covers the line above.
+          // Room for the bar’s hover bubble, so it never covers the line above.
           StorageBar(segments: segments, total: total, hovered: hover)
             .padding(.top, StorageBar.bubbleRoom - Metrics.l)
           Legend(segments: segments, hovered: hover)
@@ -153,7 +153,7 @@ private struct StorageSummary: View {
         } else {
           HStack(alignment: .center, spacing: Metrics.l) {
             // The big figure is what a clean frees now; what goes to the Trash frees
-            // nothing until it's emptied, so it's named on its own.
+            // nothing until it’s emptied, so it’s named on its own.
             let free = model.immediateBytes
             let trash = model.trashBytes
             VStack(alignment: .leading, spacing: 2) {
@@ -191,7 +191,7 @@ private struct StorageSummary: View {
 
   private var volume: VolumeInfo? { model.snapshot?.disk ?? model.scan?.volume }
 
-  /// The bar's slices, with the catch-all given a short name.
+  /// The bar’s slices, with the catch-all given a short name.
   private var legendSegments: [BarSegment] {
     model.storageSegments.map { segment in
       var segment = segment
@@ -201,9 +201,9 @@ private struct StorageSummary: View {
   }
 }
 
-/// The key under the storage bar, in the bar's order: what Glade can clear, family by
+/// The key under the storage bar, in the bar’s order: what Glade can clear, family by
 /// family, in one fixed grid of four columns, so every width and appearance lays it
-/// out the same way. Everything else on the disk sits on the heading's line, in the
+/// out the same way. Everything else on the disk sits on the heading’s line, in the
 /// last column, set apart so the coloured part never reads as the whole disk.
 /// Pointing at an entry lights its slice.
 private struct Legend: View {
@@ -277,7 +277,7 @@ private struct Legend: View {
   }
 }
 
-/// Things Glade's rules would quit or shut down to free memory.
+/// Things Glade’s rules would quit or shut down to free memory.
 private struct SuggestionList: View {
   @Environment(AppModel.self) private var model
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -292,8 +292,8 @@ private struct SuggestionList: View {
           VStack(spacing: 0) {
             ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, suggestion in
               VStack(spacing: 0) {
-                // The same insets as Storage's row separators: from the text edge to
-                // the content's trailing edge.
+                // The same insets as Storage’s row separators: from the text edge to
+                // the content’s trailing edge.
                 if index > 0 { Divider().padding(.leading, 56).padding(.trailing, Metrics.l) }
                 SuggestionRow(suggestion) { outcome = $0 }
                   .padding(.horizontal, Metrics.l)
@@ -323,7 +323,7 @@ extension MemoryPressure {
     }
   }
 
-  /// Memory's colour follows pressure, not how full it is: macOS keeps memory full on
+  /// Memory’s colour follows pressure, not how full it is: macOS keeps memory full on
   /// purpose, so a full bar is no cause for alarm.
   var color: Color {
     switch self {

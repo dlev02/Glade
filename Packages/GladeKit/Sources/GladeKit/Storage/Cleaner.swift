@@ -24,7 +24,7 @@ public enum CleanError: Error, LocalizedError {
 }
 
 /// Removes findings. This is the only code in Glade that deletes anything, and it
-/// trusts nothing it's handed: every path is checked against the safety policy again
+/// trusts nothing it’s handed: every path is checked against the safety policy again
 /// at the moment of removal, whatever the scan or an assistant said earlier.
 public enum Cleaner {
   /// A scan older than this must be redone before cleaning from it.
@@ -32,7 +32,7 @@ public enum Cleaner {
 
   /// Removes the findings with the given identifiers.
   ///
-  /// Identifiers that aren't in `scan` are skipped: nothing outside what the scanner
+  /// Identifiers that aren’t in `scan` are skipped: nothing outside what the scanner
   /// itself found can be removed, so no caller can name a path of its own.
   public static func clean(
     ids: [String],
@@ -65,8 +65,8 @@ public enum Cleaner {
       }
       progress(index, unique.count, finding.title)
       let outcome = await remove(finding, protection: protection, running: running, config: config, dryRun: options.dryRun)
-      // A folder that holds other selected findings counts only what they don't, so a
-      // receipt's total matches the plan's and nothing is counted twice.
+      // A folder that holds other selected findings counts only what they don’t, so a
+      // receipt’s total matches the plan’s and nothing is counted twice.
       let inside = unique.compactMap { scan.finding($0) }.filter { other in
         other.id != finding.id && !other.paths.isEmpty && other.paths.allSatisfy { path in
           finding.paths.contains { path.hasPrefix($0 + "/") }
@@ -188,7 +188,7 @@ public enum Cleaner {
       return .trashed(locations: locations)
     }
 
-    // One stubborn file (often a temporary file another process owns) shouldn't stop
+    // One stubborn file (often a temporary file another process owns) shouldn’t stop
     // the rest of a group from being cleared.
     var failures: [String] = []
     for path in present {
@@ -204,7 +204,7 @@ public enum Cleaner {
     return .failed(reason: "\(failures.count) of \(present.count) items couldn’t be removed (\(failures[0])); the rest were.")
   }
 
-  /// Categories whose contents rebuild from a manifest, so they're deleted outright
+  /// Categories whose contents rebuild from a manifest, so they’re deleted outright
   /// even inside Documents or Desktop.
   private static let rebuildable: Set<StorageCategory> = [.projectDependencies, .buildOutputs]
 
@@ -214,7 +214,7 @@ public enum Cleaner {
   }
 
   /// Deletes a file or folder without following links. Folders some tools mark
-  /// read-only (Go's module cache) are made writable and tried once more.
+  /// read-only (Go’s module cache) are made writable and tried once more.
   private static func delete(_ path: String) throws {
     do {
       try FileManager.default.removeItem(atPath: path)
@@ -265,7 +265,7 @@ public enum Cleaner {
     let verdict = protection.verdict(forRemoving: path, allowRepository: true)
     guard verdict.isAllowed else { return refuse(finding, path, verdict) }
     guard protection.canScan(repository) else { return refuse(finding, repository, .protected(zone: "", title: "protected area")) }
-    // A worktree's .git is a file. A folder there means this is a full repository.
+    // A worktree’s .git is a file. A folder there means this is a full repository.
     var info = stat()
     guard lstat(path + "/.git", &info) == 0, (info.st_mode & S_IFMT) == S_IFREG else {
       return .skipped(reason: "Not a worktree.")
@@ -294,7 +294,7 @@ public enum Cleaner {
   }
 
   /// Moves everything a clean sent to the Trash back where it was. Things that were
-  /// deleted outright can't be put back; they rebuild or download again.
+  /// deleted outright can’t be put back; they rebuild or download again.
   public static func restore(_ receipt: Receipt) -> RestoreResult {
     var result = RestoreResult(restored: [], missing: [], blocked: [])
     let manager = FileManager.default

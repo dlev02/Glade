@@ -4,7 +4,7 @@ import Foundation
 /// they have downloaded. The version the command runs, anything newer (an update
 /// waiting to switch over) and the one before it are always kept.
 ///
-/// When the command's link can't be followed into the versions folder, nothing is
+/// When the command’s link can’t be followed into the versions folder, nothing is
 /// reported: without knowing which version is live, none is safe to remove.
 public struct AgentVersionScanner: StorageScanner {
   public let id = "agent-versions"
@@ -35,7 +35,7 @@ public struct AgentVersionScanner: StorageScanner {
       let root = context.home + "/" + tool.versions
       guard FileFacts.isDirectory(root), context.protection.canScan(root) else { continue }
       guard let plan = Self.plan(root: root, command: context.home + "/" + tool.command) else {
-        Log.debug(.scan, "Kept every \(tool.name) version: couldn't tell which one is in use")
+        Log.debug(.scan, "Kept every \(tool.name) version: couldn’t tell which one is in use")
         continue
       }
       let stale = plan.remove.filter { context.protection.verdict(forRemoving: $0).isAllowed }
@@ -68,7 +68,7 @@ public struct AgentVersionScanner: StorageScanner {
       let name = (path as NSString).lastPathComponent
       guard !name.hasPrefix(".") else { continue }
       var entry = stat()
-      // Links and anything that isn't a plain file or folder are left alone.
+      // Links and anything that isn’t a plain file or folder are left alone.
       guard lstat(path, &entry) == 0 else { continue }
       let kind = entry.st_mode & S_IFMT
       guard kind == S_IFREG || kind == S_IFDIR else { continue }

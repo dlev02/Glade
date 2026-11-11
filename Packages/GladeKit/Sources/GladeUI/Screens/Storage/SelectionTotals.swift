@@ -1,7 +1,7 @@
 import GladeKit
 import SwiftUI
 
-/// The inspector when no single finding is highlighted: a set of findings (what's
+/// The inspector when no single finding is highlighted: a set of findings (what’s
 /// selected, or the highlighted rows) broken down by category, with their total when
 /// nothing else on screen already shows it.
 struct SelectionTotals: View {

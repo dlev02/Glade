@@ -1,7 +1,7 @@
 import GladeKit
 import Observation
 
-/// The storage list's rows, grouped, filtered and sorted once per change of scan,
+/// The storage list’s rows, grouped, filtered and sorted once per change of scan,
 /// scope or search, so scrolling through hundreds of findings does no work.
 @Observable
 final class StorageListModel {

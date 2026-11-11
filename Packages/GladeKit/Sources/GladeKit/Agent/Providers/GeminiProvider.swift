@@ -1,14 +1,14 @@
 import Foundation
 
-/// Google's Gemini CLI (`gemini -p`), in plan approval mode with no extensions, no MCP
+/// Google’s Gemini CLI (`gemini -p`), in plan approval mode with no extensions, no MCP
 /// servers, no hooks, no built-in tools and no GEMINI.md context files.
 ///
 /// Each run gets its own `GEMINI_CLI_HOME`: a fresh folder whose `.gemini` holds only a
-/// settings file (the person's chosen sign-in method, no tools, no context files) and
-/// symbolic links to the sign-in files, deleted afterwards. That keeps the person's hooks,
+/// settings file (the person’s chosen sign-in method, no tools, no context files) and
+/// symbolic links to the sign-in files, deleted afterwards. That keeps the person’s hooks,
 /// MCP servers, memory and chat history out of the run. The system prompt replaces the
-/// built-in one through `GEMINI_SYSTEM_MD`. (A system settings file can't be used: Gemini
-/// ignores one whose folder isn't owned by root.)
+/// built-in one through `GEMINI_SYSTEM_MD`. (A system settings file can’t be used: Gemini
+/// ignores one whose folder isn’t owned by root.)
 ///
 /// Written from the documentation (geminicli.com/docs/cli/headless) and the installed
 /// 0.63.0 bundle; not yet run signed in.
@@ -18,7 +18,7 @@ public struct GeminiProvider: AgentProvider {
   public let isLocal = false
   static let executable = "gemini"
   static let signInHint = "Run `gemini` in Terminal and sign in."
-  /// Sign-in files linked into the run's home, when they exist.
+  /// Sign-in files linked into the run’s home, when they exist.
   static let signInFiles = ["oauth_creds.json", "google_accounts.json"]
 
   public init() {}
@@ -42,8 +42,8 @@ public struct GeminiProvider: AgentProvider {
     )
   }
 
-  /// The run's settings: no tools, no context files, no usage statistics, and the sign-in
-  /// method from the person's own settings (a setting, not a credential).
+  /// The run’s settings: no tools, no context files, no usage statistics, and the sign-in
+  /// method from the person’s own settings (a setting, not a credential).
   static func settings() -> String {
     var settings: [String: Any] = [
       "tools": ["core": [String]()],

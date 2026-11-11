@@ -20,7 +20,7 @@ struct HistoryScreen: View {
   }
 
   var body: some View {
-    // Receipts come newest first; dry runs removed nothing, so they aren't history.
+    // Receipts come newest first; dry runs removed nothing, so they aren’t history.
     let cleans = (previewReceipts ?? model.receipts).filter { !$0.dryRun }
     let selected = cleans.first { $0.id == selection }
     Group {
@@ -46,7 +46,7 @@ struct HistoryScreen: View {
               }
             }
           }
-          // Narrower than Overview, so a clean's size sits near its name, and centred
+          // Narrower than Overview, so a clean’s size sits near its name, and centred
           // once the window is wider than that.
           .frame(maxWidth: Metrics.listWidth, alignment: .leading)
           .padding(.horizontal, Metrics.l)
@@ -81,7 +81,7 @@ struct HistoryScreen: View {
       .inspectorColumnWidth(min: 300, ideal: 320, max: 440)
     }
     .task {
-      // `-demoReceipt first` opens the newest clean's receipt.
+      // `-demoReceipt first` opens the newest clean’s receipt.
       guard DemoState.value("demoReceipt") != nil else { return }
       // Sample receipts arrive a moment after launch.
       for _ in 0..<20 where selection == nil {
@@ -98,7 +98,7 @@ struct HistoryScreen: View {
     }
   }
 
-  /// Moves the selection with the arrow keys, in the list's order.
+  /// Moves the selection with the arrow keys, in the list’s order.
   private func move(_ step: Int, in cleans: [Receipt]) -> KeyPress.Result {
     let ordered = CleanDay.grouped(cleans).flatMap(\.receipts)
     guard !ordered.isEmpty else { return .ignored }
@@ -108,7 +108,7 @@ struct HistoryScreen: View {
   }
 
   /// Shows or hides the receipt. It sits at the far trailing edge, above the
-  /// inspector when that's open.
+  /// inspector when that’s open.
   private var receiptButton: some View {
     Button {
       showsReceipt.toggle()

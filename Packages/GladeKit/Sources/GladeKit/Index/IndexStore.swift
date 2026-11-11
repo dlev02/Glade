@@ -10,7 +10,7 @@ struct FileStamp: Sendable {
   var textHash: String?
 }
 
-/// One file's row, ready to be written.
+/// One file’s row, ready to be written.
 struct FileRecord: Sendable {
   var path: String
   var size: Int64
@@ -84,7 +84,7 @@ final class IndexSnapshot: Sendable {
   }
 }
 
-/// The on-disk index: one SQLite database inside Glade's own folder, readable only by
+/// The on-disk index: one SQLite database inside Glade’s own folder, readable only by
 /// this account. It holds what was learned about each file (kind, title, a short
 /// snippet, labels), its passages with their vectors, and image feature prints.
 /// Never holds whole documents: passages are capped per file.
@@ -325,7 +325,7 @@ public final class IndexStore: @unchecked Sendable {
     }
   }
 
-  /// Records a new size and date for a file whose text didn't change.
+  /// Records a new size and date for a file whose text didn’t change.
   func touch(path: String, size: Int64, modified: Double) throws {
     try synchronized {
       let statement = try prepare("UPDATE files SET size = ?, mtime = ?, indexed_at = ? WHERE path = ?")
@@ -475,7 +475,7 @@ public final class IndexStore: @unchecked Sendable {
     }
   }
 
-  /// Passages containing the query's words, best first, scored by BM25 (higher is better).
+  /// Passages containing the query’s words, best first, scored by BM25 (higher is better).
   func wordMatches(_ words: [String], limit: Int = 300) -> [(chunk: Int64, score: Double)] {
     guard !words.isEmpty else { return [] }
     // Each word quoted, so nothing in a query is read as FTS syntax.

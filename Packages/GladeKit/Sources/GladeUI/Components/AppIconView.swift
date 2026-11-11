@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// An app's icon, looked up from where the app lives on disk.
+/// An app’s icon, looked up from where the app lives on disk.
 public struct AppIconView: View {
   var path: String?
   var size: CGFloat

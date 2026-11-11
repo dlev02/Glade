@@ -2,9 +2,9 @@ import Foundation
 
 /// How boldly a plan selects things.
 public enum CleanLevel: String, Codable, Sendable, CaseIterable, Identifiable, Comparable {
-  /// Only what rebuilds itself and hasn't been touched lately.
+  /// Only what rebuilds itself and hasn’t been touched lately.
   case careful
-  /// Adds things that download or reinstall, when they've sat idle.
+  /// Adds things that download or reinstall, when they’ve sat idle.
   case balanced
   /// Everything that can come back, however recently it was used.
   case aggressive
@@ -31,9 +31,9 @@ public enum Effort: String, Codable, Sendable, CaseIterable, Identifiable {
 }
 
 public struct AssistantSettings: Codable, Sendable, Equatable {
-  /// Providers in the order to try them. The first one that's ready is used.
+  /// Providers in the order to try them. The first one that’s ready is used.
   public var order: [String]
-  /// The everyday model for each provider. A provider that isn't listed uses its default.
+  /// The everyday model for each provider. A provider that isn’t listed uses its default.
   public var models: [String: String]
   /// The stronger model to call in when the everyday one asks for a closer look.
   public var deepModels: [String: String]
@@ -286,5 +286,16 @@ public enum Format {
 
   public static func percent(_ fraction: Double) -> String {
     "\(Int((fraction * 100).rounded()))%"
+  }
+}
+
+extension Format {
+  /// "A", "A and B", "A, B and C": a list in words, without the comma before "and".
+  public static func listed(_ items: [String]) -> String {
+    switch items.count {
+    case 0: ""
+    case 1: items[0]
+    default: items.dropLast().joined(separator: ", ") + " and " + items[items.count - 1]
+    }
   }
 }

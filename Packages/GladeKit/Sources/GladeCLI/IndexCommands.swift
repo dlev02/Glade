@@ -4,7 +4,7 @@ import GladeKit
 
 /// Options shared by the content-index commands.
 struct IndexLocation: ParsableArguments {
-  @Option(name: .long, help: ArgumentHelp("Use this index database instead of Glade's own (for experiments).", visibility: .hidden))
+  @Option(name: .long, help: ArgumentHelp("Use this index database instead of Glade’s own (for experiments).", visibility: .hidden))
   var database: String?
 
   var url: URL {
@@ -29,7 +29,7 @@ struct Index: AsyncParsableCommand {
   @OptionGroup var output: OutputOptions
   @OptionGroup var location: IndexLocation
 
-  @Flag(name: .long, help: "Show what's in the index without updating it.")
+  @Flag(name: .long, help: "Show what’s in the index without updating it.")
   var status = false
 
   @Flag(name: .long, help: "Throw the index away and build it again.")
@@ -86,7 +86,7 @@ struct Search: AsyncParsableCommand {
   @OptionGroup var output: OutputOptions
   @OptionGroup var location: IndexLocation
 
-  @Argument(help: "What you're looking for, in your own words.")
+  @Argument(help: "What you’re looking for, in your own words.")
   var query: String
 
   @Option(name: .long, help: "How many files to list.")
@@ -130,7 +130,7 @@ struct Similar: AsyncParsableCommand {
 
 struct Lookalikes: AsyncParsableCommand {
   static let configuration = CommandConfiguration(
-    abstract: "Groups of near-identical images or documents that aren't exact copies. Report only."
+    abstract: "Groups of near-identical images or documents that aren’t exact copies. Report only."
   )
 
   @OptionGroup var output: OutputOptions

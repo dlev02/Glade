@@ -2,10 +2,10 @@ import Foundation
 import GladeKit
 import ServiceManagement
 
-/// Opening Glade at login, through the system's own login items list. Only a copy
+/// Opening Glade at login, through the system’s own login items list. Only a copy
 /// installed in an Applications folder can be registered: a development build or a
 /// copy run from a disk image would leave a login item pointing at something that
-/// won't be there tomorrow.
+/// won’t be there tomorrow.
 public enum LoginItem {
   /// Installed in an Applications folder, so the setting can take effect and last.
   public static var isAvailable: Bool {
@@ -19,7 +19,7 @@ public enum LoginItem {
     guard Bundle.main.bundlePath.hasSuffix(".app") else { return }
     do {
       try SMAppService.mainApp.unregister()
-      Log.info(.app, "Removed this copy's login item")
+      Log.info(.app, "Removed this copy’s login item")
     } catch {
       Log.info(.app, "No login item to remove for this copy (\(error.localizedDescription))")
     }

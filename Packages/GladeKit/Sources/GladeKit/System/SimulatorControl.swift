@@ -34,7 +34,7 @@ public enum SimulatorControl {
   public static let timeout: TimeInterval = 60
 
   /// Runs `xcrun simctl [--set <set>] shutdown <udid>`.
-  /// - Parameter set: The device set's folder; `nil` for the standard set.
+  /// - Parameter set: The device set’s folder; `nil` for the standard set.
   public static func shutdown(udid: String, set: String? = nil, name: String? = nil) async throws -> SimulatorActionResult {
     guard UUID(uuidString: udid) != nil else {
       Log.info(.system, "Refused to shut down simulator “\(udid)”: not a UDID")

@@ -1,13 +1,13 @@
 import SwiftUI
 
-/// A model chosen from a quiet menu of the provider's suggestions, or typed in after
-/// "Other…". Empty means the provider's default. A typed name is saved when editing
+/// A model chosen from a quiet menu of the provider’s suggestions, or typed in after
+/// "Other…". Empty means the provider’s default. A typed name is saved when editing
 /// ends, and Escape puts the menu back without changing anything.
 struct ModelField: View {
   var title: String
   var suggestions: [String]
   @Binding var value: String
-  /// What an empty value is called: the provider's default, usually.
+  /// What an empty value is called: the provider’s default, usually.
   var emptyTitle = "Default"
   @State private var isTyping = false
   @State private var text = ""

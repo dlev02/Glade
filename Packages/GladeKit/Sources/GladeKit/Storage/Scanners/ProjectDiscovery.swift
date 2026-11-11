@@ -6,7 +6,7 @@ struct ProjectRoot: Sendable, Hashable {
   var maxDepth: Int
 }
 
-/// Where the person's code projects live.
+/// Where the person’s code projects live.
 enum ProjectPlaces {
   /// Folders people commonly keep projects in, relative to home. `*` matches one component.
   static let usual: [String] = [
@@ -50,7 +50,7 @@ enum ProjectPlaces {
     return usable(candidates, context)
   }
 
-  /// Agent worktree parents that the project roots don't already cover.
+  /// Agent worktree parents that the project roots don’t already cover.
   static func extraAgentParents(_ context: ScanContext, covered: [ProjectRoot]) -> [ProjectRoot] {
     var extra: [ProjectRoot] = []
     for pattern in agentWorktreeParents {
@@ -72,14 +72,14 @@ enum ProjectPlaces {
       var info = stat()
       guard stat(real, &info) == 0, (info.st_mode & S_IFMT) == S_IFDIR else { continue }
       guard context.protection.canScan(cleaned), context.protection.canScan(real) else {
-        Log.info(.scan, "Skipped project folder \(cleaned): it's in a protected zone")
+        Log.info(.scan, "Skipped project folder \(cleaned): it’s in a protected zone")
         continue
       }
       if !resolved.contains(where: { $0.path == real }) {
         resolved.append(ProjectRoot(path: real, maxDepth: candidate.maxDepth))
       }
     }
-    // Drop roots that sit inside a deeper-walked root; that root's walk covers them.
+    // Drop roots that sit inside a deeper-walked root; that root’s walk covers them.
     return resolved.filter { root in
       !resolved.contains { other in
         other.path != root.path && root.path.hasPrefix(other.path + "/") && other.maxDepth >= root.maxDepth
@@ -89,7 +89,7 @@ enum ProjectPlaces {
 }
 
 /// What one walk of the project folders turned up. Both the project and the worktree
-/// scanners need it, so it's built once per scan and shared.
+/// scanners need it, so it’s built once per scan and shared.
 struct ProjectTree: Sendable {
   struct Candidate: Sendable, Hashable {
     /// The folder that would be removed.
@@ -201,7 +201,7 @@ actor ProjectTreeCache {
 /// Read-only git queries. Every call has a short timeout, takes no optional locks (so
 /// `git status` never rewrites the index), and never prompts.
 enum Git {
-  /// The git to run, or `nil` when only Apple's installer stub is present (running it
+  /// The git to run, or `nil` when only Apple’s installer stub is present (running it
   /// would pop up a dialog offering to install the developer tools).
   static let executable: String? = {
     let manager = FileManager.default
@@ -216,11 +216,11 @@ enum Git {
     if developerDirs.contains(where: { manager.isExecutableFile(atPath: $0 + "/usr/bin/git") }) {
       return "/usr/bin/git"
     }
-    Log.info(.scan, "Git isn't installed; repositories won't be examined")
+    Log.info(.scan, "Git isn’t installed; repositories won’t be examined")
     return nil
   }()
 
-  /// Runs `git -C <directory> <arguments>`. `nil` when git is missing or couldn't start.
+  /// Runs `git -C <directory> <arguments>`. `nil` when git is missing or couldn’t start.
   static func run(_ arguments: [String], in directory: String, input: String? = nil, timeout: TimeInterval = 5) async -> ShellResult? {
     guard let executable else { return nil }
     let environment = ["GIT_OPTIONAL_LOCKS": "0", "GIT_TERMINAL_PROMPT": "0", "LC_ALL": "C"]
@@ -230,7 +230,7 @@ enum Git {
         input: input, environment: environment, timeout: timeout, quiet: true
       )
     } catch {
-      Log.warning(.scan, "git couldn't run in \(directory): \(error.localizedDescription)")
+      Log.warning(.scan, "git couldn’t run in \(directory): \(error.localizedDescription)")
       return nil
     }
   }
@@ -253,7 +253,7 @@ enum Git {
     }
   }
 
-  /// For a linked worktree's git directory, the repository it belongs to (the folder to
+  /// For a linked worktree’s git directory, the repository it belongs to (the folder to
   /// run `git worktree` in). `nil` for anything else, including submodules.
   static func owningRepository(ofWorktreeGitDirectory gitDir: String) -> String? {
     let commonFile = gitDir + "/commondir"
@@ -312,7 +312,7 @@ enum FileFacts {
   }
 }
 
-/// The working folders of this user's running processes, so a scan can tell where a
+/// The working folders of this user’s running processes, so a scan can tell where a
 /// terminal, editor or agent is at work.
 enum WorkingDirectories {
   static func current() -> [String] {

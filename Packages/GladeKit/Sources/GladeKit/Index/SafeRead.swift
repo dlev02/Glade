@@ -7,7 +7,7 @@ import Foundation
 /// placeholder (that would download it), only a regular file of the expected length,
 /// without changing its last-opened date and without filling the memory cache.
 /// Everything the index looks at is read through here and then parsed from memory, so
-/// no framework ever opens a person's file itself.
+/// no framework ever opens a person’s file itself.
 enum SafeRead {
   enum Failure: Error, CustomStringConvertible {
     case unreadable(Int32)
@@ -27,7 +27,7 @@ enum SafeRead {
     }
   }
 
-  /// The file's bytes. `limit` guards against a file that grew since the walk.
+  /// The file’s bytes. `limit` guards against a file that grew since the walk.
   static func data(_ path: String, limit: Int64) throws -> Data {
     try FileHashing.withoutAccessTimeUpdates { Result { try read(path, limit: limit) } }.get()
   }
@@ -86,7 +86,7 @@ struct ZipArchive {
   let data: Data
   let entries: [Entry]
 
-  /// The largest entry this will inflate, so a hostile archive can't exhaust memory.
+  /// The largest entry this will inflate, so a hostile archive can’t exhaust memory.
   static let entryLimit = 16 * 1024 * 1024
 
   init?(_ data: Data) {
@@ -148,7 +148,7 @@ struct ZipArchive {
         slice.withUnsafeBytes { source -> Int in
           guard let target = destination.bindMemory(to: UInt8.self).baseAddress,
                 let packed = source.bindMemory(to: UInt8.self).baseAddress else { return 0 }
-          // Apple's ZLIB codec is raw DEFLATE, which is what zip stores.
+          // Apple’s ZLIB codec is raw DEFLATE, which is what zip stores.
           return compression_decode_buffer(target, entry.size, packed, entry.compressedSize, nil, COMPRESSION_ZLIB)
         }
       }

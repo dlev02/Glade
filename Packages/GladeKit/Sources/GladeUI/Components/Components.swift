@@ -49,8 +49,8 @@ public struct BarSegment: Identifiable, Hashable, Sendable {
   public var bytes: Int64
   public var color: Color
 
-  /// The slice's colour as a small dot in a key: the catch-all's faint fill is
-  /// strengthened so the dot doesn't vanish.
+  /// The slice’s colour as a small dot in a key: the catch-all’s faint fill is
+  /// strengthened so the dot doesn’t vanish.
   public var legendColor: Color {
     id == "other" ? Color.primary.opacity(0.38) : color
   }
@@ -63,9 +63,9 @@ public struct BarSegment: Identifiable, Hashable, Sendable {
   }
 }
 
-/// The disk as one rounded bar: what's reclaimable by family, everything else in
-/// use, and what's free. Pointing at a slice brightens it, dims the rest a little and
-/// shows its name and size in a small bubble above it, in room the bar's owner leaves
+/// The disk as one rounded bar: what’s reclaimable by family, everything else in
+/// use, and what’s free. Pointing at a slice brightens it, dims the rest a little and
+/// shows its name and size in a small bubble above it, in room the bar’s owner leaves
 /// clear (`bubbleRoom`), so nothing moves or is covered; `hovered` is shared with the
 /// legend so each lights the other. Every slice is its own accessibility element.
 public struct StorageBar: View {
@@ -112,8 +112,8 @@ public struct StorageBar: View {
       .clipShape(.capsule)
       .overlay(alignment: .topLeading) {
         if let item = frames.first(where: { $0.segment.id == hovered }) {
-          // Over the slice, its arrow just touching the bar's top edge, and kept
-          // within the bar's ends however near one the slice is.
+          // Over the slice, its arrow just touching the bar’s top edge, and kept
+          // within the bar’s ends however near one the slice is.
           let centre = item.x + item.width / 2
           let half = bubbleSize.width / 2
           let x = min(max(centre, half), max(half, proxy.size.width - half))
@@ -148,7 +148,7 @@ public struct StorageBar: View {
 }
 
 /// The small bubble above a pointed-at slice: its name and size, with an arrow that
-/// points at the slice even when the bubble is pushed in from the bar's end.
+/// points at the slice even when the bubble is pushed in from the bar’s end.
 private struct BarBubble: View {
   var segment: BarSegment
   var arrowOffset: CGFloat
@@ -348,7 +348,7 @@ public struct RecoveryBadge: View {
   }
 }
 
-/// A category's symbol on a tinted tile.
+/// A category’s symbol on a tinted tile.
 public struct CategoryIcon: View {
   var category: StorageCategory
   var size: CGFloat

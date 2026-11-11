@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The tabs of the Settings window, each with its own fixed size so the window fits
-/// what it's showing, as Mac settings windows do.
+/// what it’s showing, as Mac settings windows do.
 enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
   case general, protection, assistant, alerts, search, advanced
 

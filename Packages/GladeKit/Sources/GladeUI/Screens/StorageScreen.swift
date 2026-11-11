@@ -3,7 +3,7 @@ import GladeKit
 import SwiftUI
 
 /// Everything the scan found, what a clean would remove, and the clean itself.
-/// People adjust the selection here, see why each thing is or isn't included, and
+/// People adjust the selection here, see why each thing is or isn’t included, and
 /// free the space.
 struct StorageScreen: View {
   /// What the list is built from; when any of it changes the rows are worked out again.
@@ -23,7 +23,7 @@ struct StorageScreen: View {
   @State private var searchFocus = 0
   /// The list is too narrow for words in the recovery column.
   @State private var isCompact = false
-  /// Advice to show instead of the model's, for drawing the screen in snapshots.
+  /// Advice to show instead of the model’s, for drawing the screen in snapshots.
   private let adviceOverride: StorageAdvice?
 
   /// Set by the snapshots. The offscreen renderer has nothing behind glass, so a
@@ -41,7 +41,7 @@ struct StorageScreen: View {
       .navigationTitle("Storage")
       .toolbar { toolbar }
       .background {
-        // ⌘F puts the cursor in the toolbar's search field.
+        // ⌘F puts the cursor in the toolbar’s search field.
         Button("Find") { searchFocus += 1 }
           .keyboardShortcut("f")
           .hidden()
@@ -49,7 +49,7 @@ struct StorageScreen: View {
       .inspector(isPresented: $state.showsInspector) {
         Group {
           if model.isScanning {
-            // The last scan's totals would be out of date by the time it finishes.
+            // The last scan’s totals would be out of date by the time it finishes.
             EmptyState("Scanning", symbol: Symbols.scan)
           } else {
             FindingInspector(finding: state.highlightedFinding, highlightedFindings: highlightedFindings)
@@ -145,7 +145,7 @@ struct StorageScreen: View {
   /// How far above the clean bar the rows fade out.
   private static let fadeHeight: CGFloat = 24
 
-  /// The Full Disk Access line and the assistant's advice, only when there's
+  /// The Full Disk Access line and the assistant’s advice, only when there’s
   /// something to say.
   @ViewBuilder
   private var header: some View {
@@ -169,7 +169,7 @@ struct StorageScreen: View {
     } else {
       ScrollViewReader { proxy in
       List(selection: $state.highlighted) {
-        // The advice is the list's first row, so it sits on the same grid as the
+        // The advice is the list’s first row, so it sits on the same grid as the
         // rows: its sparkle in the checkbox column, its text on the titles' edge.
         if let advice = adviceOverride ?? model.advice {
           AdviceBanner(advice: advice, title: { model.scan?.finding($0)?.title }) { id in
@@ -206,7 +206,7 @@ struct StorageScreen: View {
     }
   }
 
-  /// Highlights a finding's row and scrolls to it, first showing the scope that lists
+  /// Highlights a finding’s row and scrolls to it, first showing the scope that lists
   /// it, clearing a search that hides it and opening its group.
   private func reveal(_ id: String, proxy: ScrollViewProxy) {
     guard let finding = model.scan?.finding(id) else { return }
@@ -314,7 +314,7 @@ struct StorageScreen: View {
     }
   }
 
-  /// Space ticks the highlighted rows, or clears them when they're all ticked already.
+  /// Space ticks the highlighted rows, or clears them when they’re all ticked already.
   private func toggleChecks(_ ids: Set<String>) {
     let selectable = ids.compactMap(state.list.finding).filter { !$0.isBlocked }.map(\.id)
     guard !selectable.isEmpty else { return }

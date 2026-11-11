@@ -1,8 +1,8 @@
 import GladeKit
 
-/// Which of the table's sometimes-empty columns are showing. A column appears as soon
+/// Which of the table’s sometimes-empty columns are showing. A column appears as soon
 /// as any row has a value in it, and goes only after several refreshes without one, so
-/// it doesn't flicker as readings come and go.
+/// it doesn’t flicker as readings come and go.
 struct OptionalColumns: Equatable {
   var graphics = false
   var lastUsed = false
@@ -15,7 +15,7 @@ struct OptionalColumns: Equatable {
   static var memory: OptionalColumns { AppsTableMemory.columns }
 
   mutating func update(_ rows: [UsageRow]) {
-    // Under 1% is noise (Glade's own drawing, a blinking cursor), not a reading
+    // Under 1% is noise (Glade’s own drawing, a blinking cursor), not a reading
     // worth a column.
     let hasGraphics = rows.contains { $0.graphics >= 1 }
     let hasLastUsed = rows.contains { !$0.app.isFrontmost && $0.app.lastActive != nil }

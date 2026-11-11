@@ -15,7 +15,7 @@ struct StorageScanning: View {
             .frame(width: 240)
             .accessibilityLabel("Scan progress")
             .accessibilityValue("\(done) of \(total)")
-          // What was just looked at, and the running total, from the scan's own progress.
+          // What was just looked at, and the running total, from the scan’s own progress.
           if let activity = model.scanActivity {
             VStack(spacing: 2) {
               Text("\(Format.bytes(activity.found)) found so far")

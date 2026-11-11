@@ -5,7 +5,7 @@ import Foundation
 ///
 /// Codex reads global memory and instructions from its home folder even with
 /// `--ignore-user-config`, so each run gets its own `CODEX_HOME`: a fresh folder holding
-/// only a symbolic link to the person's `auth.json`, deleted afterwards.
+/// only a symbolic link to the person’s `auth.json`, deleted afterwards.
 public struct CodexProvider: AgentProvider {
   public let id = "codex"
   public let name = "Codex"
@@ -16,7 +16,7 @@ public struct CodexProvider: AgentProvider {
   /// Features that give the model tools or outside context. Unknown names are ignored by
   /// Codex, so the list can stay ahead of or behind the installed version. Checked with
   /// `codex debug prompt-input` on 0.167.1: with these off the shell (`exec_command`) is
-  /// gone. `apply_patch` and the sub-agent tools can't be switched off; the read-only
+  /// gone. `apply_patch` and the sub-agent tools can’t be switched off; the read-only
   /// sandbox stops the first from writing, and sub-agents inherit this configuration.
   static let disabledFeatures = [
     "shell_tool", "unified_exec", "code_mode_host", "apps", "plugins", "memories", "hooks",

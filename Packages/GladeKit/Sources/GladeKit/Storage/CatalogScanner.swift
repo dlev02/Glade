@@ -16,13 +16,13 @@ public struct LocationRule: Sendable {
     case child
     /// "Title – name of the folder the match is in"
     case parent
-    /// Xcode's `Project-hash` folder names, shown as the project.
+    /// Xcode’s `Project-hash` folder names, shown as the project.
     case derivedData
-    /// The match is named after a bundle identifier; show the app's name.
+    /// The match is named after a bundle identifier; show the app’s name.
     case bundleID
-    /// The match sits inside `~/Library/Containers/<bundle id>`; show that app's name.
+    /// The match sits inside `~/Library/Containers/<bundle id>`; show that app’s name.
     case container
-    /// Hugging Face's `models--org--name` folders, shown as `org/name`.
+    /// Hugging Face’s `models--org--name` folders, shown as `org/name`.
     case huggingFace
   }
 
@@ -38,7 +38,7 @@ public struct LocationRule: Sendable {
 
   /// When a clean level may select the finding by itself.
   public enum Auto: Sendable {
-    /// Worked out from how it's recovered and how risky it is.
+    /// Worked out from how it’s recovered and how risky it is.
     case derived
     case never
     case at(CleanLevel)
@@ -56,7 +56,7 @@ public struct LocationRule: Sendable {
   public var recovery: Recovery = .automatic
   public var risk: Risk = .safe
   public var owner: Owner?
-  /// Don't offer this while the owning app is open.
+  /// Don’t offer this while the owning app is open.
   public var blockWhileRunning = false
   public var method: RemovalMethod = .delete
   public var contentsOnly = false
@@ -70,15 +70,15 @@ public struct LocationRule: Sendable {
   /// Leave out matches whose path contains any of these.
   public var skipContaining: [String] = []
   public var minimumBytes: Int64 = 5_000_000
-  /// The location legitimately holds libraries or disk images of its own (a simulator's
-  /// test photo library), so finding one inside doesn't block removal.
+  /// The location legitimately holds libraries or disk images of its own (a simulator’s
+  /// test photo library), so finding one inside doesn’t block removal.
   public var allowsLibrariesInside = false
   /// Show it but never remove it; `reportOnly` explains what to use instead.
   public var reportOnly: String?
 }
 
 extension LocationRule {
-  /// The level and idle time a finding of this kind gets when the rule doesn't say.
+  /// The level and idle time a finding of this kind gets when the rule doesn’t say.
   static func automation(recovery: Recovery, risk: Risk, auto: Auto, idleDays: Int) -> (CleanLevel?, Int) {
     if risk == .personal { return (nil, idleDays) }
     switch auto {
@@ -121,7 +121,7 @@ public struct CatalogScanner: StorageScanner {
     if context.cancel.isCancelled { return [] }
     var matches = Self.expand(rule, context)
     // A rule that gathers many apps' folders into one finding leaves out the apps that
-    // are open, rather than holding back everyone else's.
+    // are open, rather than holding back everyone else’s.
     if rule.split == .whole {
       matches.removeAll { InUse.liveAppLock(for: $0, home: context.home) != nil }
     }
