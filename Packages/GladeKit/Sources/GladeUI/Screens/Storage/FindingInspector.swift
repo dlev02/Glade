@@ -47,11 +47,10 @@ struct FindingInspector: View {
           .fixedSize(horizontal: false, vertical: true)
       }
 
+      // The badge says how it comes back (its tooltip says more); the description
+      // above usually says it in words already.
       section("After removal") {
         RecoveryBadge(finding.recovery)
-        Text(finding.recovery.explanation)
-          .foregroundStyle(.secondary)
-          .fixedSize(horizontal: false, vertical: true)
       }
 
       section("How it’s removed") {
@@ -72,7 +71,7 @@ struct FindingInspector: View {
             set: { model.setSelected(finding.id, $0) }
           ))
           .toggleStyle(.checkbox)
-          if let reason = model.reason(for: finding.id) {
+          if let reason = selectionNote(finding) {
             Text(reason)
               .foregroundStyle(.secondary)
               .fixedSize(horizontal: false, vertical: true)
@@ -114,6 +113,15 @@ struct FindingInspector: View {
         }
       }
     }
+  }
+
+  /// Why it is or isn't in the clean, unless the reason is only that it rebuilds or
+  /// downloads again, which the badge above already says.
+  private func selectionNote(_ finding: Finding) -> String? {
+    guard let reason = model.reason(for: finding.id) else { return nil }
+    let (selected, rule) = Planner.decide(finding, level: model.level)
+    if selected, rule == reason, finding.recovery != .permanent { return nil }
+    return reason
   }
 
   /// The evidence lines, plus the copy a duplicate keeps and its project.

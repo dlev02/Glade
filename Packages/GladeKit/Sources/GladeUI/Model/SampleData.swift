@@ -187,7 +187,7 @@ public struct SampleData: Sendable {
         paths: [home + "/" + path], bytes: Int64(gigabytes * 1e9), fileCount: Int(gigabytes * 4200),
         lastUsed: Date().addingTimeInterval(-daysAgo * day), recovery: recovery, risk: risk,
         blockers: blocked.map { [$0] } ?? [], method: method,
-        evidence: evidence.isEmpty ? ["Last changed \(Format.age(Date().addingTimeInterval(-daysAgo * day)))."] : evidence,
+        evidence: evidence.isEmpty ? ["Used \(Format.age(Date().addingTimeInterval(-daysAgo * day)))."] : evidence,
         project: project, autoLevel: auto, idleDaysRequired: idle
       ))
     }
