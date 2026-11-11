@@ -287,10 +287,10 @@ extension NSColor {
 }
 
 extension Font {
-  /// Large figures: free space, sizes, totals. Rounded semibold with natural digit
-  /// widths, so "114 GB" has no gaps around its ones.
+  /// Large figures: free space, sizes, totals. SF Pro semibold, like every other large
+  /// number, with natural digit widths so "114 GB" has no gaps around its ones.
   public static func figure(_ size: CGFloat = 34) -> Font {
-    .system(size: size, weight: .semibold, design: .rounded)
+    .system(size: size, weight: .semibold)
   }
 
   /// A large figure that updates while it's watched (memory, processor, graphics):
