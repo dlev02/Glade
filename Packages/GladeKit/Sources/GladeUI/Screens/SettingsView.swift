@@ -40,6 +40,9 @@ struct SettingsView: View {
       tab = .advanced
       showsReport = true
     }
+    .onReceive(NotificationCenter.default.publisher(for: .gladeShowAssistantSettings)) { _ in
+      tab = .assistant
+    }
   }
 }
 

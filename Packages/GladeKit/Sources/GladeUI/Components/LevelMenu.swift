@@ -36,6 +36,8 @@ public struct LevelMenu: View {
     .menuStyle(.borderlessButton)
     .menuIndicator(.visible)
     .fixedSize()
+    // The accent fill is too dark to read as text on a dark surface.
+    .tint(.secondary)
     .disabled(model.isCleaning)
     .accessibilityLabel("Clean level")
     .accessibilityValue(model.level.title)
