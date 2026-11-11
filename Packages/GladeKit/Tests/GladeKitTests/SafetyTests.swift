@@ -229,6 +229,41 @@ struct SafetyTests {
     }
   }
 
+  /// Things that live in cache folders but aren't caches: removing them breaks projects
+  /// or loses downloads a person chose. The catalog must never offer them as a cache.
+  @Test func catalogDoesNotMistakeLiveDataForCaches() async throws {
+    let files = [
+      "Library/Caches/pypoetry/virtualenvs/app-x1y2-py3.12/bin/python", "Library/Caches/pypoetry/cache/repositories/pypi/a.json",
+      "Library/Caches/deno/location_data/abc/local_storage", "Library/Caches/deno/npm/registry.npmjs.org/pkg/a.tgz",
+      "Library/Caches/org.R-project.R/R/renv/cache/v5/pkg/DESCRIPTION", "Library/Caches/llama.cpp/model-Q4_K_M.gguf",
+      "Library/Caches/Buzz/models/whisper/ggml-base.bin", ".yarn/berry/cache/left-pad-npm-1.3.0.zip",
+    ]
+    for file in files {
+      let path = home + "/" + file
+      try FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+      try Data(repeating: 4, count: 6_000_000).write(to: URL(fileURLWithPath: path))
+    }
+    let context = ScanContext(config: GladeConfig(), protection: protection, home: home, running: RunningApps())
+    let findings = await CatalogScanner().scan(context)
+    func covering(_ relative: String) -> [Finding] {
+      let path = home + "/" + relative
+      return findings.filter { $0.paths.contains { path == $0 || path.hasPrefix($0 + "/") } }
+    }
+    for kept in ["Library/Caches/pypoetry/virtualenvs", "Library/Caches/deno/location_data", "Library/Caches/org.R-project.R"] {
+      #expect(covering(kept).isEmpty, "\(kept) must not be offered")
+    }
+    #expect(!covering("Library/Caches/pypoetry/cache").isEmpty, "Poetry's download cache should still be found")
+    #expect(!covering("Library/Caches/deno/npm").isEmpty, "Deno's download cache should still be found")
+    for model in ["Library/Caches/llama.cpp", "Library/Caches/Buzz/models/whisper"] {
+      for finding in covering(model) {
+        #expect(finding.risk != .safe && finding.recovery == .redownload, "\(model) is a downloaded model, offered as \(finding.ruleID)")
+      }
+    }
+    for finding in covering(".yarn/berry/cache") {
+      #expect(finding.risk == .caution && finding.recovery == .reinstall, "Yarn's Plug'n'Play packages offered as \(finding.ruleID)")
+    }
+  }
+
   @Test func scannerNeverReportsProtectedPlaces() async {
     let rules = [
       LocationRule(id: "t.caches", category: .appCaches, title: "cache", detail: "", paths: ["~/Library/Caches/*"], split: .each, minimumBytes: 0),

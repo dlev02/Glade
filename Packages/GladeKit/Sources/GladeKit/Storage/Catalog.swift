@@ -57,7 +57,11 @@ public enum Catalog {
         "CocoaPods", "org.swift.swiftpm", "org.carthage.CarthageKit", "composer", "go-build",
         "ms-playwright", "ms-playwright-go", "electron", "Cypress", "typescript", "deno", "JetBrains",
         "com.spotify.client", "node-gyp", "Glade", "io.github.dlev02.glade", "com.apple.dt.Xcode",
-        "SentryCrash", "bun", "uv", "huggingface", "turbo", "puppeteer",
+        "SentryCrash", "bun", "uv", "huggingface", "turbo", "puppeteer", "camoufox*",
+        // Named "cache" but not one: llama.cpp keeps the models you downloaded with
+        // `-hf` here, Buzz its Whisper models and plugins, renv the R packages projects
+        // link to, and kitty a graphics cache a running terminal needs.
+        "llama.cpp", "Buzz", "org.R-project.R", "kitty", "com.jetbrains.toolbox*",
       ]
     ),
     LocationRule(
@@ -228,9 +232,17 @@ public enum Catalog {
     pkg("homebrew", "Homebrew downloads", ["~/Library/Caches/Homebrew"], "Installers Homebrew already unpacked. It downloads them again if you reinstall."),
     pkg("npm", "npm cache", ["~/.npm/_cacache", "~/.npm/_npx", "~/.npm/_logs"], "Packages npm has downloaded. It fetches them again on the next install."),
     pkg("pnpm", "pnpm store", ["~/Library/pnpm/store", "~/Library/Caches/pnpm", "~/.local/share/pnpm/store", "~/.pnpm-store"], "Packages pnpm has downloaded. Projects keep their own copies; new installs fetch again."),
-    pkg("yarn", "Yarn cache", ["~/Library/Caches/Yarn", "~/.yarn/berry/cache", "~/.cache/yarn"], "Packages Yarn has downloaded. It fetches them again on the next install."),
+    pkg("yarn", "Yarn cache", ["~/Library/Caches/Yarn", "~/.cache/yarn"], "Packages Yarn has downloaded. It fetches them again on the next install."),
+    LocationRule(
+      id: "pkg.yarn-berry", category: .packageCaches, title: "Yarn packages",
+      detail: "Packages modern Yarn keeps for all your projects. Projects using Plug'n'Play load them straight from here, so each stops working until you run `yarn install` in it again.",
+      paths: ["~/.yarn/berry/cache"], recovery: .reinstall, risk: .caution,
+      used: .accessed, auto: .at(.aggressive), idleDays: 30
+    ),
     pkg("bun", "Bun cache", ["~/.bun/install/cache", "~/Library/Caches/bun"], "Packages Bun has downloaded. It fetches them again on the next install."),
-    pkg("pip", "pip cache", ["~/Library/Caches/pip", "~/Library/Caches/pypoetry", "~/.cache/pip"], "Python packages already downloaded. pip fetches them again when needed."),
+    // Poetry's own `virtualenvs` folder sits beside its caches and holds the
+    // environments your projects run in, so only the download caches are taken.
+    pkg("pip", "pip cache", ["~/Library/Caches/pip", "~/Library/Caches/pypoetry/cache", "~/Library/Caches/pypoetry/artifacts", "~/.cache/pip"], "Python packages already downloaded. pip and Poetry fetch them again when needed."),
     pkg("uv", "uv cache", ["~/.cache/uv", "~/Library/Caches/uv"], "Python packages and builds uv has cached. It fetches them again when needed."),
     pkg("conda", "Conda packages", ["~/miniconda3/pkgs", "~/anaconda3/pkgs", "~/.conda/pkgs", "~/miniforge3/pkgs", "~/mambaforge/pkgs"], "Downloaded Conda packages. Environments keep working; new ones download again."),
     pkg("cargo", "Cargo registry", ["~/.cargo/registry/cache", "~/.cargo/registry/src", "~/.cargo/git/checkouts", "~/.cargo/git/db"], "Rust crates Cargo has downloaded. It fetches them again on the next build."),
@@ -239,12 +251,32 @@ public enum Catalog {
     pkg("cocoapods", "CocoaPods cache", ["~/Library/Caches/CocoaPods", "~/.cocoapods/repos"], "Pods and spec repos CocoaPods has downloaded. It fetches them again on the next install."),
     pkg("swiftpm", "Swift packages cache", ["~/Library/Caches/org.swift.swiftpm", "~/Library/Caches/org.carthage.CarthageKit"], "Swift packages already downloaded. Xcode fetches them again when it resolves packages."),
     pkg("gradle", "Gradle cache", ["~/.gradle/caches", "~/.gradle/wrapper/dists", "~/.gradle/daemon", "~/.gradle/native", "~/.gradle/.tmp"], "Dependencies and Gradle versions already downloaded. Gradle fetches them again on the next build."),
-    pkg("maven", "Maven repository", ["~/.m2/repository"], "Java libraries Maven has downloaded. It fetches them again on the next build."),
+    LocationRule(
+      id: "pkg.maven", category: .packageCaches, title: "Maven repository",
+      detail: "Java libraries Maven has downloaded, which it fetches again on the next build. It also holds anything you built and installed locally with `mvn install`, which nothing downloads again.",
+      paths: ["~/.m2/repository"], recovery: .redownload, risk: .caution
+    ),
     pkg("composer", "Composer cache", ["~/Library/Caches/composer", "~/.composer/cache"], "PHP packages already downloaded. Composer fetches them again when needed."),
     pkg("pub", "Dart & Flutter packages", ["~/.pub-cache"], "Dart packages already downloaded. `pub get` fetches them again."),
-    pkg("playwright", "Test browsers", ["~/Library/Caches/ms-playwright", "~/Library/Caches/ms-playwright-go", "~/.cache/puppeteer", "~/Library/Caches/Cypress", "~/.cache/selenium"], "Browsers downloaded for automated testing. The test tool downloads them again when it next runs."),
+    // Not a cache: the browsers testing and agent tools launch. Most tools stop with
+    // an error until you install them again rather than downloading them by themselves.
+    LocationRule(
+      id: "pkg.playwright", category: .packageCaches, title: "Test browsers",
+      detail: "Browsers that testing and agent tools such as Playwright, Puppeteer and Cypress run. Those tools stop working until you install the browsers again (for Playwright, `npx playwright install`).",
+      paths: [
+        "~/Library/Caches/ms-playwright", "~/Library/Caches/ms-playwright-go", "~/.cache/puppeteer",
+        "~/Library/Caches/Cypress", "~/.cache/selenium", "~/Library/Caches/camoufox",
+      ],
+      recovery: .reinstall, risk: .caution, used: .accessed
+    ),
     pkg("electron", "Electron & native build caches", ["~/Library/Caches/electron", "~/.cache/electron", "~/.cache/electron-builder", "~/Library/Caches/node-gyp", "~/.cache/node-gyp", "~/.node-gyp", "~/Library/Caches/typescript", "~/.cache/prisma", "~/.cache/pre-commit", "~/.cache/turbo"], "Build tools and headers downloaded for Node projects. Fetched again when a build needs them."),
-    pkg("deno", "Deno cache", ["~/Library/Caches/deno", "~/.deno/npm", "~/.cache/deno"], "Modules Deno has downloaded. It fetches them again when needed."),
+    // Deno's folder also keeps `location_data`, the local storage of Deno programs, so
+    // only its download and compile caches are taken.
+    pkg("deno", "Deno cache", [
+      "~/Library/Caches/deno/deps", "~/Library/Caches/deno/remote", "~/Library/Caches/deno/npm", "~/Library/Caches/deno/gen",
+      "~/Library/Caches/deno/registries", "~/.cache/deno/deps", "~/.cache/deno/remote", "~/.cache/deno/npm", "~/.cache/deno/gen",
+      "~/.deno/npm",
+    ], "Modules Deno has downloaded and compiled. It fetches them again when needed."),
     pkg("nuget", ".NET packages", ["~/.nuget/packages", "~/.nuget/v3-cache", "~/.local/share/NuGet/http-cache"], "Packages NuGet has downloaded. It fetches them again on the next restore."),
     LocationRule(
       id: "pkg.agent-runtimes", category: .packageCaches, title: "Agent tool runtimes",
@@ -261,7 +293,9 @@ public enum Catalog {
     LocationRule(
       id: "dev.jetbrains", category: .developerCaches, title: "JetBrains caches",
       detail: "Indexes and caches for JetBrains IDEs. Rebuilt when you reopen a project, which takes a few minutes.",
-      paths: ["~/Library/Caches/JetBrains/*"], split: .each, titleStyle: .child
+      paths: ["~/Library/Caches/JetBrains/*"], split: .each, titleStyle: .child,
+      // Reindexing costs real time, so Careful leaves these for a bolder level.
+      auto: .at(.balanced), idleDays: 7
     ),
     LocationRule(
       id: "dev.vscode-caches", category: .developerCaches, title: "Editor caches",
@@ -365,7 +399,7 @@ public enum Catalog {
         "~/Library/Group Containers/*MacWhisper*/models/*", "~/.cache/whisper", "~/.whisper-models/*",
         "~/Library/Application Support/superwhisper/models/*",
         "~/Library/Application Support/com.prakashjoshipax.VoiceInk/WhisperModels/*", "~/Library/Application Support/whisperkit",
-        "~/Documents/huggingface/models/argmaxinc",
+        "~/Documents/huggingface/models/argmaxinc", "~/Library/Caches/Buzz/models/*",
       ],
       split: .each, titleStyle: .child, recovery: .redownload, risk: .caution, used: .accessed, idleDays: 30
     ),
@@ -378,6 +412,7 @@ public enum Catalog {
         "~/Library/Application Support/DiffusionBee", "~/.cache/gpt4all", "~/.llama/checkpoints",
         "~/Library/Containers/com.liuliu.draw-things/Data/Documents/Models", "~/.cache/whisper.cpp",
         "~/Library/Application Support/Msty/models", "~/.aitk/models", "~/.foundry/cache/models",
+        "~/Library/Caches/llama.cpp",
       ],
       split: .each, titleStyle: .child, recovery: .redownload, risk: .caution, used: .accessed, idleDays: 30
     ),
