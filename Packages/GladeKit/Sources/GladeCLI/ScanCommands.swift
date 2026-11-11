@@ -92,7 +92,7 @@ enum Table {
       finding.autoLevel.map { "auto≥\($0.rawValue)" } ?? "manual",
       finding.blockers.first.map { "BLOCKED: \($0.detail)" },
     ].compactMap { $0 }.joined(separator: " · ")
-    let place = finding.paths.count == 1 ? Redactor.tilde(finding.paths[0]) : "\(finding.paths.count) locations"
+    let place = finding.paths.isEmpty ? "Managed by its own tool" : finding.paths.count == 1 ? Redactor.tilde(finding.paths[0]) : "\(finding.paths.count) locations"
     return "  \(finding.id.padding(toLength: 13, withPad: " ", startingAt: 0)) \(Format.bytes(finding.bytes).leftPadded(10))  \(finding.title)\n\(String(repeating: " ", count: 28))\(flags)\n\(String(repeating: " ", count: 28))\(place)"
   }
 }

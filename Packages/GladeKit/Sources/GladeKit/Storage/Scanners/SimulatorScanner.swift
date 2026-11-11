@@ -39,7 +39,7 @@ public struct SimulatorScanner: StorageScanner {
       return []
     }
 
-    var findings: [Finding] = []
+    var findings: [Finding] = await runtimes(devices: list.devices, context: context)
     var unavailable: [(Device, String)] = []
     let dateParser = ISO8601DateFormatter()
 
@@ -87,6 +87,55 @@ public struct SimulatorScanner: StorageScanner {
           autoLevel: .careful, idleDaysRequired: 0
         ))
       }
+    }
+    return findings
+  }
+
+  private struct Runtime: Decodable {
+    var identifier: String
+    var runtimeIdentifier: String?
+    var version: String?
+    var build: String?
+    var state: String?
+    var deletable: Bool?
+    var sizeBytes: Int64?
+    var lastUsedAt: String?
+  }
+
+  /// Downloaded simulator system versions. One that no simulator uses is dead weight;
+  /// the rest are listed for a person to choose.
+  private func runtimes(devices: [String: [Device]], context: ScanContext) async -> [Finding] {
+    let list: [String: Runtime]
+    do {
+      let result = try await Shell.run("xcrun", ["simctl", "runtime", "list", "-j"], timeout: 30, quiet: true)
+      guard result.succeeded else { return [] }
+      list = try JSONDecoder().decode([String: Runtime].self, from: Data(result.stdout.utf8))
+    } catch {
+      Log.warning(.scan, "Couldn’t read the simulator runtime list: \(error)")
+      return []
+    }
+    let dateParser = ISO8601DateFormatter()
+    var findings: [Finding] = []
+    for runtime in list.values {
+      guard runtime.state == "Ready", runtime.deletable == true, let bytes = runtime.sizeBytes, bytes > 100_000_000,
+            UUID(uuidString: runtime.identifier) != nil, let runtimeID = runtime.runtimeIdentifier else { continue }
+      let users = devices[runtimeID]?.filter { $0.isAvailable != false } ?? []
+      let lastUsed = runtime.lastUsedAt.flatMap { dateParser.date(from: $0) }
+      let name = "\(Self.runtimeName(runtimeID)) (\(runtime.build ?? "?"))"
+      var evidence: [String] = []
+      evidence.append(users.isEmpty ? "No simulator uses this version." : "\(users.count) simulators use this version.")
+      evidence.append(lastUsed.map { "Last used \(Format.age($0, now: context.now))." } ?? "Never used since it was installed.")
+      let unused = users.isEmpty
+      findings.append(Finding(
+        id: Finding.makeID(rule: "sim.runtime", path: runtime.identifier), ruleID: "sim.runtime", category: .simulators,
+        title: "Simulator system – \(name)",
+        detail: unused
+          ? "A downloaded simulator system version that none of your simulators use. Xcode offers to download it again if you ever add one."
+          : "A downloaded simulator system version. Removing it makes the simulators that use it unavailable until Xcode downloads it again.",
+        paths: [], bytes: bytes, lastUsed: lastUsed, recovery: .redownload, risk: .caution, owner: Catalog.simulator,
+        method: .simulatorRuntime(identifier: runtime.identifier), evidence: evidence,
+        autoLevel: unused ? .balanced : nil, idleDaysRequired: unused ? 0 : 30
+      ))
     }
     return findings
   }

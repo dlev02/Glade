@@ -117,6 +117,11 @@ public enum Cleaner {
       return await simulator(["erase", udid], udid: udid, dryRun: dryRun)
     case .unavailableSimulators:
       return await simulator(["delete", "unavailable"], udid: nil, dryRun: dryRun)
+    case .simulatorSet(let name):
+      guard ["previews", "testing"].contains(name) else { return .skipped(reason: "Not a known simulator set.") }
+      return await simulator(["--set", name, "delete", "all"], udid: nil, dryRun: dryRun)
+    case .simulatorRuntime(let identifier):
+      return await simulator(["runtime", "delete", identifier], udid: identifier, dryRun: dryRun)
     case .gitWorktree(let repository):
       return await worktree(finding, repository: repository, protection: protection, dryRun: dryRun)
     case .delete, .trash:

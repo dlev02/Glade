@@ -14,6 +14,8 @@ public struct LocationRule: Sendable {
     case fixed
     /// "Title – child name"
     case child
+    /// "Title – name of the folder the match is in"
+    case parent
     /// Xcode's `Project-hash` folder names, shown as the project.
     case derivedData
     /// The match is named after a bundle identifier; show the app's name.
@@ -68,6 +70,9 @@ public struct LocationRule: Sendable {
   /// Leave out matches whose path contains any of these.
   public var skipContaining: [String] = []
   public var minimumBytes: Int64 = 5_000_000
+  /// The location legitimately holds libraries or disk images of its own (a simulator's
+  /// test photo library), so finding one inside doesn't block removal.
+  public var allowsLibrariesInside = false
   /// Show it but never remove it; `reportOnly` explains what to use instead.
   public var reportOnly: String?
 }
@@ -127,7 +132,8 @@ public struct CatalogScanner: StorageScanner {
         let total = stale.map(\.1).reduce(Measure(), +)
         return make(rule, paths: stale.map(\.0), measure: total, name: nil, context: context).map { [$0] } ?? []
       }
-      let measure = await context.measure(matches)
+      var measure = await context.measure(matches, checkingLibraries: !rule.allowsLibrariesInside)
+      if rule.allowsLibrariesInside { measure.containsStrict = false }
       return make(rule, paths: matches, measure: measure, name: nil, context: context).map { [$0] } ?? []
     case .each:
       let measured = await measureEach(matches, context)
@@ -186,6 +192,8 @@ public struct CatalogScanner: StorageScanner {
         }
       case .fixed: break
       case .child: title = "\(rule.title) – \(name)"
+      case .parent:
+        title = "\(rule.title) – \(Self.projectName(for: (paths[0] as NSString).deletingLastPathComponent))"
       case .derivedData:
         title = "\(rule.title) – \(Self.stripHash(name))"
       case .bundleID:
@@ -242,6 +250,19 @@ public struct CatalogScanner: StorageScanner {
 
   static func lastUsed(_ measure: Measure, _ rule: LocationRule) -> Date? {
     rule.used == .modified ? measure.newestModification : measure.lastUsed
+  }
+
+  /// A readable name for a build folder. Bitrig names build folders after a project
+  /// identifier; when the matching project is on disk, use the name of its Xcode project.
+  static func projectName(for folder: String) -> String {
+    let name = (folder as NSString).lastPathComponent
+    let projects = ((folder as NSString).deletingLastPathComponent as NSString).deletingLastPathComponent + "/Projects/" + name
+    if let contents = try? FileManager.default.contentsOfDirectory(atPath: projects),
+       let project = contents.first(where: { $0.hasSuffix(".xcodeproj") || $0.hasSuffix(".xcworkspace") }) {
+      return (project as NSString).deletingPathExtension
+    }
+    let stripped = stripHash(name)
+    return stripped.count > 28 ? String(stripped.prefix(26)) + "…" : stripped
   }
 
   static func stripHash(_ name: String) -> String {

@@ -118,9 +118,11 @@ public struct ScanContext: Sendable {
   }
 
   /// Measures paths off the main thread, a few at a time, at background priority.
-  public func measure(_ paths: [String]) async -> Measure {
+  /// - Parameter checkingLibraries: Pass false for places that hold libraries of their
+  ///   own, so those are counted instead of flagged.
+  public func measure(_ paths: [String], checkingLibraries: Bool = true) async -> Measure {
     await limiter.acquire()
-    let protection = self.protection
+    let protection: Protection? = checkingLibraries ? self.protection : nil
     let cancel = self.cancel
     let result = await Task.detached(priority: .utility) {
       DiskWalk.measure(paths, protection: protection) { cancel.isCancelled }

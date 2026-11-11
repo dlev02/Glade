@@ -160,14 +160,32 @@ public enum Catalog {
       owner: xcode_, idleDays: 3
     ),
     LocationRule(
-      id: "xcode.previews", category: .xcode, title: "Preview & interface caches",
-      detail: "SwiftUI preview simulators and Interface Builder caches. Xcode recreates them when needed.",
+      id: "xcode.bitrig", category: .xcode, title: "Bitrig build data",
+      detail: "Build products Bitrig made for one project. Rebuilt the next time that project is built or previewed.",
+      paths: ["~/Library/Bitrig/Users/*/Builds/*/DerivedData"], split: .each, titleStyle: .parent,
+      owner: Owner("Bitrig", bundleIDs: ["app.bitrig.Bitrig"], processNames: ["Bitrig"]), idleDays: 3
+    ),
+    LocationRule(
+      id: "xcode.testdevices", category: .simulators, title: "Test simulators",
+      detail: "Copies of simulators Xcode makes to run tests in parallel. Xcode makes fresh ones the next time tests run.",
+      paths: ["~/Library/Developer/XCTestDevices"], owner: xcode_, method: .simulatorSet(name: "testing"),
+      idleDays: 3, allowsLibrariesInside: true
+    ),
+    LocationRule(
+      id: "xcode.previews", category: .simulators, title: "Preview simulators",
+      detail: "Simulators Xcode keeps for SwiftUI previews. Xcode makes fresh ones the next time a preview runs.",
+      paths: ["~/Library/Developer/Xcode/UserData/Previews"], owner: xcode_, method: .simulatorSet(name: "previews"),
+      idleDays: 3, allowsLibrariesInside: true
+    ),
+    LocationRule(
+      id: "xcode.caches", category: .xcode, title: "Xcode caches",
+      detail: "Interface Builder, documentation and playground caches. Xcode recreates them when needed.",
       paths: [
-        "~/Library/Developer/Xcode/UserData/Previews", "~/Library/Developer/Xcode/UserData/IB Support",
-        "~/Library/Developer/Xcode/DocumentationCache", "~/Library/Developer/Xcode/DocumentationIndex",
-        "~/Library/Caches/com.apple.dt.Xcode", "~/Library/Developer/XCPGDevices", "~/Library/Developer/XCTestDevices",
+        "~/Library/Developer/Xcode/UserData/IB Support", "~/Library/Developer/Xcode/DocumentationCache",
+        "~/Library/Developer/Xcode/DocumentationIndex", "~/Library/Caches/com.apple.dt.Xcode",
+        "~/Library/Developer/XCPGDevices",
       ],
-      owner: xcode_
+      owner: xcode_, allowsLibrariesInside: true
     ),
     LocationRule(
       id: "xcode.devicesupport", category: .xcode, title: "Device support",
@@ -199,14 +217,8 @@ public enum Catalog {
     LocationRule(
       id: "sim.caches", category: .simulators, title: "Simulator caches",
       detail: "Shared system caches for simulators. Rebuilt when a simulator next boots, which makes that boot slower.",
-      paths: ["~/Library/Developer/CoreSimulator/Caches"], owner: simulator, blockWhileRunning: true
-    ),
-    LocationRule(
-      id: "sim.runtimes", category: .simulators, title: "Simulator runtimes",
-      detail: "Downloaded iOS, watchOS, tvOS and visionOS versions for the simulator.",
-      paths: ["/Library/Developer/CoreSimulator/Volumes/*", "/Library/Developer/CoreSimulator/Images/*"],
-      recovery: .redownload, risk: .caution, minimumBytes: 100_000_000,
-      reportOnly: "Remove old runtimes in Xcode › Settings › Components."
+      paths: ["~/Library/Developer/CoreSimulator/Caches"], owner: simulator, blockWhileRunning: true,
+      allowsLibrariesInside: true
     ),
   ]
 
@@ -233,6 +245,8 @@ public enum Catalog {
     pkg("playwright", "Test browsers", ["~/Library/Caches/ms-playwright", "~/Library/Caches/ms-playwright-go", "~/.cache/puppeteer", "~/Library/Caches/Cypress", "~/.cache/selenium"], "Browsers downloaded for automated testing. The test tool downloads them again when it next runs."),
     pkg("electron", "Electron & native build caches", ["~/Library/Caches/electron", "~/.cache/electron", "~/.cache/electron-builder", "~/Library/Caches/node-gyp", "~/.cache/node-gyp", "~/.node-gyp", "~/Library/Caches/typescript", "~/.cache/prisma", "~/.cache/pre-commit", "~/.cache/turbo"], "Build tools and headers downloaded for Node projects. Fetched again when a build needs them."),
     pkg("deno", "Deno cache", ["~/Library/Caches/deno", "~/.deno/npm", "~/.cache/deno"], "Modules Deno has downloaded. It fetches them again when needed."),
+    pkg("nuget", ".NET packages", ["~/.nuget/packages", "~/.nuget/v3-cache", "~/.local/share/NuGet/http-cache"], "Packages NuGet has downloaded. It fetches them again on the next restore."),
+    pkg("agent-runtimes", "Agent tool runtimes", ["~/.cache/codex-runtimes"], "Runtimes an agent downloaded to run tools. It downloads them again when needed."),
     pkg("nvm", "Node version manager cache", ["~/.nvm/.cache", "~/.fnm/node-versions/.downloads", "~/.volta/cache", "~/.cache/node/corepack", "~/.rustup/downloads", "~/.rustup/tmp"], "Installer downloads kept by version managers. Fetched again if you reinstall."),
   ]
 
@@ -292,6 +306,19 @@ public enum Catalog {
 
   static let emulators: [LocationRule] = [
     LocationRule(
+      id: "emu.claude-vm", category: .emulators, title: "Claude desktop virtual machine",
+      detail: "The Linux environment Claude's desktop app uses for agent tasks. Claude downloads it again when that feature is next used; anything saved only inside it is lost.",
+      paths: ["~/Library/Application Support/Claude/vm_bundles/*"], recovery: .redownload, risk: .caution,
+      owner: Owner("Claude", bundleIDs: ["com.anthropic.claudefordesktop"]), blockWhileRunning: true,
+      method: .trash, used: .accessed, auto: .never, minimumBytes: 100_000_000
+    ),
+    LocationRule(
+      id: "emu.codex-sideload", category: .buildOutputs, title: "Codex sideload builds",
+      detail: "App builds Codex prepared for installing on your devices. They're rebuilt the next time you sideload that app.",
+      paths: ["~/Library/Application Support/Codex/RemoteSideload/artifacts/*"], recovery: .reinstall, risk: .caution,
+      olderThanDays: 14, auto: .at(.balanced), minimumBytes: 20_000_000
+    ),
+    LocationRule(
       id: "emu.android", category: .emulators, title: "Android emulator",
       detail: "A virtual Android device with its apps and data. You'd have to create and set it up again.",
       paths: ["~/.android/avd/*.avd"], split: .each, titleStyle: .child, recovery: .reinstall,
@@ -330,7 +357,8 @@ public enum Catalog {
       paths: [
         "~/Library/Application Support/MacWhisper/models/*", "~/Library/Application Support/MacWhisper/models-*",
         "~/Library/Containers/com.goodsnooze.MacWhisper/Data/Library/Application Support/MacWhisper/models/*",
-        "~/Library/Group Containers/*MacWhisper*/models/*", "~/.cache/whisper", "~/Library/Application Support/superwhisper/models/*",
+        "~/Library/Group Containers/*MacWhisper*/models/*", "~/.cache/whisper", "~/.whisper-models/*",
+        "~/Library/Application Support/superwhisper/models/*",
         "~/Library/Application Support/com.prakashjoshipax.VoiceInk/WhisperModels/*", "~/Library/Application Support/whisperkit",
         "~/Documents/huggingface/models/argmaxinc",
       ],
@@ -405,6 +433,12 @@ public enum Catalog {
   // MARK: Media downloads
 
   static let media: [LocationRule] = [
+    LocationRule(
+      id: "media.cleanshot", category: .largeFiles, title: "CleanShot capture history",
+      detail: "Screenshots and recordings CleanShot keeps in its history, older than 30 days. Captures you saved or exported elsewhere are separate files and stay.",
+      paths: ["~/Library/Application Support/CleanShot/media/*"], recovery: .permanent, risk: .personal,
+      method: .trash, olderThanDays: 30, minimumBytes: 20_000_000
+    ),
     LocationRule(
       id: "media.podcasts", category: .mediaDownloads, title: "Podcast downloads",
       detail: "Episodes downloaded by Podcasts. They stream or download again from the app.",
