@@ -20,7 +20,7 @@ struct ToolbarSearchField: NSViewRepresentable {
     field.action = #selector(Coordinator.changed(_:))
     field.setAccessibilityIdentifier("storage.search")
     field.translatesAutoresizingMaskIntoConstraints = false
-    field.widthAnchor.constraint(greaterThanOrEqualToConstant: 200).isActive = true
+    field.widthAnchor.constraint(greaterThanOrEqualToConstant: 140).isActive = true
     field.widthAnchor.constraint(lessThanOrEqualToConstant: 280).isActive = true
     return field
   }

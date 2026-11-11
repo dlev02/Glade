@@ -31,8 +31,11 @@ struct AskButton: View {
     }
   }
 
-  /// "Claude Code" reads as "Claude" on a button; other names stay as they are.
+  /// "Claude Code" reads as "Claude" on a button. A long name ("Apple Intelligence")
+  /// would crowd search and the inspector button out of the toolbar, so it becomes
+  /// "AI"; the tooltip still names it.
   static func shortName(_ provider: ProviderStatus) -> String {
-    provider.name.hasSuffix(" Code") ? String(provider.name.dropLast(5)) : provider.name
+    let name = provider.name.hasSuffix(" Code") ? String(provider.name.dropLast(5)) : provider.name
+    return name.count > 8 ? "AI" : name
   }
 }

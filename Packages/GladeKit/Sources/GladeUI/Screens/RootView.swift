@@ -40,7 +40,9 @@ public struct RootView: View {
       case .history: HistoryScreen()
       }
     }
-    .frame(minWidth: 940, minHeight: 600)
+    // Wide enough that Storage's toolbar (scope, Scan, Ask, search, inspector) never
+    // spills into an overflow menu, even with the inspector open.
+    .frame(minWidth: 1000, minHeight: 600)
     .accent(model.tint)
     .preferredColorScheme(model.appearance.colorScheme)
     .sheet(isPresented: $model.showsSetup) {
