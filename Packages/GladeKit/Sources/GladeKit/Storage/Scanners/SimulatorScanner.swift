@@ -61,7 +61,7 @@ public struct SimulatorScanner: StorageScanner {
         if let lastBoot { evidence.append("Last started \(Format.age(lastBoot, now: context.now)).") }
         findings.append(Finding(
           id: Finding.makeID(rule: "sim.device", path: device.udid), ruleID: "sim.device", category: .simulators,
-          title: "\(device.name) (\(Self.runtimeName(runtime)))",
+          title: "\(device.name) · \(Self.runtimeName(runtime))",
           detail: "Apps and data inside this simulator. Erasing it keeps the simulator and returns it to a fresh state; apps reinstall when you next run them from Xcode.",
           paths: [folder], bytes: measure.bytes, fileCount: measure.files, lastUsed: lastUsed,
           recovery: .reinstall, risk: .caution, owner: Catalog.simulator,
@@ -128,7 +128,7 @@ public struct SimulatorScanner: StorageScanner {
       let unused = users.isEmpty
       findings.append(Finding(
         id: Finding.makeID(rule: "sim.runtime", path: runtime.identifier), ruleID: "sim.runtime", category: .simulators,
-        title: "Simulator system – \(name)",
+        title: "Simulator system · \(name)",
         detail: unused
           ? "A downloaded simulator system version that none of your simulators use. Xcode offers to download it again if you ever add one."
           : "A downloaded simulator system version. Removing it makes the simulators that use it unavailable until Xcode downloads it again.",

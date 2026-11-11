@@ -62,7 +62,7 @@ public struct SampleData: Sendable {
     var entries: [[String: Any]] = [[
       "id": "shutDownIdleSimulator:simulator:sample", "kind": "shutDownIdleSimulator", "appID": "simulator:sample",
       "appName": "iPad Pro 13-inch (M5)", "title": "Shut down iPad Pro 13-inch (M5)",
-      "reason": "iPad Pro 13-inch (M5) (iOS 27.2) has been idle since it started 31 hours ago and is using 10.3 GB. Bitrig is open and may be showing it; Glade can’t tell which simulator Bitrig shows.",
+      "reason": "iPad Pro 13-inch (M5) · iOS 27.2 has been idle since it started 31 hours ago and is using 10.3 GB. Bitrig is open and may be showing it; Glade can’t tell which simulator Bitrig shows.",
       "frees": ["memoryBytes": 10_300_000_000, "cpuPercent": 0.2], "confidence": "low", "actionable": true,
       "simulatorUDID": "sample", "facts": "Idle 31 h · 10.3 GB", "caveat": "May be in use by Bitrig",
     ]]
@@ -159,7 +159,7 @@ public struct SampleData: Sendable {
       Receipt(
         id: "A1B2C3D4-0000-0000-0000-000000000002", date: Date().addingTimeInterval(-day * 3), initiator: .assistant(provider: "Claude"), dryRun: false,
         entries: [
-          entry("Simulator system – iOS 18.0", .simulators, 8.4, .deleted),
+          entry("Simulator system · iOS 18.0", .simulators, 8.4, .deleted),
           entry("Claude Code sessions – Developer-Harbor", .agentHistory, 1.1, .deleted),
           entry("uv cache", .packageCaches, 9.8, .deleted),
         ],
@@ -197,9 +197,9 @@ public struct SampleData: Sendable {
     add("Build data – Harbor", .xcode, 6.8, daysAgo: 2, .automatic, .safe, .careful, idle: 3, path: "Library/Developer/Xcode/DerivedData/Harbor-c", detail: build)
     add("Build data – Pocket Notes", .xcode, 3.1, daysAgo: 96, .automatic, .safe, .careful, idle: 3, path: "Library/Developer/Xcode/DerivedData/PocketNotes-d", detail: build)
     add("Archive – Lantern 2.3", .xcode, 2.4, daysAgo: 120, .permanent, .caution, nil, path: "Library/Developer/Xcode/Archives/2026-07-12/Lantern.xcarchive", detail: "A build you archived for release. Needed to symbolicate crashes from that version; nothing recreates it.", method: .trash)
-    add("Simulator system – iOS 18.0", .simulators, 8.4, daysAgo: 210, .redownload, .caution, .balanced, path: "sim/ios18", detail: "A downloaded simulator system version that none of your simulators use. Xcode offers to download it again if you ever add one.", evidence: ["No simulator uses this version.", "Never used since it was installed."])
-    add("iPhone 17 Pro (iOS 27.2)", .simulators, 8.8, daysAgo: 1, .reinstall, .caution, .balanced, idle: 14, path: "Library/Developer/CoreSimulator/Devices/A", detail: "Apps and data inside this simulator. Erasing it keeps the simulator and returns it to a fresh state.")
-    add("iPad Air 11-inch (iOS 27.2)", .simulators, 6.5, daysAgo: 38, .reinstall, .caution, .balanced, idle: 14, path: "Library/Developer/CoreSimulator/Devices/B", detail: "Apps and data inside this simulator. Erasing it keeps the simulator and returns it to a fresh state.")
+    add("Simulator system · iOS 18.0", .simulators, 8.4, daysAgo: 210, .redownload, .caution, .balanced, path: "sim/ios18", detail: "A downloaded simulator system version that none of your simulators use. Xcode offers to download it again if you ever add one.", evidence: ["No simulator uses this version.", "Never used since it was installed."])
+    add("iPhone 17 Pro · iOS 27.2", .simulators, 8.8, daysAgo: 1, .reinstall, .caution, .balanced, idle: 14, path: "Library/Developer/CoreSimulator/Devices/A", detail: "Apps and data inside this simulator. Erasing it keeps the simulator and returns it to a fresh state.")
+    add("iPad Air 11-inch · iOS 27.2", .simulators, 6.5, daysAgo: 38, .reinstall, .caution, .balanced, idle: 14, path: "Library/Developer/CoreSimulator/Devices/B", detail: "Apps and data inside this simulator. Erasing it keeps the simulator and returns it to a fresh state.")
     add("Test simulators", .simulators, 25.1, daysAgo: 6, .automatic, .safe, .careful, idle: 3, path: "Library/Developer/XCTestDevices", detail: "Copies of simulators Xcode makes to run tests in parallel. Xcode makes fresh ones the next time tests run.")
     add("Worktree – Lantern / fix-sync-crash", .agentWorktrees, 4.6, daysAgo: 33, .reinstall, .caution, .balanced, idle: 14, path: "Developer/Lantern/.claude/worktrees/fix-sync", detail: "An extra working copy an agent made. Its branch and commits stay in the repository.", evidence: ["Branch fix-sync-crash, merged into main.", "Nothing uncommitted."], project: "Lantern")
     add("Worktree – Harbor / onboarding-redesign", .agentWorktrees, 3.9, daysAgo: 4, .reinstall, .caution, nil, path: "Developer/Harbor/.claude/worktrees/onboarding", detail: "An extra working copy an agent made. Its branch and commits stay in the repository.", blocked: Blocker(.uncommittedWork, "3 uncommitted files"), project: "Harbor")

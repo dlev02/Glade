@@ -71,7 +71,7 @@ enum AssistantSnapshots {
       "summary": "I’d add the Lantern build data and the iOS 18 simulator system, which nothing uses, and leave Atlas alone because you built it this morning. The CleanShot history is worth a look yourself.",
       "select": [
         note("Build data – Lantern", "Not built in 41 days; Xcode rebuilds it on the next build."),
-        note("Simulator system – iOS 18.0", "No simulator uses this version."),
+        note("Simulator system · iOS 18.0", "No simulator uses this version."),
       ],
       "deselect": [note("Build data – Atlas", "You built Atlas a few hours ago.")],
       "review": [note("CleanShot capture history", "22 GB of captures older than 30 days.")],
@@ -110,7 +110,7 @@ enum AssistantSnapshots {
     let records = [
       run(
         "sample", minutesAgo: 4, "storage plan",
-        prompt: "Goal: Free up 30 GB\n\nFindings (name · size · last used · comes back):\n- Build data – Lantern · 18.2 GB · 41 days ago · rebuilds\n- Simulator system – iOS 18.0 · 9.8 GB · never used · downloads again",
+        prompt: "Goal: Free up 30 GB\n\nFindings (name · size · last used · comes back):\n- Build data – Lantern · 18.2 GB · 41 days ago · rebuilds\n- Simulator system · iOS 18.0 · 9.8 GB · never used · downloads again",
         reply: "{\"summary\": \"I’d add the Lantern build data and the iOS 18 simulator system.\"}"
       ),
       run("question", minutesAgo: 62, "question", prompt: "Why is my Mac slow right now?", reply: nil, error: "Claude Code didn’t answer within 180 seconds."),

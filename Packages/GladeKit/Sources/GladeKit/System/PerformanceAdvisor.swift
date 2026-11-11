@@ -128,7 +128,7 @@ public enum PerformanceAdvisor {
       let idleFor = simulator.lastActivity.map { now.timeIntervalSince($0) }
       // Only boot time known: nothing has started in it since, but it may have been looked at.
       let sinceBootOnly = simulator.lastActivity != nil && simulator.lastActivity == simulator.bootedAt
-      let label = simulator.system.map { "\(simulator.name) (\($0))" } ?? simulator.name
+      let label = simulator.system.map { "\(simulator.name) · \($0)" } ?? simulator.name
       var reason =
         if let idleFor, sinceBootOnly {
           "\(label) has been idle since it started \(Durations.phrase(idleFor)) ago and is using \(memory(simulator.memoryBytes))."

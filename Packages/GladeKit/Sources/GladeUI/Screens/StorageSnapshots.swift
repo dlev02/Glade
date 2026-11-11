@@ -50,7 +50,7 @@ enum StorageSnapshots {
     },
     "storage-confirm": { _ in AnyView(sheet(CleanConfirmation(cancel: {}, confirm: {}))) },
     "storage-progress": { _ in
-      AnyView(sheet(CleanProgress(done: 4, total: 11, title: "Simulator system – iOS 18.0")))
+      AnyView(sheet(CleanProgress(done: 4, total: 11, title: "Simulator system · iOS 18.0")))
     },
     "storage-result": { model in
       guard let receipt = SampleData.sampleReceipts().first else { return AnyView(EmptyView()) }
@@ -114,7 +114,7 @@ enum StorageSnapshots {
         entry("Test simulators", .simulators, 25.1, .deleted),
         entry("CleanShot capture history", .largeFiles, 21.9, .trashed(locations: ["~/a": "~/.Trash/a"])),
         entry("Slack cache", .appCaches, 0.9, .skipped(reason: "Slack opened while the clean was running.")),
-        entry("Simulator system – iOS 18.0", .simulators, 8.4, .failed(reason: "Xcode’s simulator tool didn’t answer within two minutes.")),
+        entry("Simulator system · iOS 18.0", .simulators, 8.4, .failed(reason: "Xcode’s simulator tool didn’t answer within two minutes.")),
       ],
       freeBefore: 9_600_000_000, freeAfter: 65_900_000_000
     )
