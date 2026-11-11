@@ -1,0 +1,73 @@
+import GladeKit
+import SwiftUI
+
+/// One AI in the assistant list: its name, whether it can be used, and for one that
+/// can, which model it uses day to day.
+struct ProviderRow: View {
+  var provider: ProviderStatus
+  @Binding var model: String
+
+  var body: some View {
+    HStack(spacing: Metrics.m) {
+      VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: Metrics.s) {
+          Text(provider.name)
+          if !provider.verified {
+            Text("Untested")
+              .font(.caption)
+              .foregroundStyle(.secondary)
+              .padding(.horizontal, 6)
+              .padding(.vertical, 1)
+              .background(Palette.track, in: .capsule)
+              .help("This connection follows the tool’s documentation but hasn’t been tried for real yet.")
+          }
+        }
+        status
+          .font(.callout)
+          .lineLimit(2)
+      }
+      Spacer(minLength: Metrics.m)
+      if provider.isReady {
+        ModelField(title: provider.name, suggestions: provider.models, value: $model)
+      }
+    }
+    .padding(.vertical, 2)
+  }
+
+  @ViewBuilder private var status: some View {
+    switch provider.state {
+    case .ready:
+      Label(provider.isLocal ? "Ready · On this Mac" : "Ready", systemImage: "checkmark.circle.fill")
+        .labelStyle(StatusLabelStyle(color: .green))
+    case .needsSignIn(let hint):
+      Label("Sign in: \(Self.plain(hint))", systemImage: "exclamationmark.circle.fill")
+        .labelStyle(StatusLabelStyle(color: .orange))
+    case .notInstalled:
+      Label("Not installed", systemImage: "circle.dashed")
+        .labelStyle(StatusLabelStyle(color: .secondary))
+    case .unavailable(let reason):
+      Label("Unavailable: \(reason)", systemImage: "xmark.circle")
+        .labelStyle(StatusLabelStyle(color: .secondary))
+    }
+  }
+
+  /// Hints are written with Markdown-style backticks; show them as plain text.
+  private static func plain(_ hint: String) -> String {
+    hint.replacingOccurrences(of: "`", with: "")
+  }
+}
+
+/// A status line: a small coloured symbol and secondary text.
+private struct StatusLabelStyle: LabelStyle {
+  var color: Color
+
+  func makeBody(configuration: Configuration) -> some View {
+    HStack(alignment: .firstTextBaseline, spacing: 4) {
+      configuration.icon
+        .foregroundStyle(color)
+        .imageScale(.small)
+      configuration.title
+        .foregroundStyle(.secondary)
+    }
+  }
+}
