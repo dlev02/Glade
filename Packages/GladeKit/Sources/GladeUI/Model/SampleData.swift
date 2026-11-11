@@ -53,6 +53,33 @@ public struct SampleData: Sendable {
     )
   }
 
+  /// An idle simulator with a doubt worth seeing, and an idle app: the two kinds of
+  /// suggestion people meet most. The app is the largest real one running, so its icon
+  /// draws; acting on either in demo mode changes nothing.
+  public static func sampleSuggestions(apps: [AppUsage]) -> [PerformanceSuggestion] {
+    var entries: [[String: Any]] = [[
+      "id": "shutDownIdleSimulator:simulator:sample", "kind": "shutDownIdleSimulator", "appID": "simulator:sample",
+      "appName": "iPad Pro 13-inch (M5)", "title": "Shut down iPad Pro 13-inch (M5)",
+      "reason": "iPad Pro 13-inch (M5) (iOS 27.2) has been idle since it started 31 hours ago and is using 10.3 GB. Bitrig is open and may be showing it; Glade can’t tell which simulator Bitrig shows.",
+      "frees": ["memoryBytes": 10_300_000_000, "cpuPercent": 0.2], "confidence": "low", "actionable": true,
+      "simulatorUDID": "sample", "facts": "Idle 31 h · 10.3 GB", "caveat": "May be in use by Bitrig",
+    ]]
+    let candidates = apps.filter { $0.kind == .app && !$0.isSystem && !$0.isGlade && !$0.isFrontmost }
+    if let app = candidates.max(by: { $0.memoryBytes < $1.memoryBytes }) {
+      let bytes = max(app.memoryBytes, 1_200_000_000)
+      entries.append([
+        "id": "quitIdleApp:\(app.id)", "kind": "quitIdleApp", "appID": app.id, "appName": app.name,
+        "title": "Quit \(app.name)",
+        "reason": "\(app.name) is using \(Format.bytes(bytes)) and hasn’t been used for 3 hours.",
+        "frees": ["memoryBytes": bytes, "cpuPercent": 0.4], "confidence": "high", "actionable": true,
+        "facts": "Idle 3 h · \(Format.bytes(bytes))",
+      ])
+    }
+    // The engine's initialiser isn't public, so build them the way they arrive from disk.
+    guard let data = try? JSONSerialization.data(withJSONObject: entries) else { return [] }
+    return (try? JSONDecoder().decode([PerformanceSuggestion].self, from: data)) ?? []
+  }
+
   static func sampleProviders() -> [ProviderStatus] {
     [
       ProviderStatus(id: "claude", name: "Claude Code", state: .ready, path: "/usr/local/bin/claude", version: "2.1", supportsEffort: true, models: ["haiku", "sonnet", "opus", "fable"]),

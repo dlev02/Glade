@@ -5,6 +5,7 @@ extension AppModel {
   /// The button title for a suggestion, or `nil` when it's only something to look at.
   public func actionTitle(for suggestion: PerformanceSuggestion) -> String? {
     guard suggestion.actionable else { return nil }
+    if isDemo { return suggestion.kind == .shutDownIdleSimulator ? "Shut Down" : "Quit" }
     if suggestion.kind == .shutDownIdleSimulator {
       return simulators.contains { $0.udid == suggestion.simulatorUDID } ? "Shut Down" : nil
     }
@@ -13,6 +14,7 @@ extension AppModel {
 
   /// Does what the suggestion says and returns a sentence describing what happened.
   public func perform(_ suggestion: PerformanceSuggestion) async -> String {
+    if isDemo { return "Sample data: nothing was changed." }
     if suggestion.kind == .shutDownIdleSimulator {
       guard let simulator = simulators.first(where: { $0.udid == suggestion.simulatorUDID }) else {
         return "That simulator is no longer running."

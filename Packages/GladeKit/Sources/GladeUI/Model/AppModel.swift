@@ -152,6 +152,9 @@ public final class AppModel {
   private var detailWatchers = 0
   private var tick = 0
   private var isLive = false
+  /// Showing made-up findings and suggestions (`-demo YES`). Acting on a sample
+  /// suggestion changes nothing.
+  public private(set) var isDemo = false
 
   public init(live: Bool = true) {
     let loaded = live ? ConfigStore.load() : GladeConfig()
@@ -176,11 +179,12 @@ public final class AppModel {
     // that don't reveal anyone's own files.
     if defaults.bool(forKey: "demo") {
       isLive = false
+      isDemo = true
       Task {
         var sample = await SampleData.capture()
         let known = ["Xcode", "Safari", "Mail", "Messages", "Music", "Finder", "Simulator", "Simulator devices", "Docker", "Notes", "Photos", "Terminal", "Calendar", "Preview", "TV", "Podcasts", "Maps", "Reminders", "Glade"]
         sample.apps = sample.apps.filter { app in known.contains(app.name) || app.bundleIdentifier?.hasPrefix("com.apple.") == true }
-        sample.suggestions = []
+        sample.suggestions = SampleData.sampleSuggestions(apps: sample.apps)
         loadSample(sample)
       }
       return
