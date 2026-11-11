@@ -51,14 +51,29 @@ struct AdviceCard: View {
 
   private var header: some View {
     HStack(alignment: .center, spacing: Metrics.m) {
+      // The same figures as the clean bar: what's freed now, and the Trash apart.
+      let free = model.immediateBytes
+      let trash = model.trashBytes
       VStack(alignment: .leading, spacing: 2) {
         Text("Current selection")
           .font(.callout)
           .foregroundStyle(.secondary)
-        Text(Format.bytes(model.selectedBytes))
-          .font(.figure(24))
-          .foregroundStyle(accentMark)
-          .contentTransition(.numericText())
+        HStack(alignment: .firstTextBaseline, spacing: Metrics.s) {
+          Text(Format.bytes(free > 0 ? free : trash))
+            .font(.figure(24))
+            .foregroundStyle(accentMark)
+            .contentTransition(.numericText())
+          if free > 0, trash > 0 {
+            Text("+ \(Format.bytes(trash)) to the Trash")
+              .font(.callout)
+              .foregroundStyle(.secondary)
+              .monospacedDigit()
+          } else if free == 0, trash > 0 {
+            Text("to the Trash")
+              .font(.callout)
+              .foregroundStyle(.secondary)
+          }
+        }
       }
       .accessibilityElement(children: .combine)
       Spacer(minLength: Metrics.m)
