@@ -124,13 +124,14 @@ struct FindingInspector: View {
     return reason
   }
 
-  /// The evidence lines, plus the copy a duplicate keeps and its project.
+  /// The evidence lines, plus the copy a duplicate keeps and its project. Each is a
+  /// sentence with a full stop, like the evidence the scanners write.
   private func facts(_ finding: Finding) -> [String] {
     var lines = finding.evidence
-    if let keeps = finding.keeps { lines.append("Keeps: \(Redactor.tilde(keeps))") }
-    if let project = finding.project { lines.append("Project: \(project)") }
-    if finding.fileCount > 0 { lines.append("\(finding.fileCount.formatted()) files") }
-    return lines
+    if let keeps = finding.keeps { lines.append("Keeps the copy at \(Redactor.tilde(keeps)).") }
+    if let project = finding.project { lines.append("Part of \(project).") }
+    if finding.fileCount > 0 { lines.append(finding.fileCount == 1 ? "1 file." : "\(finding.fileCount.formatted()) files.") }
+    return lines.map { $0.hasSuffix(".") || $0.hasSuffix("?") || $0.hasSuffix("!") ? $0 : $0 + "." }
   }
 
   private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
