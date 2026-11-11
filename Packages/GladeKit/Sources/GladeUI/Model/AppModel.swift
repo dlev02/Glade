@@ -197,6 +197,10 @@ public final class AppModel {
         loadSample(sample)
         // `-demoSetup YES` shows Setup over the sample data.
         if DemoState.value("demoSetup") != nil { showsSetup = true }
+        // `-demoSetup signin` shows it with no AI ready yet, only one to sign in to.
+        if DemoState.value("demoSetup") == "signin" {
+          providers = [ProviderStatus(id: "claude", name: "Claude Code", state: .needsSignIn(hint: "Run `claude` in Terminal and sign in."))]
+        }
         // `-demoConversation empty` starts the Assistant with nothing asked yet.
         if DemoState.value("demoConversation") == "empty" { messages = [] }
         // `-demoProvider claude` puts that AI first, in memory only.
