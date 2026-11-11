@@ -14,7 +14,9 @@ public struct GladeCommand: AsyncParsableCommand {
       cloud folders) are never read. Run `\(Brand.cli) guide` for a briefing written for AI agents.
       """,
     version: Brand.version,
-    subcommands: [Doctor.self, Scan.self, Plan.self, Clean.self, Undo.self, Receipts.self, Protect.self, Categories.self, Logs.self, MCP.self, Guidance.self]
+    subcommands: [Doctor.self, Scan.self, Plan.self, Clean.self, Undo.self, Receipts.self, Protect.self, Categories.self, Logs.self, MCP.self, Guidance.self,
+      Status.self, Processes.self, Apps.self, Context.self, Suggest.self, Quit.self,
+    ]
   )
 
   public init() {}
@@ -25,6 +27,8 @@ public enum CLI {
   /// Parses and runs a command. Exits the process when it finishes.
   public static func run(_ arguments: [String]? = nil) async {
     Log.echoToStandardError(minimum: .warning)
+    // ArgumentParser exits the process itself, so make sure the log is written first.
+    atexit { Log.flush() }
     await GladeCommand.main(arguments)
   }
 

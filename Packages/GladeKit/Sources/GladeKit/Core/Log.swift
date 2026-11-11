@@ -64,6 +64,11 @@ public enum Log {
     store.history(limit: limit)
   }
 
+  /// Waits until everything logged so far is on disk. Call before the process exits.
+  public static func flush() {
+    store.flush()
+  }
+
   /// Echo warnings and errors to stderr. The command line turns this on.
   public static func echoToStandardError(minimum: LogLevel?) {
     store.setEcho(minimum)
@@ -104,6 +109,10 @@ final class LogStore: @unchecked Sendable {
 
   private var currentFile: URL { folder.appendingPathComponent("glade.log") }
   private var previousFile: URL { folder.appendingPathComponent("glade.1.log") }
+
+  func flush() {
+    queue.sync {}
+  }
 
   func setEcho(_ level: LogLevel?) {
     queue.sync { echo = level }

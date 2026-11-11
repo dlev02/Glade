@@ -195,6 +195,14 @@ public enum ScanEngine {
       CatalogScanner(),
       AgentHistoryScanner(),
       SimulatorScanner(),
+      WorktreeScanner(),
+      ProjectScanner(),
+      EditorExtensionScanner(),
+      DownloadsScanner(),
+      AppCopyScanner(),
+      AppLeftoverScanner(),
+      LargeFileScanner(),
+      DuplicateScanner(),
     ]
   }
 
@@ -243,6 +251,16 @@ public enum ScanEngine {
         for path in finding.paths { claimed[path] = finding.id }
         findings.append(finding)
       }
+    }
+    // A finding that sits inside another one (a worktree's node_modules) is still
+    // offered, but its space is already counted by the one that contains it.
+    let roots = findings.flatMap { finding in finding.paths.map { ($0 + "/", finding.id) } }
+    for index in findings.indices where !findings[index].paths.isEmpty {
+      let finding = findings[index]
+      let container = roots.first { root, owner in
+        owner != finding.id && finding.paths.allSatisfy { $0.hasPrefix(root) }
+      }
+      findings[index].within = container?.1
     }
     findings.sort { $0.bytes > $1.bytes }
 

@@ -129,6 +129,30 @@ public struct AutomationSettings: Codable, Sendable, Equatable {
   }
 }
 
+public struct IndexSettings: Codable, Sendable, Equatable {
+  /// Build and keep a searchable understanding of what files contain. Everything
+  /// stays on this Mac.
+  public var enabled: Bool
+  /// Folders to index.
+  public var folders: [String]
+  /// Read the text in images and scanned pages.
+  public var readTextInImages: Bool
+
+  public init() {
+    enabled = false
+    folders = ["~/Downloads", "~/Desktop", "~/Documents"]
+    readTextInImages = true
+  }
+
+  public init(from decoder: Decoder) throws {
+    self.init()
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? enabled
+    folders = try c.decodeIfPresent([String].self, forKey: .folders) ?? folders
+    readTextInImages = try c.decodeIfPresent(Bool.self, forKey: .readTextInImages) ?? readTextInImages
+  }
+}
+
 /// Settings the engine needs. Stored as one JSON file so the app and the command line
 /// read the same thing.
 public struct GladeConfig: Codable, Sendable, Equatable {
@@ -147,6 +171,7 @@ public struct GladeConfig: Codable, Sendable, Equatable {
   public var keepRunning: [String]
   public var assistant: AssistantSettings
   public var automation: AutomationSettings
+  public var index: IndexSettings
 
   public init() {
     protectedPaths = []
@@ -158,6 +183,7 @@ public struct GladeConfig: Codable, Sendable, Equatable {
     keepRunning = []
     assistant = AssistantSettings()
     automation = AutomationSettings()
+    index = IndexSettings()
   }
 
   public init(from decoder: Decoder) throws {
@@ -172,6 +198,7 @@ public struct GladeConfig: Codable, Sendable, Equatable {
     keepRunning = try c.decodeIfPresent([String].self, forKey: .keepRunning) ?? keepRunning
     assistant = try c.decodeIfPresent(AssistantSettings.self, forKey: .assistant) ?? assistant
     automation = try c.decodeIfPresent(AutomationSettings.self, forKey: .automation) ?? automation
+    index = try c.decodeIfPresent(IndexSettings.self, forKey: .index) ?? index
   }
 }
 

@@ -202,6 +202,8 @@ public struct Finding: Codable, Sendable, Identifiable, Hashable {
   public var idleDaysRequired: Int
   /// The owning app must be closed before this is removed.
   public var needsOwnerClosed: Bool
+  /// The finding this one sits inside, if any. Its space is counted there.
+  public var within: String?
 
   public init(
     id: String, ruleID: String, category: StorageCategory, title: String, detail: String,
@@ -326,10 +328,11 @@ public struct ScanResult: Codable, Sendable, Identifiable {
     self.hasFullDiskAccess = hasFullDiskAccess
   }
 
-  public var totalBytes: Int64 { findings.reduce(0) { $0 + $1.bytes } }
+  /// Everything found, with nested findings counted once.
+  public var totalBytes: Int64 { findings.filter { $0.within == nil }.reduce(0) { $0 + $1.bytes } }
 
   public func bytes(in category: StorageCategory) -> Int64 {
-    findings.filter { $0.category == category }.reduce(0) { $0 + $1.bytes }
+    findings.filter { $0.category == category && $0.within == nil }.reduce(0) { $0 + $1.bytes }
   }
 
   public func finding(_ id: String) -> Finding? { findings.first { $0.id == id } }
