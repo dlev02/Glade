@@ -61,7 +61,8 @@ struct Plan: AsyncParsableCommand {
     )
     emit(report, json: output.json) {
       print("\(plan.level.title) plan: \(Format.bytes(plan.selectedBytes)) across \(plan.selectedIDs.count) items")
-      print("  \(Format.bytes(plan.immediateBytes)) freed immediately, \(Format.bytes(plan.selectedBytes - plan.immediateBytes)) moved to the Trash\n")
+      let trash = plan.selectedBytes - plan.immediateBytes
+      print("  \(Format.bytes(plan.immediateBytes)) freed now" + (trash > 0 ? ", \(Format.bytes(trash)) to the Trash (freed when the Trash is emptied)" : "") + "\n")
       for row in rows where row.selected {
         print("  ✓ \(row.id.padding(toLength: 13, withPad: " ", startingAt: 0)) \(Format.bytes(row.bytes).leftPadded(10))  \(row.title)  — \(row.reason)")
       }
@@ -135,7 +136,11 @@ struct Clean: AsyncParsableCommand {
       if receipt.dryRun {
         print("\nDry run: \(Format.bytes(receipt.removedBytes)) would be removed. Add --confirm to do it.")
       } else {
-        print("\nRemoved \(Format.bytes(receipt.removedBytes)) (\(Format.bytes(receipt.trashedBytes)) is in the Trash).")
+        var summary = "\nFreed \(Format.bytes(receipt.freedBytes))."
+        if receipt.trashedBytes > 0 {
+          summary += " Moved \(Format.bytes(receipt.trashedBytes)) to the Trash; that space is freed when the Trash is emptied."
+        }
+        print(summary)
         print("Free space: \(Format.bytes(receipt.freeBefore)) → \(Format.bytes(receipt.freeAfter)). Receipt \(receipt.id.prefix(8)).")
       }
     }
@@ -180,7 +185,7 @@ struct Receipts: ParsableCommand {
     emit(receipts, json: output.json) {
       if receipts.isEmpty { print("Nothing has been cleaned yet.") }
       for receipt in receipts {
-        print("\(receipt.id.prefix(8))  \(receipt.date.formatted(date: .abbreviated, time: .shortened))  \(Format.bytes(receipt.removedBytes).leftPadded(10))  \(receipt.entries.count) items  by \(receipt.initiator.title)")
+        print("\(receipt.id.prefix(8))  \(receipt.date.formatted(date: .abbreviated, time: .shortened))  \(Format.bytes(receipt.freedBytes).leftPadded(10)) freed  \(Format.bytes(receipt.trashedBytes).leftPadded(10)) to Trash  \(receipt.entries.count) items  by \(receipt.initiator.title)")
       }
     }
   }

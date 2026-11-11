@@ -56,7 +56,7 @@ struct StorageScreen: View {
           }
         }
         .inspectorBackground()
-        .inspectorColumnWidth(min: 260, ideal: 300, max: 420)
+        .inspectorColumnWidth(min: 300, ideal: 320, max: 420)
       }
       .sheet(isPresented: $showsCleanSheet) {
         CleanSheet { showsCleanSheet = false }

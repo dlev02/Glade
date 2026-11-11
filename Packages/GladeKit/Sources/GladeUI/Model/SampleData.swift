@@ -105,7 +105,7 @@ public struct SampleData: Sendable {
           entry("Old installer – Figma.dmg", .downloads, 0.4, .trashed(locations: ["~/Downloads/Figma.dmg": "~/.Trash/Figma.dmg"])),
           entry("Simulator logs", .logs, 0.5, .deleted),
         ],
-        freeBefore: 9_600_000_000, freeAfter: 33_100_000_000
+        freeBefore: 9_600_000_000, freeAfter: 32_700_000_000
       ),
       Receipt(
         id: "A1B2C3D4-0000-0000-0000-000000000002", date: Date().addingTimeInterval(-day * 3), initiator: .assistant(provider: "Claude"), dryRun: false,

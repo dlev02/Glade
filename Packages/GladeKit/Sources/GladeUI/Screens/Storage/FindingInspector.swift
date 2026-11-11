@@ -19,19 +19,13 @@ struct FindingInspector: View {
         } else if highlightedFindings.count > 1 {
           SelectionTotals(title: "\(highlightedFindings.count) Items", findings: highlightedFindings)
         } else {
-          SelectionTotals(title: "Selected", findings: selectedFindings)
+          // The clean bar already says how many and how much; here, only how it splits.
+          SelectionTotals(title: "Selected", findings: model.cleanItems, showsTotal: false)
         }
       }
       .padding(Metrics.l)
       .frame(maxWidth: .infinity, alignment: .leading)
     }
-  }
-
-  /// What a clean would take now.
-  private var selectedFindings: [Finding] {
-    guard let scan = model.scan else { return [] }
-    let chosen = Set(model.selectedIDs)
-    return scan.findings.filter { chosen.contains($0.id) }
   }
 
   private func content(_ finding: Finding) -> some View {

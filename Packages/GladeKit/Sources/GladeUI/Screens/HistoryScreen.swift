@@ -62,7 +62,7 @@ struct HistoryScreen: View {
         }
       }
       .inspectorBackground()
-      .inspectorColumnWidth(min: 320, ideal: 380)
+      .inspectorColumnWidth(min: 300, ideal: 320, max: 440)
     }
     .onChange(of: selection) { old, new in
       if new == nil {

@@ -143,18 +143,31 @@ private struct StorageSummary: View {
           }
         } else {
           HStack(alignment: .center, spacing: Metrics.l) {
+            // The big figure is what a clean frees now; what goes to the Trash frees
+            // nothing until it's emptied, so it's named on its own.
+            let free = model.immediateBytes
+            let trash = model.trashBytes
             VStack(alignment: .leading, spacing: 2) {
-              Text(Format.bytes(model.selectedBytes))
-                .font(.figure(26))
-                .foregroundStyle(accentMark)
-                .contentTransition(.numericText())
-              HStack(spacing: Metrics.xs) {
-                Text("ready to free ·")
+              HStack(alignment: .firstTextBaseline, spacing: Metrics.s) {
+                Text(Format.bytes(free > 0 ? free : trash))
+                  .font(.figure(26))
+                  .foregroundStyle(accentMark)
+                  .contentTransition(.numericText())
+                if free > 0, trash > 0 {
+                  Text("+ \(Format.bytes(trash)) to the Trash")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+                }
+              }
+              HStack(spacing: Metrics.s) {
+                Text(free > 0 || trash == 0 ? "ready to free" : "to move to the Trash")
                   .foregroundStyle(.secondary)
                 LevelMenu()
               }
               .font(.callout)
             }
+            .accessibilityElement(children: .contain)
             Spacer()
             Button("Review", systemImage: Symbols.review) { model.section = .storage }
               .principalAction()

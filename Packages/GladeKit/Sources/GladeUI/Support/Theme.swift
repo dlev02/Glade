@@ -191,7 +191,7 @@ extension Recovery {
     case .automatic: "The app or tool that made this rebuilds it when it's next needed."
     case .redownload: "It downloads again when needed, which takes time and bandwidth."
     case .reinstall: "It comes back when you reinstall or rebuild."
-    case .permanent: "Nothing recreates this. It goes to the Trash first."
+    case .permanent: "Nothing recreates this once it’s gone."
     }
   }
 }

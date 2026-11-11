@@ -55,8 +55,9 @@ public enum MacDescription {
         lines.append("\(category.title): \(Format.bytes(bytes))")
       }
       for level in CleanLevel.allCases {
-        let total = Planner.plan(scan: scan, level: level).selectedBytes
-        lines.append("A \(level.title) clean would free \(Format.bytes(total))")
+        let plan = Planner.plan(scan: scan, level: level)
+        let trash = plan.selectedBytes - plan.immediateBytes
+        lines.append("A \(level.title) clean would free \(Format.bytes(plan.immediateBytes))" + (trash > 0 ? " and move \(Format.bytes(trash)) to the Trash (freed only when the Trash is emptied)" : ""))
       }
       if let plan { lines.append("Currently selected: \(Format.bytes(plan.selectedBytes)) at \(plan.level.title)") }
     }

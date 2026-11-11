@@ -6,13 +6,24 @@ struct HistorySummary: View {
   var cleans: [Receipt]
 
   var body: some View {
-    let total = cleans.reduce(Int64(0)) { $0 + $1.removedBytes }
-    HStack(alignment: .firstTextBaseline, spacing: Metrics.s) {
-      Text(Format.bytes(total))
-        .font(.figure(34))
-      Text(cleans.count == 1 ? "freed in 1 clean" : "freed in \(cleans.count) cleans")
-        .font(.title3)
-        .foregroundStyle(.secondary)
+    // Freed is what was deleted; what went to the Trash is counted on its own, since
+    // it frees nothing until the Trash is emptied.
+    let freed = cleans.reduce(Int64(0)) { $0 + $1.freedBytes }
+    let trashed = cleans.reduce(Int64(0)) { $0 + $1.trashedBytes }
+    let count = cleans.count == 1 ? "1 clean" : "\(cleans.count) cleans"
+    VStack(alignment: .leading, spacing: 2) {
+      HStack(alignment: .firstTextBaseline, spacing: Metrics.s) {
+        Text(Format.bytes(freed > 0 || trashed == 0 ? freed : trashed))
+          .font(.figure(34))
+        Text(freed > 0 || trashed == 0 ? "freed in \(count)" : "moved to the Trash in \(count)")
+          .font(.title3)
+          .foregroundStyle(.secondary)
+      }
+      if freed > 0, trashed > 0 {
+        Text("\(Format.bytes(trashed)) moved to the Trash")
+          .foregroundStyle(.secondary)
+          .monospacedDigit()
+      }
     }
     .frame(maxWidth: .infinity, alignment: .leading)
     .padding(.top, Metrics.s)

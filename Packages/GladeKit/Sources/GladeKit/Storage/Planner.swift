@@ -60,21 +60,34 @@ public enum Planner {
 
   /// Recomputes a plan's totals after its selection changes.
   public static func total(_ plan: inout CleanPlan, scan: ScanResult, config: GladeConfig) {
-    let selected = plan.selectedIDs.compactMap { scan.finding($0) }
-    let paths = selected.flatMap { finding in finding.paths.map { ($0, finding.id) } }
     var bytes: Int64 = 0, immediate: Int64 = 0
-    for finding in selected {
-      // A folder inside another selected folder is already counted by its parent.
-      let nested = !finding.paths.isEmpty && finding.paths.allSatisfy { path in
-        paths.contains { other, owner in owner != finding.id && path.hasPrefix(other + "/") }
-      }
-      if nested { continue }
+    for finding in topLevel(plan.selectedIDs, in: scan) {
       bytes += finding.bytes
-      let trashed = finding.method == .trash || config.trashEverything || finding.risk == .personal
+      // As the Cleaner decides: only files go to the Trash. Simulators, worktrees and
+      // the Trash itself are removed by their own tools, so they free space at once.
+      let trashed: Bool
+      switch finding.method {
+      case .delete, .trash: trashed = finding.method == .trash || config.trashEverything || finding.risk == .personal
+      default: trashed = false
+      }
       if !trashed { immediate += finding.bytes }
     }
     plan.selectedBytes = bytes
     plan.immediateBytes = immediate
+  }
+
+  /// The findings a clean of these identifiers works through, each once: a finding
+  /// inside another chosen one goes with it, so it is neither counted nor removed on
+  /// its own. Every total and every count of items uses this one rule.
+  public static func topLevel(_ ids: [String], in scan: ScanResult) -> [Finding] {
+    let chosen = ids.compactMap { scan.finding($0) }
+    let roots = chosen.flatMap { finding in finding.paths.map { ($0 + "/", finding.id) } }
+    return chosen.filter { finding in
+      let nested = !finding.paths.isEmpty && finding.paths.allSatisfy { path in
+        roots.contains { root, owner in owner != finding.id && path.hasPrefix(root) }
+      }
+      return !nested
+    }
   }
 
   /// The hard limit on automatic selection. Neither a clean level nor an assistant

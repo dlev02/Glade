@@ -72,7 +72,8 @@ public final class AppModel {
   public var config: GladeConfig {
     didSet {
       guard config != oldValue else { return }
-      ConfigStore.save(config)
+      // Sample data never writes the person's own settings.
+      if !isDemo { ConfigStore.save(config) }
       if config.level != oldValue.level || config.trashEverything != oldValue.trashEverything { rebuildPlan() }
       let automation = config.automation
       Task { await monitor.update(automation) }
@@ -180,10 +181,14 @@ public final class AppModel {
     if defaults.bool(forKey: "demo") {
       isLive = false
       isDemo = true
+      // `-demoTrashEverything YES|NO` and `-demoLevel careful|balanced|aggressive` set
+      // up a clean's three outcomes (all to the Trash, all removed, mixed) for
+      // screenshots, in memory only.
+      if defaults.object(forKey: "demoTrashEverything") != nil { config.trashEverything = defaults.bool(forKey: "demoTrashEverything") }
+      if let wanted = defaults.string(forKey: "demoLevel"), let level = CleanLevel(rawValue: wanted) { config.level = level }
       Task {
         var sample = await SampleData.capture()
-        let known = ["Xcode", "Safari", "Mail", "Messages", "Music", "Finder", "Simulator", "Simulator devices", "Docker", "Notes", "Photos", "Terminal", "Calendar", "Preview", "TV", "Podcasts", "Maps", "Reminders", "Glade"]
-        sample.apps = sample.apps.filter { app in known.contains(app.name) || app.bundleIdentifier?.hasPrefix("com.apple.") == true }
+        sample.apps = Self.demoApps(sample.apps)
         sample.suggestions = SampleData.sampleSuggestions(apps: sample.apps)
         loadSample(sample)
       }
@@ -256,8 +261,15 @@ public final class AppModel {
     }
   }
 
+  /// Sample data shows only well-known apps, never the person's own.
+  private static func demoApps(_ apps: [AppUsage]) -> [AppUsage] {
+    let known = ["Xcode", "Safari", "Mail", "Messages", "Music", "Finder", "Simulator", "Simulator devices", "Docker", "Notes", "Photos", "Terminal", "Calendar", "Preview", "TV", "Podcasts", "Maps", "Reminders", "Glade"]
+    return apps.filter { app in known.contains(app.name) || app.bundleIdentifier?.hasPrefix("com.apple.") == true }
+  }
+
   public func refreshApps() async {
-    let listing = await sampler.apps()
+    var listing = await sampler.apps()
+    if isDemo { listing = Self.demoApps(listing) }
     let current = ActivityContext.current(apps: listing, power: snapshot?.power)
     // Only worth working out when simulators are actually running.
     let running = listing.contains { $0.name.localizedCaseInsensitiveContains("simulator") }
@@ -265,7 +277,8 @@ public final class AppModel {
     apps = listing
     context = current
     simulators = devices
-    if let snapshot {
+    // Sample suggestions stay as they are, so they never name the person's own apps.
+    if let snapshot, !isDemo {
       suggestions = PerformanceAdvisor.suggestions(
         snapshot: snapshot, apps: listing, context: current, simulators: devices, config: config
       )
@@ -287,10 +300,14 @@ public final class AppModel {
   private func handle(_ alert: ThresholdAlert) async {
     var body = alert.body
     if alert.kind == .lowStorage, config.automation.autoCleanOnLowStorage {
-      if let freed = await automaticClean() { body += " Glade cleared \(Format.bytes(freed)) of caches." }
+      if let freed = await automaticClean(), freed > 0 { body += " Glade freed \(Format.bytes(freed)) of caches." }
     } else if alert.kind == .lowStorage, let scan {
-      let reclaim = Planner.plan(scan: scan, level: config.level, config: config).selectedBytes
-      if reclaim > 0 { body += " A \(config.level.title) clean would free \(Format.bytes(reclaim))." }
+      let plan = Planner.plan(scan: scan, level: config.level, config: config)
+      if plan.immediateBytes > 0 {
+        body += " A \(config.level.title) clean would free \(Format.bytes(plan.immediateBytes))."
+      } else if plan.selectedBytes > 0 {
+        body += " A \(config.level.title) clean would move \(Format.bytes(plan.selectedBytes)) to the Trash."
+      }
     } else if alert.kind == .memoryPressure || alert.kind == .sustainedCPU {
       await refreshApps()
       if let top = suggestions.first(where: \.actionable) { body += " \(top.title)." }
@@ -353,7 +370,7 @@ public final class AppModel {
     if let scan { ScanEngine.save(scan) }
     rebuildPlan()
     receipts = Cleaner.receipts()
-    return receipt.removedBytes
+    return receipt.freedBytes
   }
 
   // MARK: Scanning
@@ -437,10 +454,23 @@ public final class AppModel {
     scan?.findings.map(\.id).filter { isSelected($0) } ?? []
   }
 
+  /// What a clean of the selection works through, biggest first: each finding once,
+  /// leaving out any inside another selected one (it goes with it). Every count of
+  /// items, in the clean bar, the inspector, the confirmation and the result, is this.
+  public var cleanItems: [Finding] {
+    guard let scan else { return [] }
+    return Planner.topLevel(selectedIDs, in: scan).sorted { $0.bytes > $1.bytes }
+  }
+
   /// The selection's total, with nested folders counted once.
   public var selectedBytes: Int64 { totals.selected }
-  /// How much of it is freed straight away; the rest goes to the Trash first.
+  /// How much of it is freed straight away.
   public var immediateBytes: Int64 { totals.immediate }
+  /// How much of it goes to the Trash, which frees nothing until it is emptied.
+  public var trashBytes: Int64 {
+    let totals = totals
+    return max(0, totals.selected - totals.immediate)
+  }
 
   private var totals: (selected: Int64, immediate: Int64) {
     guard let scan, var copy = plan else { return (0, 0) }
@@ -460,7 +490,8 @@ public final class AppModel {
   /// Removes everything selected.
   public func clean() async {
     guard let scan, !isCleaning else { return }
-    let ids = selectedIDs
+    // Only the outermost of nested findings: the rest go with them.
+    let ids = cleanItems.map(\.id)
     guard !ids.isEmpty else { return }
     cleanState = .cleaning(done: 0, total: ids.count, title: "")
     // Sample findings point at real places in the home folder, so a demo clean only
@@ -507,7 +538,8 @@ public final class AppModel {
         bytes: finding.bytes, outcome: outcome
       ))
     }
-    let freed = entries.reduce(Int64(0)) { $0 + $1.bytes }
+    // Only what was deleted frees space; the Trash holds on to the rest.
+    let freed = entries.reduce(Int64(0)) { $0 + ($1.outcome == .deleted ? $1.bytes : 0) }
     let receipt = Receipt(
       id: UUID().uuidString, date: Date(), initiator: .user, dryRun: false, entries: entries,
       freeBefore: scan.volume.availableBytes, freeAfter: scan.volume.availableBytes + freed

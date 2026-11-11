@@ -116,7 +116,7 @@ enum StorageSnapshots {
         entry("Slack cache", .appCaches, 0.9, .skipped(reason: "Slack opened while the clean was running.")),
         entry("Simulator system – iOS 18.0", .simulators, 8.4, .failed(reason: "Xcode’s simulator tool didn’t answer within two minutes.")),
       ],
-      freeBefore: 9_600_000_000, freeAfter: 66_000_000_000
+      freeBefore: 9_600_000_000, freeAfter: 65_900_000_000
     )
   }
 }

@@ -345,8 +345,13 @@ public struct ScanResult: Codable, Sendable, Identifiable {
       default: nil
       }
     })
+    // Anything inside a removed finding went with it.
+    let roots = findings.filter { gone.contains($0.id) }.flatMap { $0.paths.map { $0 + "/" } }
     var copy = self
-    copy.findings.removeAll { gone.contains($0.id) }
+    copy.findings.removeAll { finding in
+      gone.contains(finding.id)
+        || (!finding.paths.isEmpty && finding.paths.allSatisfy { path in roots.contains { path.hasPrefix($0) } })
+    }
     copy.volume = .current()
     return copy
   }
@@ -429,6 +434,15 @@ public struct Receipt: Codable, Sendable, Identifiable {
       case .deleted, .trashed, .wouldRemove: $0 + $1.bytes
       default: $0
       }
+    }
+  }
+
+  /// Space actually freed: what was deleted. Things in the Trash still take up space
+  /// until the Trash is emptied, so they don't count here.
+  public var freedBytes: Int64 {
+    entries.reduce(0) {
+      if case .deleted = $1.outcome { return $0 + $1.bytes }
+      return $0
     }
   }
 

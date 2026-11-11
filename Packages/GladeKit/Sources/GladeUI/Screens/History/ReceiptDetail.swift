@@ -20,7 +20,7 @@ struct ReceiptDetail: View {
 
         if !trashed.isEmpty {
           group("In the Trash", entries: trashed) {
-            Button(trashed.count == 1 ? "Put Back 1 Item" : "Put Back \(trashed.count) Items", systemImage: Symbols.putBack) {
+            Button(trashed.count == 1 ? "Put Back 1 Item" : "Put Back \(trashed.count) Items") {
               confirmsPutBack = true
             }
             .secondaryAction()
@@ -40,10 +40,10 @@ struct ReceiptDetail: View {
           }
         }
         if !removed.isEmpty {
-          group("Removed", entries: removed)
+          group("Deleted", entries: removed)
         }
         if !kept.isEmpty {
-          group("Not Removed", entries: kept, showsOutcome: true)
+          group("Left in place", entries: kept, showsOutcome: true)
         }
       }
       .padding(Metrics.l)
@@ -53,27 +53,42 @@ struct ReceiptDetail: View {
 
   private var header: some View {
     let name = receipt.initiator.name(providerName: { model.providerName($0) })
+    let freed = receipt.freedBytes
+    let trashed = receipt.trashedBytes
     return VStack(alignment: .leading, spacing: Metrics.s) {
       VStack(alignment: .leading, spacing: 2) {
-        Text(Format.bytes(receipt.removedBytes))
-          .font(.figure(34))
+        HStack(alignment: .firstTextBaseline, spacing: Metrics.s) {
+          Text(Format.bytes(freed > 0 || trashed == 0 ? freed : trashed))
+            .font(.figure(34))
+          Text(freed > 0 || trashed == 0 ? "freed" : "moved to the Trash")
+            .font(.title3)
+            .foregroundStyle(.secondary)
+        }
         Text("\(name) · \(receipt.date.formatted(date: .abbreviated, time: .shortened))")
           .foregroundStyle(.secondary)
       }
       .accessibilityElement(children: .combine)
 
-      HStack(spacing: Metrics.s) {
-        Text("Free space")
-          .foregroundStyle(.secondary)
-        Text(Format.bytes(receipt.freeBefore))
-        Image(systemName: "arrow.right")
-          .foregroundStyle(.tertiary)
-          .accessibilityLabel("to")
-        Text(Format.bytes(receipt.freeAfter))
-          .fontWeight(.medium)
+      // Free space as measured; nothing to show when only the Trash filled up.
+      if freed > 0, receipt.freeAfter != receipt.freeBefore {
+        HStack(spacing: Metrics.s) {
+          Text("Free space")
+            .foregroundStyle(.secondary)
+          Text(Format.bytes(receipt.freeBefore))
+          Image(systemName: "arrow.right")
+            .foregroundStyle(.tertiary)
+            .accessibilityLabel("to")
+          Text(Format.bytes(receipt.freeAfter))
+            .fontWeight(.medium)
+        }
+        .monospacedDigit()
+        .accessibilityElement(children: .combine)
       }
-      .monospacedDigit()
-      .accessibilityElement(children: .combine)
+      if freed > 0, trashed > 0 {
+        Text("\(Format.bytes(trashed)) moved to the Trash")
+          .foregroundStyle(.secondary)
+          .monospacedDigit()
+      }
     }
   }
 

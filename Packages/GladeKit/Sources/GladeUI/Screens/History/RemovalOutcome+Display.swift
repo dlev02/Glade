@@ -5,7 +5,7 @@ import SwiftUI
 extension RemovalOutcome {
   var title: String {
     switch self {
-    case .deleted: "Removed"
+    case .deleted: "Deleted"
     case .trashed: "In the Trash"
     case .skipped(let reason): "Skipped: \(reason)"
     case .failed(let reason): "Failed: \(reason)"

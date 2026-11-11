@@ -9,6 +9,10 @@ struct ReceiptRow: View {
   var body: some View {
     let name = receipt.initiator.name(providerName: { model.providerName($0) })
     let items = receipt.entries.count == 1 ? "1 item" : "\(receipt.entries.count) items"
+    let amount = [
+      receipt.freedBytes > 0 ? "\(Format.bytes(receipt.freedBytes)) freed" : nil,
+      receipt.trashedBytes > 0 ? "\(Format.bytes(receipt.trashedBytes)) moved to the Trash" : nil,
+    ].compactMap(\.self).joined(separator: ", ")
     HStack(spacing: Metrics.m) {
       Image(systemName: receipt.initiator.symbol)
         .font(.system(size: 13, weight: .medium))
@@ -25,11 +29,20 @@ struct ReceiptRow: View {
           .monospacedDigit()
       }
       Spacer(minLength: Metrics.m)
-      Text(Format.bytes(receipt.removedBytes))
-        .font(.figure(15))
+      // What it freed; a clean that only moved things to the Trash shows that amount
+      // beside the Trash symbol instead.
+      HStack(spacing: Metrics.xs) {
+        if receipt.freedBytes == 0, receipt.trashedBytes > 0 {
+          Image(systemName: "trash")
+            .font(.callout)
+            .foregroundStyle(.secondary)
+        }
+        Text(Format.bytes(receipt.freedBytes > 0 ? receipt.freedBytes : receipt.trashedBytes))
+          .font(.figure(15))
+      }
     }
     .padding(.vertical, Metrics.xs)
     .accessibilityElement(children: .ignore)
-    .accessibilityLabel("\(name), \(receipt.date.formatted(date: .omitted, time: .shortened)), \(items), \(Format.bytes(receipt.removedBytes))")
+    .accessibilityLabel("\(name), \(receipt.date.formatted(date: .omitted, time: .shortened)), \(items), \(amount)")
   }
 }

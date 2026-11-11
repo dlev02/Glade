@@ -28,10 +28,14 @@ struct MenuBarView: View {
           .padding(.horizontal, Metrics.xs)
       }
       if model.scan != nil, model.selectedBytes > 0 {
+        let free = model.immediateBytes
+        let count = model.cleanItems.count
         Button {
           showStorage()
         } label: {
-          Text("Review \(Format.bytes(model.selectedBytes))…")
+          // The figure is what a clean frees now, as on Overview; Trash-only
+          // selections are counted in items, since they free nothing yet.
+          Text(free > 0 ? "Review \(Format.bytes(free))…" : count == 1 ? "Review 1 Item…" : "Review \(count) Items…")
             .frame(maxWidth: .infinity)
         }
         .filledAction()

@@ -10,27 +10,28 @@ struct CleanBar: View {
   var freeUp: () -> Void
 
   var body: some View {
-    let count = model.selectedIDs.count
-    let total = model.selectedBytes
+    let count = model.cleanItems.count
+    let free = model.immediateBytes
+    let trash = model.trashBytes
     HStack(spacing: Metrics.l) {
       VStack(alignment: .leading, spacing: 0) {
-        Text(count == 0 ? "Nothing selected" : "\(count) \(count == 1 ? "item" : "items") · \(Format.bytes(total))")
+        Text(summary(count: count, free: free, trash: trash))
           .font(.headline)
           .monospacedDigit()
           .contentTransition(.numericText())
-          .animation(reduceMotion ? nil : .snappy(duration: 0.18), value: total)
+          .animation(reduceMotion ? nil : .snappy(duration: 0.18), value: free + trash)
         LevelMenu()
           .font(.callout)
           .foregroundStyle(.secondary)
       }
       Spacer(minLength: Metrics.m)
       FullDiskAccessGlyph()
-      Button(total > 0 ? "Free Up \(Format.bytes(total))" : "Free Up", action: freeUp)
+      Button(free > 0 ? "Free Up \(Format.bytes(free))" : trash > 0 ? "Move to Trash" : "Free Up", action: freeUp)
         .filledAction()
         .monospacedDigit()
         .keyboardShortcut(.return, modifiers: .command)
         .disabled(count == 0 || model.isScanning || model.isCleaning)
-        .help("Free up the selected items (⌘Return)")
+        .help("Review and clean the selected items (⌘Return)")
         .accessibilityIdentifier("cleanBar.freeUp")
     }
     .padding(.leading, Metrics.l + Metrics.xs)
@@ -39,5 +40,15 @@ struct CleanBar: View {
     .glassEffect(.regular, in: .capsule)
     .padding(.horizontal, Metrics.l)
     .padding(.bottom, Metrics.m)
+  }
+
+  /// "19 items · 102 GB to free · 12 GB to the Trash": what is freed now comes first,
+  /// and the Trash is named separately because it frees nothing until it's emptied.
+  private func summary(count: Int, free: Int64, trash: Int64) -> String {
+    guard count > 0 else { return "Nothing selected" }
+    var parts = [count == 1 ? "1 item" : "\(count) items"]
+    if free > 0 { parts.append("\(Format.bytes(free)) to free") }
+    if trash > 0 { parts.append("\(Format.bytes(trash)) to the Trash") }
+    return parts.joined(separator: " · ")
   }
 }
