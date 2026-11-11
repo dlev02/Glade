@@ -50,7 +50,7 @@ Turn automatic checks off in Settings. Glade then makes no network requests of i
 
 ### Questions you ask an AI
 
-Glade only asks an AI when you ask it to (**Assistant**, `glade advise`, `glade ask`), or when a coding agent you run calls Glade. It runs the AI tool you installed and signed in to, and that tool sends the request to its provider under your account and their terms: Anthropic for Claude Code, OpenAI for Codex, Google for Gemini CLI, Cursor, GitHub for Copilot CLI, Alibaba for Qwen Code, and whichever provider you set up in OpenCode. Apple Intelligence and Ollama run on your Mac, and nothing leaves it; Glade reaches Ollama through its local address, 127.0.0.1. Glade's support for Apple's Private Cloud Compute stays switched off until Apple grants Glade access to it.
+Glade only asks an AI when you ask it to (**Assistant**, `glade advise`, `glade ask`), or when a coding agent you run calls Glade. It runs the AI tool you installed and signed in to, and that tool sends the request to its provider under your account and their terms: Anthropic for Claude Code, OpenAI for Codex, Google for Gemini CLI, Cursor, GitHub for Copilot CLI, Alibaba for Qwen Code, and whichever provider you set up in OpenCode. Apple Intelligence and Ollama run on your Mac, and nothing leaves it; Glade reaches Ollama through its local address, 127.0.0.1. Apple's Private Cloud Compute is not used: Apple offers it only to apps from the App Store.
 
 What the AI is shown:
 
