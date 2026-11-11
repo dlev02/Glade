@@ -69,16 +69,26 @@ struct AdviceChips: View {
   }
 }
 
-/// A chip's findings: each name with the assistant's reason under it. Choosing one
-/// shows its row in the list.
+/// A chip's findings: each name and its size, with the assistant's reason under it.
+/// Choosing one shows its row in the list.
 private struct ChipList: View {
+  @Environment(AppModel.self) private var model
   var kind: AdviceNote.Kind
   var notes: [StorageAdvice.Note]
   var title: (String) -> String?
   var choose: (String) -> Void
   @State private var hovered: String?
 
+  /// Each listed finding's size, looked up once.
+  private var sizes: [String: Int64] {
+    let ids = Set(notes.map(\.id))
+    var sizes: [String: Int64] = [:]
+    for finding in model.scan?.findings ?? [] where ids.contains(finding.id) { sizes[finding.id] = finding.bytes }
+    return sizes
+  }
+
   var body: some View {
+    let sizes = self.sizes
     ScrollView {
       VStack(alignment: .leading, spacing: 2) {
         ForEach(notes) { note in
@@ -87,8 +97,17 @@ private struct ChipList: View {
           } label: {
             VStack(alignment: .leading, spacing: 1) {
               if let name = title(note.id) {
-                Text(name)
-                  .lineLimit(2)
+                HStack(alignment: .firstTextBaseline, spacing: Metrics.s) {
+                  Text(name)
+                    .lineLimit(2)
+                  Spacer(minLength: Metrics.s)
+                  if let bytes = sizes[note.id] {
+                    Text(Format.bytes(bytes))
+                      .monospacedDigit()
+                      .foregroundStyle(.secondary)
+                      .fixedSize()
+                  }
+                }
               } else {
                 // An identifier the assistant made up; show it exactly, as data.
                 Text(verbatim: note.id)
@@ -123,7 +142,7 @@ private struct ChipList: View {
     // Its own type, not the chip's caption and grey.
     .font(.body)
     .foregroundStyle(.primary)
-    .frame(width: 300)
+    .frame(width: 320)
     .frame(maxHeight: 320)
     .fixedSize(horizontal: false, vertical: true)
   }
