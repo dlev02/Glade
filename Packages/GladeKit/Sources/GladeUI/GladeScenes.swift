@@ -80,6 +80,7 @@ struct GladeCommands: Commands {
   var model: AppModel
   var updater: UpdaterHooks
   @Environment(\.openWindow) private var openWindow
+  @Environment(\.openSettings) private var openSettings
 
   var body: some Commands {
     CommandGroup(after: .appInfo) {
@@ -109,7 +110,13 @@ struct GladeCommands: Commands {
     CommandGroup(replacing: .help) {
       Button("Set Up \(Brand.name)…") { model.showsSetup = true }
       Button("Report a Problem…") {
-        NotificationCenter.default.post(name: .gladeReportProblem, object: nil)
+        // The report sheet lives in Settings, so open that first and give it a
+        // moment to start listening.
+        openSettings()
+        Task {
+          try? await Task.sleep(for: .milliseconds(400))
+          NotificationCenter.default.post(name: .gladeReportProblem, object: nil)
+        }
       }
       Link("\(Brand.name) on GitHub", destination: URL(string: Brand.repository)!)
     }
