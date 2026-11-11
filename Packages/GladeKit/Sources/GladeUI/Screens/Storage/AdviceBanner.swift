@@ -9,9 +9,13 @@ struct AdviceBanner: View {
   @Environment(AppModel.self) private var model
   @Environment(\.accentMark) private var accentMark
   var advice: StorageAdvice
-  /// Looks up a finding's title for the refused suggestions.
+  /// Looks up a finding's title for the chips' lists and the refused suggestions.
   var title: (String) -> String?
+  /// Shows a finding's row in the list, when it's chosen from a chip's list.
+  var reveal: ((String) -> Void)?
   @State private var showsRejected = false
+
+  private static let textWidth: CGFloat = 680
 
   var body: some View {
     HStack(alignment: .firstTextBaseline, spacing: Metrics.s) {
@@ -21,10 +25,12 @@ struct AdviceBanner: View {
         .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
         .accessibilityHidden(true)
       VStack(alignment: .leading, spacing: Metrics.s) {
+        // A comfortable reading measure, however wide the list is.
         MarkdownText(advice.summary)
           .fixedSize(horizontal: false, vertical: true)
+          .frame(maxWidth: Self.textWidth, alignment: .leading)
         HStack(alignment: .firstTextBaseline, spacing: Metrics.m) {
-          AdviceChips(advice: advice)
+          AdviceChips(advice: advice, title: title, reveal: reveal)
           Spacer(minLength: Metrics.m)
           // Who answered, as quiet metadata at the end of the row.
           if advice.escalated {

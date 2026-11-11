@@ -167,12 +167,15 @@ struct StorageScreen: View {
     if state.list.groups.isEmpty {
       emptyScope
     } else {
+      ScrollViewReader { proxy in
       List(selection: $state.highlighted) {
         // The advice is the list's first row, so it sits on the same grid as the
         // rows: its sparkle in the checkbox column, its text on the titles' edge.
         if let advice = adviceOverride ?? model.advice {
-          AdviceBanner(advice: advice) { state.list.finding($0)?.title }
-            .selectionDisabled()
+          AdviceBanner(advice: advice, title: { model.scan?.finding($0)?.title }) { id in
+            reveal(id, proxy: proxy)
+          }
+          .selectionDisabled()
         }
         ForEach(state.list.groups) { group in
           Section {
@@ -199,6 +202,24 @@ struct StorageScreen: View {
         toggleChecks(state.highlighted)
         return .handled
       }
+      }
+    }
+  }
+
+  /// Highlights a finding's row and scrolls to it, first showing the scope that lists
+  /// it, clearing a search that hides it and opening its group.
+  private func reveal(_ id: String, proxy: ScrollViewProxy) {
+    guard let finding = model.scan?.finding(id) else { return }
+    if !state.scope.includes(finding) {
+      state.scope = StorageScope.review.includes(finding) ? .review : .everything
+    }
+    if !state.query.isEmpty { state.query = "" }
+    state.collapsed.remove(finding.category)
+    state.refresh(scan: model.scan)
+    state.highlighted = [id]
+    Task {
+      await Task.yield()
+      withAnimation(reduceMotion ? nil : .smooth) { proxy.scrollTo(id, anchor: .center) }
     }
   }
 
