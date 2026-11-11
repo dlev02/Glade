@@ -16,7 +16,7 @@ struct MenuReading: View {
         .font(.caption)
         .foregroundStyle(.secondary)
       Text(figure)
-        .font(.figure(17))
+        .font(.liveFigure(17))
         .foregroundStyle(figure == "—" ? .tertiary : .primary)
         .contentTransition(.numericText())
         .lineLimit(1)

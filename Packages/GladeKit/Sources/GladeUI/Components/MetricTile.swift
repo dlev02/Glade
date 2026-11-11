@@ -34,7 +34,7 @@ public struct MetricTile: View {
             .font(.subheadline.weight(.medium))
             .foregroundStyle(.secondary)
           Text(figure)
-            .font(.figure(28))
+            .font(.liveFigure(28))
             .foregroundStyle(figure == "—" ? .tertiary : .primary)
             .contentTransition(.numericText())
           Text(caption)

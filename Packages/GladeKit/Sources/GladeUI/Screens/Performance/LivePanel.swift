@@ -29,7 +29,7 @@ struct LivePanel<Details: View>: View {
           }
           HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text(figure)
-              .font(.figure(28))
+              .font(.liveFigure(28))
               .foregroundStyle(figure == "—" ? .tertiary : .primary)
               .contentTransition(.numericText())
               .lineLimit(1)

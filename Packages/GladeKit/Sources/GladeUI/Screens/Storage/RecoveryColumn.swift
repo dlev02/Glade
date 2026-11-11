@@ -2,14 +2,14 @@ import GladeKit
 import SwiftUI
 
 /// How a finding comes back, as a column in the storage list: a coloured symbol and
-/// one grey word. When the list is narrow the word goes, except for "Permanent",
+/// one grey word. When the list is narrow the word goes, except for "Can’t be undone",
 /// which always shows, in red, because nothing brings it back.
 struct RecoveryColumn: View {
   var recovery: Recovery
   var compact: Bool
 
   /// Wide enough for the longest word, so the symbols line up down the list.
-  static let width: CGFloat = 96
+  static let width: CGFloat = 132
   static let compactWidth: CGFloat = 22
 
   var body: some View {
@@ -25,7 +25,7 @@ struct RecoveryColumn: View {
       }
     }
     .font(.callout)
-    // A narrow "Permanent" keeps its own width rather than spilling over the title.
+    // A narrow "Can’t be undone" keeps its own width rather than spilling over the title.
     .frame(width: compact ? (showsWord ? nil : Self.compactWidth) : Self.width, alignment: compact ? .trailing : .leading)
     .help(recovery.explanation)
     .accessibilityElement(children: .ignore)
@@ -38,9 +38,9 @@ extension Recovery {
   var shortTitle: String {
     switch self {
     case .automatic: "Rebuilds"
-    case .redownload: "Downloads"
-    case .reinstall: "Reinstall"
-    case .permanent: "Permanent"
+    case .redownload: "Downloads again"
+    case .reinstall: "Needs reinstall"
+    case .permanent: "Can’t be undone"
     }
   }
 }

@@ -58,40 +58,116 @@ public struct BarSegment: Identifiable, Hashable, Sendable {
 }
 
 /// The disk as one rounded bar: what's reclaimable by family, everything else in
-/// use, and what's free.
+/// use, and what's free. Pointing at a slice brightens it, dims the rest a little and
+/// shows its name and size in a small bubble above it; `hovered` is shared with the
+/// legend so each lights the other. Every slice is its own accessibility element.
 public struct StorageBar: View {
   var segments: [BarSegment]
   var total: Int64
   var height: CGFloat
+  @Binding var hovered: String?
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @State private var bubbleHeight: CGFloat = 34
 
-  public init(segments: [BarSegment], total: Int64, height: CGFloat = 22) {
+  public init(segments: [BarSegment], total: Int64, height: CGFloat = 22, hovered: Binding<String?> = .constant(nil)) {
     self.segments = segments
     self.total = total
     self.height = height
+    _hovered = hovered
   }
 
   public var body: some View {
     GeometryReader { proxy in
-      let visible = segments.filter { $0.bytes > 0 }
-      let gap: CGFloat = 2
-      let usable = max(0, proxy.size.width - gap * CGFloat(max(0, visible.count - 1)))
-      HStack(spacing: gap) {
-        ForEach(visible) { segment in
+      let frames = frames(width: proxy.size.width)
+      ZStack(alignment: .topLeading) {
+        HStack(spacing: 0) { Spacer(minLength: 0) }
+          .frame(width: proxy.size.width, height: height)
+          .background(Palette.track)
+        ForEach(frames, id: \.segment.id) { item in
           Rectangle()
-            .fill(segment.color.gradient)
-            .frame(width: max(2, usable * CGFloat(segment.bytes) / CGFloat(max(total, 1))))
-            .help("\(segment.title): \(Format.bytes(segment.bytes))")
+            .fill(item.segment.color.gradient)
+            .brightness(hovered == item.segment.id ? 0.06 : 0)
+            .opacity(hovered == nil || hovered == item.segment.id ? 1 : 0.55)
+            .frame(width: item.width, height: height)
+            .offset(x: item.x)
+            .contentShape(.rect)
+            .onHover { inside in
+              if inside { hovered = item.segment.id } else if hovered == item.segment.id { hovered = nil }
+            }
+            .accessibilityElement()
+            .accessibilityLabel(item.segment.title)
+            .accessibilityValue(Format.bytes(item.segment.bytes))
         }
-        Spacer(minLength: 0)
       }
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .background(Palette.track)
       .clipShape(.capsule)
+      .overlay(alignment: .topLeading) {
+        if let item = frames.first(where: { $0.segment.id == hovered }) {
+          // Centred over the slice, its arrow just touching the bar's top edge.
+          BarBubble(segment: item.segment)
+            .fixedSize()
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { bubbleHeight = $0 }
+            .position(x: item.x + item.width / 2, y: -bubbleHeight / 2 - 2)
+            .allowsHitTesting(false)
+            .transition(.opacity)
+        }
+      }
+      .animation(reduceMotion ? nil : .snappy(duration: 0.12), value: hovered)
     }
     .frame(height: height)
-    .accessibilityElement(children: .ignore)
+    .accessibilityElement(children: .contain)
     .accessibilityLabel("Storage")
-    .accessibilityValue(segments.filter { $0.bytes > 0 }.map { "\($0.title) \(Format.bytes($0.bytes))" }.joined(separator: ", "))
+  }
+
+  /// Where each visible slice sits, with a 2-point gap between slices.
+  private func frames(width: CGFloat) -> [(segment: BarSegment, x: CGFloat, width: CGFloat)] {
+    let visible = segments.filter { $0.bytes > 0 }
+    let gap: CGFloat = 2
+    let usable = max(0, width - gap * CGFloat(max(0, visible.count - 1)))
+    var x: CGFloat = 0
+    return visible.map { segment in
+      let w = max(2, usable * CGFloat(segment.bytes) / CGFloat(max(total, 1)))
+      defer { x += w + gap }
+      return (segment, x, w)
+    }
+  }
+}
+
+/// The small bubble above a pointed-at slice: its name and size, with an arrow.
+private struct BarBubble: View {
+  var segment: BarSegment
+
+  var body: some View {
+    VStack(spacing: 0) {
+      HStack(spacing: 6) {
+        Circle().fill(segment.color).frame(width: 8, height: 8)
+        Text(segment.title)
+        Text(Format.bytes(segment.bytes))
+          .foregroundStyle(.secondary)
+          .monospacedDigit()
+      }
+      .font(.callout)
+      .padding(.horizontal, 10)
+      .padding(.vertical, 5)
+      .background(.thickMaterial, in: .capsule)
+      Triangle()
+        .fill(.thickMaterial)
+        .frame(width: 12, height: 6)
+    }
+    .compositingGroup()
+    .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
+    .accessibilityHidden(true)
+  }
+}
+
+/// A small downward arrow.
+private nonisolated struct Triangle: Shape {
+  func path(in rect: CGRect) -> Path {
+    Path { path in
+      path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+      path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+      path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+      path.closeSubpath()
+    }
   }
 }
 
@@ -261,7 +337,7 @@ public struct CategoryIcon: View {
   public var body: some View {
     Image(systemName: category.symbol)
       .font(.system(size: size * 0.5, weight: .medium))
-      .foregroundStyle(category.family.color)
+      .foregroundStyle(category.family.glyphColor)
       .frame(width: size, height: size)
       .background(category.family.color.opacity(0.14), in: .rect(cornerRadius: size * 0.28))
       .accessibilityHidden(true)

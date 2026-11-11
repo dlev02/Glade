@@ -100,9 +100,14 @@ struct OverviewScreen: View {
 private struct StorageSummary: View {
   @Environment(AppModel.self) private var model
   @Environment(\.accentMark) private var accentMark
+  /// The slice or legend entry under the pointer; `-demoHoverSegment <id>` sets one
+  /// for screenshots.
+  @State private var hovered: String?
+  private let pinned = UserDefaults.standard.string(forKey: "demoHoverSegment")
 
   var body: some View {
     let segments = legendSegments
+    let hover = Binding(get: { pinned ?? hovered }, set: { if pinned == nil { hovered = $0 } })
     Card(padding: Metrics.xl) {
       VStack(alignment: .leading, spacing: Metrics.l) {
         VStack(alignment: .leading, spacing: 2) {
@@ -115,8 +120,8 @@ private struct StorageSummary: View {
         }
         .accessibilityElement(children: .combine)
         if let total = volume?.totalBytes {
-          StorageBar(segments: segments, total: total)
-          Legend(segments: segments)
+          StorageBar(segments: segments, total: total, hovered: hover)
+          Legend(segments: segments, hovered: hover)
         }
 
         Divider()
@@ -192,31 +197,65 @@ private struct StorageSummary: View {
   }
 }
 
-/// The key under the storage bar: name and size in tidy columns, in the bar's order.
+/// The key under the storage bar, in the bar's order: first what Glade can clear,
+/// family by family, then everything else on the disk, set apart so the coloured part
+/// never reads as the whole disk. Pointing at an entry lights its slice.
 private struct Legend: View {
   var segments: [BarSegment]
+  @Binding var hovered: String?
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+  private static let columns = [GridItem(.adaptive(minimum: 188, maximum: 240), spacing: Metrics.xl, alignment: .leading)]
 
   var body: some View {
-    LazyVGrid(
-      columns: [GridItem(.adaptive(minimum: 168, maximum: 240), spacing: Metrics.xl, alignment: .leading)],
-      alignment: .leading, spacing: Metrics.s
-    ) {
-      ForEach(segments.filter { $0.bytes > 0 }) { segment in
-        HStack(spacing: 6) {
-          Circle()
-            .fill(segment.color)
-            .frame(width: 8, height: 8)
-          Text(segment.title)
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-          Spacer(minLength: Metrics.s)
-          Text(Format.bytes(segment.bytes))
+    let shown = segments.filter { $0.bytes > 0 }
+    let clearable = shown.filter { $0.id != "other" }
+    let other = shown.first { $0.id == "other" }
+    VStack(alignment: .leading, spacing: Metrics.s) {
+      if !clearable.isEmpty {
+        HStack(spacing: Metrics.xs) {
+          Text("Glade can clear")
+          Text(Format.bytes(clearable.reduce(0) { $0 + $1.bytes }))
             .monospacedDigit()
         }
-        .font(.callout)
-        .accessibilityElement(children: .combine)
+        .font(.callout.weight(.medium))
+        .foregroundStyle(.secondary)
+        LazyVGrid(columns: Self.columns, alignment: .leading, spacing: Metrics.s) {
+          ForEach(clearable) { entry($0) }
+        }
+      }
+      if let other {
+        LazyVGrid(columns: Self.columns, alignment: .leading, spacing: Metrics.s) {
+          entry(other)
+        }
       }
     }
+    .animation(reduceMotion ? nil : .snappy(duration: 0.12), value: hovered)
+  }
+
+  private func entry(_ segment: BarSegment) -> some View {
+    HStack(spacing: 6) {
+      Circle()
+        .fill(segment.color)
+        .frame(width: 8, height: 8)
+      Text(segment.title)
+        .foregroundStyle(hovered == segment.id ? .primary : .secondary)
+        .lineLimit(1)
+      Spacer(minLength: Metrics.s)
+      Text(Format.bytes(segment.bytes))
+        .monospacedDigit()
+        .frame(minWidth: 64, alignment: .trailing)
+    }
+    .font(.callout)
+    .padding(.horizontal, 4)
+    .padding(.vertical, 1)
+    .background(Color.primary.opacity(hovered == segment.id ? 0.06 : 0), in: .rect(cornerRadius: 5))
+    .padding(.horizontal, -4)
+    .contentShape(.rect)
+    .onHover { inside in
+      if inside { hovered = segment.id } else if hovered == segment.id { hovered = nil }
+    }
+    .accessibilityElement(children: .combine)
   }
 }
 
@@ -235,7 +274,9 @@ private struct SuggestionList: View {
           VStack(spacing: 0) {
             ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, suggestion in
               VStack(spacing: 0) {
-                if index > 0 { Divider().padding(.leading, 56) }
+                // The same insets as Storage's row separators: from the text edge to
+                // the content's trailing edge.
+                if index > 0 { Divider().padding(.leading, 56).padding(.trailing, Metrics.l) }
                 SuggestionRow(suggestion) { outcome = $0 }
                   .padding(.horizontal, Metrics.l)
                   .padding(.vertical, Metrics.m)

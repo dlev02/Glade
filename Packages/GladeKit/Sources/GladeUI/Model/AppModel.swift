@@ -735,7 +735,7 @@ public final class AppModel {
       }
     }
     let other = max(0, volume.usedBytes - reclaimable)
-    segments.append(BarSegment(id: "other", title: scan == nil ? "Used" : "Everything Else", bytes: other, color: Color.primary.opacity(0.28)))
+    segments.append(BarSegment(id: "other", title: scan == nil ? "Used" : "Everything Else", bytes: other, color: Color.primary.opacity(0.16)))
     return segments
   }
 

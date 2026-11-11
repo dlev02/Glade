@@ -118,6 +118,15 @@ public enum CategoryFamily: String, CaseIterable, Identifiable, Sendable {
     case .system: Color(nsColor: .systemGray)
     }
   }
+
+  /// The colour for a symbol on the family's pale tile: yellow is too light to read on
+  /// its own tint in light mode, so it darkens there.
+  public var glyphColor: Color {
+    switch self {
+    case .files: Color(light: 0x9A6700, dark: 0xFFD60A)
+    default: color
+    }
+  }
 }
 
 extension StorageCategory {
@@ -274,9 +283,15 @@ extension NSColor {
 }
 
 extension Font {
-  /// Large figures: free space, memory used. Rounded and steady-width so they don't
-  /// jitter as they change.
+  /// Large figures: free space, sizes, totals. Rounded semibold with natural digit
+  /// widths, so "114 GB" has no gaps around its ones.
   public static func figure(_ size: CGFloat = 34) -> Font {
-    .system(size: size, weight: .semibold, design: .rounded).monospacedDigit()
+    .system(size: size, weight: .semibold, design: .rounded)
+  }
+
+  /// A large figure that updates while it's watched (memory, processor, graphics):
+  /// steady-width digits so it doesn't jitter.
+  public static func liveFigure(_ size: CGFloat = 34) -> Font {
+    figure(size).monospacedDigit()
   }
 }
