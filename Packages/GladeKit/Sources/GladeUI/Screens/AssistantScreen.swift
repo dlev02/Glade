@@ -35,18 +35,21 @@ struct AssistantScreen: View {
             .keyboardShortcut("n")
             .disabled(messages.isEmpty)
         }
+        // Declared once in the main toolbar, its own capsule at the trailing edge, the
+        // same as Storage's and History's inspector buttons.
+        ToolbarSpacer(.fixed, placement: .primaryAction)
+        ToolbarItem(placement: .primaryAction) {
+          Button("Details", systemImage: Symbols.inspector) { showsDetails.toggle() }
+            .accessibilityIdentifier("toolbar.details")
+            .accessibilityValue(showsDetails ? "Shown" : "Hidden")
+            .help("Show What Was Sent")
+            .keyboardShortcut("i", modifiers: [.command, .option])
+        }
       }
       .inspector(isPresented: $showsDetails) {
         RunsInspector(runs: runs) { shownRun = $0 }
+          .inspectorBackground()
           .inspectorColumnWidth(min: 260, ideal: 300, max: 400)
-          .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-              Button("Details", systemImage: Symbols.inspector) { showsDetails.toggle() }
-                .accessibilityIdentifier("toolbar.details")
-                .help("Show What Was Sent")
-                .keyboardShortcut("i", modifiers: [.command, .option])
-            }
-          }
       }
       .sheet(item: $shownRun) { run in
         RunSheet(run: run)

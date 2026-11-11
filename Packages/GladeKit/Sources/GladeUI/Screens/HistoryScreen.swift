@@ -48,11 +48,10 @@ struct HistoryScreen: View {
     }
     .navigationTitle("History")
     .toolbar {
-      if !showsReceipt {
-        ToolbarItem(placement: .primaryAction) {
-          receiptButton
-            .disabled(selected == nil)
-        }
+      // Declared once, so it never appears twice or moves when the receipt opens.
+      ToolbarItem(placement: .primaryAction) {
+        receiptButton
+          .disabled(selected == nil)
       }
     }
     .inspector(isPresented: $showsReceipt) {
@@ -62,13 +61,8 @@ struct HistoryScreen: View {
             .id(selected.id)
         }
       }
+      .inspectorBackground()
       .inspectorColumnWidth(min: 320, ideal: 380)
-      .toolbar {
-        ToolbarSpacer(.flexible)
-        ToolbarItem {
-          receiptButton
-        }
-      }
     }
     .onChange(of: selection) { old, new in
       if new == nil {
