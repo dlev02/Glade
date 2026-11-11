@@ -11,6 +11,10 @@ The first version of Glade. It shows what is using your Mac's storage, memory, p
 - Every finding says how it comes back: it rebuilds itself, downloads again, needs a reinstall, or is permanent.
 - Three levels choose what to clear: Careful, Balanced and Aggressive. Change any choice by hand before you clean.
 
+### Search
+
+- Optional and off by default: Glade can read what documents, PDFs and images contain, on this Mac only, so you can search by meaning (`glade search "the lease for the flat"`), find files like another, and find near-identical photos and documents.
+
 ### Safety
 
 - Keys and credentials, Keychains and password managers, your AI agents' memory and settings, Photos and other libraries, Messages, Mail, Notes, iCloud Drive and other synced folders, browser profiles, backups and `.git` folders are never scanned, shown or removed. Add folders of your own.

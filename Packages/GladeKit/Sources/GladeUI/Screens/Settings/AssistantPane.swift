@@ -78,14 +78,7 @@ struct AssistantPane: View {
       }
 
       Section {
-        Toggle("Share short file excerpts with cloud AIs", isOn: Binding(
-          get: { model.config.assistant.shareExcerpts },
-          set: { share in
-            if share { confirmsSharing = true } else { model.config.assistant.shareExcerpts = false }
-          }
-        ))
-      } footer: {
-        Text("Without this, they see names, sizes and dates only.")
+        Label("Cloud AIs see names, sizes and dates only. What files contain stays on this Mac.", systemImage: "lock.shield")
           .foregroundStyle(.secondary)
       }
 

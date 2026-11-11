@@ -292,6 +292,48 @@ public final class AppModel {
       if let top = suggestions.first(where: \.actionable) { body += " \(top.title)." }
     }
     await Notifier.post(title: alert.title, body: body, kind: alert.kind.rawValue)
+    if config.assistant.proactive { await checkIn(about: alert) }
+  }
+
+  /// Has the assistant look at what set off an alert, when the person has switched
+  /// that on. Counted against the runs-a-day limit they chose.
+  private func checkIn(about alert: ThresholdAlert) async {
+    do {
+      if alert.kind == .lowStorage {
+        if scan == nil || Date().timeIntervalSince(scan?.finished ?? .distantPast) > 6 * 3600 {
+          let fresh = await ScanEngine.run(config: config)
+          ScanEngine.save(fresh)
+          scan = fresh
+          rebuildPlan()
+        }
+        guard let scan else { return }
+        if apps.isEmpty { await refreshApps() }
+        let base = Planner.plan(scan: scan, level: config.level, config: config)
+        let result = try await Assistant.advise(
+          scan: scan, plan: base, goal: "Free space is low (\(alert.body)) Suggest what to clear.",
+          activity: MacDescription.activity(context: context, apps: apps), config: config, proactive: true,
+          providers: AgentProviders.all
+        )
+        plan = result.plan
+        advice = result.advice
+        overrides = [:]
+        messages.append(Message(role: .assistant, text: result.advice.summary, provider: result.advice.provider, advice: result.advice))
+        await Notifier.post(title: "\(Brand.name) has a plan", body: result.advice.summary, kind: "assistant")
+      } else {
+        await refreshApps()
+        let description = MacDescription.build(
+          snapshot: snapshot, apps: apps, context: context, suggestions: suggestions, scan: scan, plan: plan
+        )
+        let reply = try await Assistant.ask(
+          "\(alert.title). \(alert.body) What is the cause, and what would you quit or shut down?",
+          snapshot: description, config: config, proactive: true, providers: AgentProviders.all
+        )
+        messages.append(Message(role: .assistant, text: reply.answer, provider: reply.provider))
+        await Notifier.post(title: alert.title, body: String(reply.answer.prefix(220)), kind: "assistant")
+      }
+    } catch {
+      Log.info(.agent, "Proactive check-in skipped: \(error.localizedDescription)")
+    }
   }
 
   /// The Careful clean, run unattended because the person switched that on.

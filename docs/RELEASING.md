@@ -6,7 +6,7 @@ A release is a Developer ID signed, notarized DMG and ZIP attached to a GitHub r
 
 ### Make the update signing key
 
-The updater is off until this is done. `App/Info.plist` has `SUFeedURL` but no `SUPublicEDKey`, and Glade only starts Sparkle when it has both, so a build made now would never update. `make_release.sh` refuses to run without the key.
+This was done on 11 November 2026: the key is in the login Keychain under the account `glade`, backed up to `~/Developer/Glade-signing/sparkle-private-key.txt`, and `SUPublicEDKey` is in `App/Info.plist`. The steps stay here for a new Mac or a lost key. Glade only starts Sparkle when the feed URL and the key are both present, and `make_release.sh` refuses to run without them. Keep a second copy of the backup somewhere off this Mac.
 
 1. Build once (Bitrig or `xcodebuild -project Glade.xcodeproj -scheme Glade build`) so Sparkle's tools are downloaded. They are under `SourcePackages/artifacts/sparkle/Sparkle/bin` in the build's DerivedData folder.
 2. Make the key in the login Keychain under Glade's own account, and print its public half:

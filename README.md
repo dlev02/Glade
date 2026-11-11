@@ -21,6 +21,8 @@ Setup opens by itself the first time, and again from **Help > Set Up Glade…**.
 1. **Full Disk Access.** macOS keeps some folders from every app until you allow it. Without it Glade still works, but it can't measure everything and says what it skipped. The button in setup opens the right pane of System Settings; turn Glade on there.
 2. **Notifications.** Glade tells you when free space runs low, memory is under pressure or something keeps the processor busy for minutes. Allow them when asked.
 3. **An AI, if you want one.** Glade asks an AI command-line tool you already use, signed in with your own account. Install and sign in to [Claude Code](https://claude.com/claude-code) or [Codex](https://developers.openai.com/codex), or turn on Apple Intelligence, and Glade finds it. Everything else works without one.
+4. **Open at Login.** On by default for a copy in Applications, so the menu bar item and alerts are there after a restart. Switch it off in setup or in Settings.
+5. **Command line, if you want it.** **Install** links the `glade` command into `~/.local/bin`.
 
 ## Use
 
@@ -89,11 +91,13 @@ A leaf in the menu bar shows memory pressure at a glance, and can show free spac
 
 ## Command line and agents
 
-The app's executable is also the `glade` command. Link it onto your `PATH`:
+The app's executable is also the `glade` command. **Install** in setup, or in **Settings > Advanced**, links it into `~/.local/bin`. By hand:
 
 ```sh
-ln -s /Applications/Glade.app/Contents/MacOS/Glade /usr/local/bin/glade
+ln -s /Applications/Glade.app/Contents/MacOS/Glade ~/.local/bin/glade
 ```
+
+**Settings > Advanced** also connects Claude Code and Codex to Glade's MCP server with one click, and shows the exact command it runs.
 
 Every command accepts `--json`, and nothing is removed without `--confirm`.
 
