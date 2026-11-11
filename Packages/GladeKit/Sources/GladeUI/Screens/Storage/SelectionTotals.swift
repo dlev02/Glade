@@ -53,12 +53,17 @@ struct SelectionTotals: View {
   }
 
   /// Bytes per category, largest first, with findings inside another listed finding
-  /// counted once.
+  /// counted once. The same rule as the clean's own total, so the two always agree.
   private var byCategory: [(category: StorageCategory, bytes: Int64)] {
     let ids = Set(findings.map(\.id))
+    let paths = findings.flatMap { finding in finding.paths.map { ($0, finding.id) } }
     var totals: [StorageCategory: Int64] = [:]
     for finding in findings {
       if let container = finding.within, ids.contains(container) { continue }
+      let nested = finding.paths.allSatisfy { path in
+        paths.contains { other, owner in owner != finding.id && path.hasPrefix(other + "/") }
+      }
+      if nested { continue }
       totals[finding.category, default: 0] += finding.bytes
     }
     return totals.map { ($0.key, $0.value) }.sorted { $0.bytes > $1.bytes }
