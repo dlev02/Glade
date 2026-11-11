@@ -20,13 +20,7 @@ public struct RootView: View {
   public var body: some View {
     @Bindable var model = model
     NavigationSplitView {
-      List(selection: Binding(get: { model.section }, set: { model.section = $0 ?? .overview })) {
-        ForEach(AppModel.Section.allCases) { section in
-          Label(section.title, systemImage: section.symbol)
-            .tag(section)
-            .accessibilityIdentifier("sidebar.\(section.rawValue)")
-        }
-      }
+      SidebarList()
       .navigationSplitViewColumnWidth(min: 180, ideal: 200, max: 260)
       .safeAreaInset(edge: .bottom) {
         SidebarFooter()
