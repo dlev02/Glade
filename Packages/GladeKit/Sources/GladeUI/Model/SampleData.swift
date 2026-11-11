@@ -44,7 +44,9 @@ public struct SampleData: Sendable {
       scan: sampleScan(volume: latest.disk), receipts: sampleReceipts(), providers: sampleProviders(),
       messages: [
         AppModel.Message(role: .person, text: "Why is my Mac slow?"),
-        AppModel.Message(role: .assistant, text: formattedAnswer(snapshot: latest, apps: apps), provider: "claude"),
+        // Answered with the same chosen model as the sample advice, so every caption
+        // takes one form: "Claude Code · Opus".
+        AppModel.Message(role: .assistant, text: formattedAnswer(snapshot: latest, apps: apps), provider: "claude", model: "opus"),
       ]
     )
   }
