@@ -51,7 +51,7 @@ struct AdvancedPane: View {
           }
         }
         if let automatic = updater.automaticallyChecks {
-          Toggle("Check Automatically", isOn: automatic)
+          Toggle("Check automatically", isOn: automatic)
         }
         if let url = URL(string: Brand.repository) {
           Link("\(Brand.name) on GitHub", destination: url)

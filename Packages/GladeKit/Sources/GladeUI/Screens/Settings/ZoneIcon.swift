@@ -6,14 +6,14 @@ import SwiftUI
 /// off", so none should shout louder than another.
 struct ZoneIcon: View {
   var zone: ProtectedZone
-  var size: CGFloat = 24
+  var size: CGFloat = 28
 
   var body: some View {
     Image(systemName: Self.symbol(for: zone.id))
       .font(.system(size: size * 0.5, weight: .medium))
       .foregroundStyle(.secondary)
       .frame(width: size, height: size)
-      .background(.fill.tertiary, in: .rect(cornerRadius: size * 0.28))
+      .background(.fill.tertiary, in: .rect(cornerRadius: 8))
       .accessibilityHidden(true)
   }
 

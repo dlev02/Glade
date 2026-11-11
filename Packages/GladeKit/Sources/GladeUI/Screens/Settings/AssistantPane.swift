@@ -67,7 +67,7 @@ struct AssistantPane: View {
       if !unavailable.isEmpty {
         Section("Unavailable") {
           ForEach(unavailable) { provider in
-            ProviderRow(provider: provider, model: modelBinding(\.models, provider.id), showsHandle: false)
+            ProviderRow(provider: provider, model: modelBinding(\.models, provider.id), showsHandle: false, reservesHandle: ready.count > 1)
           }
         }
       }
@@ -78,7 +78,7 @@ struct AssistantPane: View {
             Text(effort.title).tag(effort)
           }
         }
-        menuPicker("For a closer look, call in", selection: $model.config.assistant.deepProvider, value: deepTitle) {
+        menuPicker("Second opinion from", selection: $model.config.assistant.deepProvider, value: deepTitle) {
           Text("Same").tag(String?.none)
           if !ready.isEmpty { Divider() }
           ForEach(ready) { provider in

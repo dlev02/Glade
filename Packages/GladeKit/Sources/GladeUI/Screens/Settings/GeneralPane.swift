@@ -21,14 +21,14 @@ struct GeneralPane: View {
       }
 
       Section {
-        Toggle("Open at Login", isOn: Binding(get: { opensAtLogin }, set: setOpensAtLogin))
+        Toggle("Open at login", isOn: Binding(get: { opensAtLogin }, set: setOpensAtLogin))
           .disabled(!LoginItem.isAvailable && overrides.opensAtLogin == nil)
-        Toggle("Show Free Space in Menu Bar", isOn: $model.menuBarShowsFreeSpace)
+        Toggle("Show free space in the menu bar", isOn: $model.menuBarShowsFreeSpace)
       } footer: {
         if let loginProblem {
           Text(loginProblem).foregroundStyle(.secondary)
         } else if !LoginItem.isAvailable, overrides.opensAtLogin == nil {
-          Text("Open at Login is available in the installed app.").foregroundStyle(.secondary)
+          Text("Open at login is available in the installed app.").foregroundStyle(.secondary)
         }
       }
 
@@ -37,7 +37,7 @@ struct GeneralPane: View {
           LevelMenu(offersReset: false)
             .tint(.secondary)
         }
-        Toggle("Move everything to Trash", isOn: $model.config.trashEverything)
+        Toggle("Move everything to the Trash", isOn: $model.config.trashEverything)
       }
     }
     .onAppear {

@@ -8,13 +8,17 @@ struct ProviderRow: View {
   @Binding var model: String
   /// Shows the drag handle of a row that can be reordered.
   var showsHandle: Bool
+  /// Leaves the handle's room empty, so rows without one share the text edge of rows
+  /// that have one.
+  var reservesHandle = false
 
   var body: some View {
     HStack(spacing: Metrics.m) {
-      if showsHandle {
+      if showsHandle || reservesHandle {
         Image(systemName: "line.3.horizontal")
           .foregroundStyle(.tertiary)
-          .help("Drag to change the order")
+          .opacity(showsHandle ? 1 : 0)
+          .help(showsHandle ? "Drag to change the order" : "")
           .accessibilityHidden(true)
       }
       VStack(alignment: .leading, spacing: 2) {

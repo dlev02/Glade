@@ -35,7 +35,7 @@ struct ProtectionPane: View {
           VStack(alignment: .leading, spacing: 0) {
             ForEach(Array(locked.enumerated()), id: \.element.id) { index, zone in
               if index > 0 {
-                Divider().padding(.leading, 24 + Metrics.m)
+                Divider().padding(.leading, 28 + Metrics.m)
               }
               HStack(alignment: .top, spacing: Metrics.m) {
                 ZoneIcon(zone: zone)
