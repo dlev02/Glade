@@ -60,15 +60,21 @@ public struct ChoicePopover<Value: Hashable>: View {
   var sections: [ChoiceSection<Value>]
   var footer: ChoiceFooter?
   var arrowEdge: Edge
+  /// A named coordinate space whose top edge the popover must clear, such as the
+  /// composer's: it then opens above that edge instead of above the control, so it
+  /// never covers what sits between them.
+  var clears: String?
   @State private var isPresented = false
   @State private var hovering = false
+  /// The control's frame in `clears`, once measured.
+  @State private var frameInClearedSpace: CGRect?
 
   /// - Parameters:
   ///   - label: What's being chosen, for VoiceOver ("Clean level").
   ///   - value: The current choice as the control shows it.
   public init(
     _ label: String, value: String, selection: Binding<Value>, sections: [ChoiceSection<Value>],
-    footer: ChoiceFooter? = nil, arrowEdge: Edge = .bottom
+    footer: ChoiceFooter? = nil, arrowEdge: Edge = .bottom, clears: String? = nil
   ) {
     self.label = label
     self.value = value
@@ -76,6 +82,16 @@ public struct ChoicePopover<Value: Hashable>: View {
     self.sections = sections
     self.footer = footer
     self.arrowEdge = arrowEdge
+    self.clears = clears
+  }
+
+  /// Where the popover's arrow points: the control itself, or, when it must clear a
+  /// container's top edge, a strip of the control's width just above that edge.
+  private var anchor: PopoverAttachmentAnchor {
+    guard clears != nil, let frame = frameInClearedSpace else { return .rect(.bounds) }
+    let gap: CGFloat = 4
+    let top = -(frame.minY + gap)
+    return .rect(.rect(CGRect(x: 0, y: top, width: frame.width, height: -top + frame.height)))
   }
 
   public var body: some View {
@@ -118,7 +134,12 @@ public struct ChoicePopover<Value: Hashable>: View {
         isPresented = true
       }
     }
-    .popover(isPresented: $isPresented, arrowEdge: arrowEdge) {
+    .onGeometryChange(for: CGRect?.self) { proxy in
+      clears.map { proxy.frame(in: .named($0)) }
+    } action: { frame in
+      frameInClearedSpace = frame
+    }
+    .popover(isPresented: $isPresented, attachmentAnchor: anchor, arrowEdge: arrowEdge) {
       ChoiceList(sections: sections, selection: selection, footer: footer) { chosen in
         selection = chosen
         isPresented = false

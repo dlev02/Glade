@@ -16,6 +16,9 @@ struct Composer: View {
   @State private var typedModel = ""
   @FocusState private var isFocused: Bool
 
+  /// The composer's own coordinate space; its top edge is the glass's.
+  private static let space = "composer"
+
   var body: some View {
     VStack(alignment: .leading, spacing: Metrics.s) {
       TextField("Ask about this Mac", text: $text, axis: .vertical)
@@ -56,6 +59,8 @@ struct Composer: View {
       .font(.callout)
     }
     .padding(Metrics.m)
+    // The choices' popovers open above this edge, clear of the question.
+    .coordinateSpace(.named(Self.space))
     .glassEffect(.regular, in: .rect(cornerRadius: 20))
     .padding(.horizontal, Metrics.xl)
     .padding(.bottom, Metrics.l)
@@ -89,7 +94,8 @@ struct Composer: View {
           NotificationCenter.default.post(name: .gladeShowAssistantSettings, object: nil)
         }
       },
-      arrowEdge: .top
+      arrowEdge: .top,
+      clears: Self.space
     )
     .accessibilityIdentifier("composer.provider")
     .help("Which AI answers")
@@ -113,7 +119,8 @@ struct Composer: View {
         typedModel = current
         typesModel = true
       },
-      arrowEdge: .top
+      arrowEdge: .top,
+      clears: Self.space
     )
     .accessibilityIdentifier("composer.model")
     .help("Which model answers")
@@ -130,7 +137,8 @@ struct Composer: View {
       value: "\(model.config.assistant.effort.title) effort",
       selection: $model.config.assistant.effort,
       sections: [ChoiceSection(choices: Effort.allCases.map { Choice($0, $0.title, subtitle: $0.consequence) })],
-      arrowEdge: .top
+      arrowEdge: .top,
+      clears: Self.space
     )
     .accessibilityIdentifier("composer.effort")
     .help("How hard it thinks")
