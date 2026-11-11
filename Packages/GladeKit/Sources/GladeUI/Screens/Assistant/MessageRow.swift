@@ -54,6 +54,12 @@ struct MessageRow: View {
           Button("Copy", systemImage: "document.on.document", action: copy)
           Button("Show What Was Sent", systemImage: Symbols.whatWasSent, action: showWhatWasSent)
         }
+        // The hover buttons are invisible until the pointer is near; VoiceOver gets
+        // the same two as actions on the answer itself.
+        .accessibilityActions {
+          Button("Copy", action: copy)
+          Button("Show What Was Sent", action: showWhatWasSent)
+        }
       if let advice = message.advice {
         AdviceCard(advice: advice, isLive: isLiveAdvice)
           .padding(.top, Metrics.xs)
@@ -65,7 +71,8 @@ struct MessageRow: View {
     }
   }
 
-  /// Shown on hover or when one of them has keyboard focus; always there for VoiceOver.
+  /// Shown on hover or when one of them has keyboard focus. VoiceOver reaches them as
+  /// actions on the answer.
   private var actions: some View {
     HStack(spacing: Metrics.m) {
       Button("Copy", systemImage: "document.on.document", action: copy)
