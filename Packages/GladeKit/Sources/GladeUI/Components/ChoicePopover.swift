@@ -179,7 +179,8 @@ private struct ChoiceList<Value: Hashable>: View {
     .focusEffectDisabled()
     .focused($isFocused)
     .onAppear {
-      highlighted = currentIndex
+      // The tick marks the current choice; the fill is only the pointer's or the
+      // keyboard's place, so nothing is filled until one of them moves.
       isFocused = true
     }
     .onKeyPress(.downArrow) { move(1) }
@@ -205,7 +206,7 @@ private struct ChoiceList<Value: Hashable>: View {
 
   private func move(_ step: Int) -> KeyPress.Result {
     guard rowCount > 0 else { return .ignored }
-    let start = highlighted ?? (step > 0 ? -1 : rowCount)
+    let start = highlighted ?? currentIndex.map { $0 - step } ?? (step > 0 ? -1 : rowCount)
     highlighted = min(max(start + step, 0), rowCount - 1)
     return .handled
   }

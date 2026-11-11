@@ -32,7 +32,7 @@ struct ModelField: View {
           Text("Default").tag("")
           if !choices.isEmpty { Divider() }
           ForEach(choices, id: \.self) { name in
-            Text(name).tag(name)
+            Text(ModelName.display(name)).tag(name)
           }
         }
         .pickerStyle(.inline)
@@ -40,14 +40,14 @@ struct ModelField: View {
         Divider()
         Button("Other…") { isTyping = true }
       } label: {
-        Text(value.isEmpty ? "Default" : value)
+        Text(value.isEmpty ? "Default" : ModelName.display(value))
       }
       .menuStyle(.borderlessButton)
       .menuIndicator(.visible)
       .fixedSize()
       .tint(.secondary)
       .accessibilityLabel("Model for \(title)")
-      .accessibilityValue(value.isEmpty ? "Default" : value)
+      .accessibilityValue(value.isEmpty ? "Default" : ModelName.display(value))
       .help("Choose a model")
     }
   }

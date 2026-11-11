@@ -63,6 +63,8 @@ public final class AppModel {
     public var date = Date()
     /// Which AI answered.
     public var provider: String?
+    /// The model it used, when one was chosen.
+    public var model: String?
     /// Set when the answer changed the storage plan.
     public var advice: StorageAdvice?
   }
@@ -191,6 +193,10 @@ public final class AppModel {
         sample.apps = Self.demoApps(sample.apps)
         sample.suggestions = SampleData.sampleSuggestions(apps: sample.apps)
         loadSample(sample)
+        // `-demoAdvice short|long` starts with the assistant's advice showing.
+        if let length = defaults.string(forKey: "demoAdvice"), let scan {
+          applySampleAdvice(SampleData.sampleAdvice(scan: scan, short: length == "short"))
+        }
       }
       return
     }
@@ -338,7 +344,7 @@ public final class AppModel {
         plan = result.plan
         advice = result.advice
         overrides = [:]
-        messages.append(Message(role: .assistant, text: result.advice.summary, provider: result.advice.provider, advice: result.advice))
+        messages.append(Message(role: .assistant, text: result.advice.summary, provider: result.advice.provider, model: result.advice.model, advice: result.advice))
         await Notifier.post(title: "\(Brand.name) has a plan", body: result.advice.summary, kind: "assistant")
       } else {
         await refreshApps()
@@ -349,7 +355,7 @@ public final class AppModel {
           "\(alert.title). \(alert.body) What is the cause, and what would you quit or shut down?",
           snapshot: description, config: config, proactive: true, providers: AgentProviders.all
         )
-        messages.append(Message(role: .assistant, text: reply.answer, provider: reply.provider))
+        messages.append(Message(role: .assistant, text: reply.answer, provider: reply.provider, model: reply.model))
         await Notifier.post(title: alert.title, body: String(reply.answer.prefix(220)), kind: "assistant")
       }
     } catch {
@@ -582,6 +588,13 @@ public final class AppModel {
   public func adviseStorage(goal: String? = nil) async {
     guard let scan else { return }
     assistantState = .thinking("Looking at what's safe to clear…")
+    // Sample data is never sent to a real AI; a made-up answer arrives instead.
+    if isDemo {
+      try? await Task.sleep(for: .seconds(2.5))
+      applySampleAdvice(SampleData.sampleAdvice(scan: scan))
+      assistantState = .idle
+      return
+    }
     let base = Planner.plan(scan: scan, level: config.level, config: config)
     if apps.isEmpty { await refreshApps() }
     do {
@@ -592,7 +605,7 @@ public final class AppModel {
       plan = result.plan
       advice = result.advice
       overrides = [:]
-      messages.append(Message(role: .assistant, text: result.advice.summary, provider: result.advice.provider, advice: result.advice))
+      messages.append(Message(role: .assistant, text: result.advice.summary, provider: result.advice.provider, model: result.advice.model, advice: result.advice))
       assistantState = .idle
     } catch {
       messages.append(Message(role: .problem, text: error.localizedDescription))
@@ -613,18 +626,36 @@ public final class AppModel {
       return
     }
     assistantState = .thinking("Thinking…")
+    if isDemo {
+      try? await Task.sleep(for: .seconds(2.5))
+      messages.append(Message(role: .assistant, text: SampleData.formattedAnswer, provider: "claude"))
+      assistantState = .idle
+      return
+    }
     await refreshApps()
     let description = MacDescription.build(
       snapshot: snapshot, apps: apps, context: context, suggestions: suggestions, scan: scan, plan: plan
     )
     do {
       let reply = try await Assistant.ask(text, snapshot: description, config: config, providers: AgentProviders.all)
-      messages.append(Message(role: .assistant, text: reply.answer, provider: reply.provider))
+      messages.append(Message(role: .assistant, text: reply.answer, provider: reply.provider, model: reply.model))
       assistantState = .idle
     } catch {
       messages.append(Message(role: .problem, text: error.localizedDescription))
       assistantState = .failed(error.localizedDescription)
     }
+  }
+
+  /// Demo mode only: applies made-up advice the way a real run's would be.
+  private func applySampleAdvice(_ sample: StorageAdvice?) {
+    guard let sample, let scan, var updated = plan else { return }
+    for note in sample.select { if let index = updated.items.firstIndex(where: { $0.id == note.id }) { updated.items[index].selected = true } }
+    for note in sample.deselect { if let index = updated.items.firstIndex(where: { $0.id == note.id }) { updated.items[index].selected = false } }
+    Planner.total(&updated, scan: scan, config: config)
+    plan = updated
+    advice = sample
+    overrides = [:]
+    messages.append(Message(role: .assistant, text: sample.summary, provider: sample.provider, model: sample.model, advice: sample))
   }
 
   public func clearConversation() {

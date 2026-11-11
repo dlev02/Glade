@@ -49,6 +49,8 @@ public struct SampleData: Sendable {
           text: "I'd clear about 46 GB: build data for three projects you haven't opened in over a month, an iOS 18 simulator system nothing uses, old package downloads and agent sessions from the summer. I left Atlas and Harbor alone because you built both this week.",
           provider: "Claude"
         ),
+        AppModel.Message(role: .person, text: "Why is my Mac slow?"),
+        AppModel.Message(role: .assistant, text: formattedAnswer, provider: "claude"),
       ]
     )
   }
@@ -79,6 +81,53 @@ public struct SampleData: Sendable {
     guard let data = try? JSONSerialization.data(withJSONObject: entries) else { return [] }
     return (try? JSONDecoder().decode([PerformanceSuggestion].self, from: data)) ?? []
   }
+
+  /// Advice as a storage run returns it, after Glade's checks: additions, things left
+  /// alone, personal items to look at and suggestions refused.
+  /// - Parameter short: A one-line answer instead of a four-line one.
+  public static func sampleAdvice(scan: ScanResult, short: Bool = false) -> StorageAdvice? {
+    func id(_ prefix: String) -> String { scan.findings.first { $0.title.hasPrefix(prefix) }?.id ?? prefix }
+    func note(_ prefix: String, _ why: String) -> [String: String] { ["id": id(prefix), "why": why] }
+    let summary = short
+      ? "I’d add the Pocket Notes build data and leave Atlas alone, since you built it this morning."
+      : "I’d clear about **46 GB**: build data for projects you haven’t opened in over a month, an iOS 18 simulator system nothing uses, old package downloads and agent sessions from the summer. I left Atlas and Harbor alone because you built both this week, and kept the npm cache because you installed packages yesterday. Your CleanShot history, a second copy of a holiday video and an old film are worth a look yourself if you want more space."
+    let object: [String: Any] = [
+      "summary": summary,
+      "select": short ? [note("Build data – Pocket Notes", "Not opened in three months.")] : [
+        note("Build data – Pocket Notes", "Not opened in three months."),
+        note("Codex sessions", "Untouched since August."),
+        note("Homebrew downloads", "Installers already unpacked."),
+      ],
+      "deselect": short ? [] : [note("build – Atlas", "Built this morning."), note("Ollama models", "Used five days ago.")],
+      "review": short ? [] : [note("CleanShot", "Mostly old recordings."), note("Sintel", "Not opened in ten months."), note("holiday-2025", "A second copy.")],
+      "rejected": short ? [] : [note("Worktree – Harbor", "It has 3 uncommitted files, so only you can remove it.")],
+      "provider": "claude",
+      "model": "opus",
+      "escalated": false,
+      "runID": "sample",
+    ]
+    guard let data = try? JSONSerialization.data(withJSONObject: object) else { return nil }
+    return try? JSONDecoder().decode(StorageAdvice.self, from: data)
+  }
+
+  /// A written answer with the formatting AIs use, for showing how answers render.
+  public static let formattedAnswer = """
+    Your Mac is busy mostly because of **two things**:
+
+    1. **Docker** is holding **6.5 GB** of memory with no containers running.
+    2. An **iPad Pro simulator** has been idle for 31 hours and uses *10.3 GB*.
+
+    ### What I'd do
+    - Quit Docker until you need it; it starts again in a few seconds.
+    - Shut down the simulator with `xcrun simctl shutdown all`, or from Performance.
+
+    Memory pressure is **normal**, so nothing is urgent:
+
+    ```
+    Memory used   30.1 GB of 38.7 GB
+    Swap          13.4 GB
+    ```
+    """
 
   static func sampleProviders() -> [ProviderStatus] {
     [

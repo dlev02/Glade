@@ -2,8 +2,9 @@ import GladeKit
 import SwiftUI
 
 /// What the assistant said about the selection, how it changed it, and, plainly,
-/// any suggestions Glade refused because they broke a safety rule. Drawn like the
-/// Assistant's advice card, so the two read as the same thing.
+/// any suggestions Glade refused because they broke a safety rule. It is the storage
+/// list's first row and follows the rows' grid: the sparkle in the checkbox column,
+/// the words and chips on the titles' edge, who answered on the sizes' trailing edge.
 struct AdviceBanner: View {
   @Environment(AppModel.self) private var model
   @Environment(\.accentMark) private var accentMark
@@ -13,16 +14,16 @@ struct AdviceBanner: View {
   @State private var showsRejected = false
 
   var body: some View {
-    HStack(alignment: .top, spacing: Metrics.m) {
+    HStack(alignment: .firstTextBaseline, spacing: Metrics.s) {
       Image(systemName: Symbols.assistant)
         .foregroundStyle(accentMark)
+        .frame(width: FindingRow.checkWidth)
+        .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
         .accessibilityHidden(true)
       VStack(alignment: .leading, spacing: Metrics.s) {
-        Text(advice.summary)
-          .foregroundStyle(.primary)
-          .lineLimit(4)
+        MarkdownText(advice.summary)
           .fixedSize(horizontal: false, vertical: true)
-        HStack(spacing: Metrics.m) {
+        HStack(alignment: .firstTextBaseline, spacing: Metrics.m) {
           AdviceChips(advice: advice)
           Spacer(minLength: Metrics.m)
           // Who answered, as quiet metadata at the end of the row.
@@ -30,7 +31,7 @@ struct AdviceBanner: View {
             Label("Stronger model", systemImage: "brain")
               .help("A stronger model took a closer look")
           }
-          Text(model.responderName(advice.provider))
+          Text(model.responderName(advice.provider, model: advice.model))
         }
         .font(.caption)
         .foregroundStyle(.secondary)
@@ -54,10 +55,10 @@ struct AdviceBanner: View {
           }
         }
       }
-      Spacer(minLength: 0)
     }
-    .padding(.horizontal, Metrics.l)
-    .padding(.vertical, Metrics.m)
-    .background(Palette.card, in: .rect(cornerRadius: Metrics.cardRadius))
+    // The same breathing room above and below: the list already adds its own top
+    // margin, so the row gives back that much at the top.
+    .padding(.top, -Metrics.s)
+    .padding(.bottom, Metrics.m)
   }
 }

@@ -129,19 +129,13 @@ struct StorageScreen: View {
   private var header: some View {
     let advice = adviceOverride ?? model.advice
     let failure: String? = if case .failed(let message) = model.assistantState { message } else { nil }
-    if advice != nil || failure != nil {
-      VStack(alignment: .leading, spacing: Metrics.m) {
-        if let advice {
-          AdviceBanner(advice: advice) { state.list.finding($0)?.title }
-        } else if let failure {
-          Label(failure, systemImage: "exclamationmark.triangle")
-            .font(.callout)
-            .foregroundStyle(.secondary)
-            .lineLimit(2)
-        }
-      }
-      .padding(.horizontal, Metrics.l)
-      .padding(.vertical, Metrics.m)
+    if advice == nil, let failure {
+      Label(failure, systemImage: "exclamationmark.triangle")
+        .font(.callout)
+        .foregroundStyle(.secondary)
+        .lineLimit(2)
+        .padding(.horizontal, Metrics.l)
+        .padding(.vertical, Metrics.m)
       Divider()
     }
   }
@@ -152,6 +146,12 @@ struct StorageScreen: View {
       emptyScope
     } else {
       List(selection: $state.highlighted) {
+        // The advice is the list's first row, so it sits on the same grid as the
+        // rows: its sparkle in the checkbox column, its text on the titles' edge.
+        if let advice = adviceOverride ?? model.advice {
+          AdviceBanner(advice: advice) { state.list.finding($0)?.title }
+            .selectionDisabled()
+        }
         ForEach(state.list.groups) { group in
           Section {
             if !state.collapsed.contains(group.category) {
@@ -225,7 +225,7 @@ struct StorageScreen: View {
     ToolbarItem(placement: .primaryAction) { AskButton() }
     ToolbarSpacer(.fixed, placement: .primaryAction)
     ToolbarItem(placement: .primaryAction) {
-      ToolbarSearchField(text: $state.query, prompt: "Titles, projects, paths", focusRequest: searchFocus)
+      ToolbarSearchField(text: $state.query, prompt: "Search", focusRequest: searchFocus)
     }
     // After search, so it is always the last item at the trailing edge.
     ToolbarSpacer(.fixed, placement: .primaryAction)

@@ -26,7 +26,7 @@ public enum StoragePrompt {
     - `review` is for at most 8 personal or manual items that look most worth a person's time: old installers, large old files, duplicates, games not played in months.
 
     Writing:
-    - `summary`: two or three plain sentences for a non-technical person. Say roughly how much you'd clear, the main things, and what you left alone and why. No jargon ("regenerable", "artifacts").
+    - `summary`: two or three plain sentences for a non-technical person, as Markdown (bold for the key figure is fine; no headings or lists). Say roughly how much you'd clear, the main things, and what you left alone and why. No jargon ("regenerable", "artifacts").
     - Each `why`: under 20 words, specific to that item.
     - Set `escalate.needed` to true only when the choice is genuinely unclear or risky and a stronger model's judgement would change the answer.
 
@@ -37,7 +37,7 @@ public enum StoragePrompt {
   public static let questionSystem = """
     You are the assistant inside Glade, a Mac app that shows what is using a Mac's storage, memory and processors and helps clear it safely. You are given a snapshot Glade took of this Mac and a question from its owner.
 
-    Answer from the snapshot only. If it doesn't contain what you'd need, say what's missing instead of guessing. Be specific: name the apps and items and give the numbers. Keep it short, in plain language for a non-technical person, with no headings. You can't take actions; if something should be done, say which Glade action does it (a Careful, Balanced or Aggressive clean, or quitting a named app).
+    Answer from the snapshot only. If it doesn't contain what you'd need, say what's missing instead of guessing. Be specific: name the apps and items and give the numbers. Keep it short, in plain language for a non-technical person. Markdown is shown formatted: a few bullets or a numbered list and **bold** for the key figures help; use at most a small `###` heading, and only when the answer has more than one part. You can't take actions; if something should be done, say which Glade action does it (a Careful, Balanced or Aggressive clean, or quitting a named app).
     """
 
   public static let schema = """

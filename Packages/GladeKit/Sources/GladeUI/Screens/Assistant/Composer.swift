@@ -12,6 +12,8 @@ struct Composer: View {
   var ready: [ProviderStatus]
   var isBusy: Bool
   @State private var text = ""
+  @State private var typesModel = false
+  @State private var typedModel = ""
   @FocusState private var isFocused: Bool
 
   var body: some View {
@@ -35,6 +37,9 @@ struct Composer: View {
 
       HStack(spacing: Metrics.m) {
         providerMenu
+        if active.takesModel, !active.models.isEmpty {
+          modelMenu
+        }
         if active.supportsEffort {
           effortMenu
         }
@@ -55,6 +60,14 @@ struct Composer: View {
     .frame(maxWidth: ConversationView.columnWidth + Metrics.xl * 2)
     .frame(maxWidth: .infinity)
     .onAppear { isFocused = true }
+    .alert("Model for \(active.name)", isPresented: $typesModel) {
+      TextField("Model name", text: $typedModel)
+      Button("Use") { setModel(typedModel.trimmingCharacters(in: .whitespacesAndNewlines)) }
+        .keyboardShortcut(.defaultAction)
+      Button("Cancel", role: .cancel) {}
+    } message: {
+      Text("The name \(active.name) knows it by.")
+    }
   }
 
   private var providerMenu: some View {
@@ -62,20 +75,50 @@ struct Composer: View {
       "Answers",
       value: active.name,
       selection: Binding(get: { active.id }, set: { model.preferProvider($0) }),
-      sections: [ChoiceSection(choices: ready.map {
-        Choice($0.id, $0.name, subtitle: $0.isLocal ? "On this Mac" : "Sees names, sizes and dates")
-      })],
-      footer: ChoiceFooter("Assistant Settings…", symbol: Symbols.settings) {
+      sections: [
+        ChoiceSection("On this Mac", choices: ready.filter(\.isLocal).map { Choice($0.id, $0.name, subtitle: "Nothing leaves this Mac") }),
+        ChoiceSection("Cloud", choices: ready.filter { !$0.isLocal }.map { Choice($0.id, $0.name, subtitle: "Sees names, sizes and dates") }),
+      ].filter { !$0.choices.isEmpty },
+      footer: ChoiceFooter("Assistant Settings…") {
         openSettings()
         Task {
           // Give the Settings window a moment to start listening.
           try? await Task.sleep(for: .milliseconds(300))
           NotificationCenter.default.post(name: .gladeShowAssistantSettings, object: nil)
         }
-      }
+      },
+      arrowEdge: .bottom
     )
     .accessibilityIdentifier("composer.provider")
     .help("Which AI answers")
+  }
+
+  /// The model the chosen AI uses, from its own suggestions, kept in the same setting
+  /// as Settings › Assistant so the two always agree.
+  private var modelMenu: some View {
+    let current = model.config.assistant.models[active.id] ?? ""
+    let suggestions = active.models
+    let names = current.isEmpty || suggestions.contains(current) ? suggestions : suggestions + [current]
+    return ChoicePopover(
+      "Model",
+      value: current.isEmpty ? "Default model" : ModelName.display(current),
+      selection: Binding(get: { current }, set: { setModel($0) }),
+      sections: [
+        ChoiceSection(choices: [Choice("", "Default", subtitle: "\(active.name)’s own choice")]),
+        ChoiceSection(choices: names.map { Choice($0, ModelName.display($0)) }),
+      ],
+      footer: ChoiceFooter("Other…") {
+        typedModel = current
+        typesModel = true
+      },
+      arrowEdge: .bottom
+    )
+    .accessibilityIdentifier("composer.model")
+    .help("Which model answers")
+  }
+
+  private func setModel(_ name: String) {
+    model.config.assistant.models[active.id] = name.isEmpty ? nil : name
   }
 
   private var effortMenu: some View {
@@ -84,7 +127,8 @@ struct Composer: View {
       "Effort",
       value: "\(model.config.assistant.effort.title) effort",
       selection: $model.config.assistant.effort,
-      sections: [ChoiceSection(choices: Effort.allCases.map { Choice($0, $0.title, subtitle: $0.consequence) })]
+      sections: [ChoiceSection(choices: Effort.allCases.map { Choice($0, $0.title, subtitle: $0.consequence) })],
+      arrowEdge: .bottom
     )
     .accessibilityIdentifier("composer.effort")
     .help("How hard it thinks")

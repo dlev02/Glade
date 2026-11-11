@@ -8,9 +8,13 @@ public struct LevelMenu: View {
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   /// Offers "Reset Selection" when the person has changed choices by hand.
   var offersReset: Bool
+  /// Where the popover's arrow sits: `.top` opens it below the trigger, `.bottom`
+  /// above (for the clean bar at the foot of the window).
+  var arrowEdge: Edge
 
-  public init(offersReset: Bool = true) {
+  public init(offersReset: Bool = true, arrowEdge: Edge = .top) {
     self.offersReset = offersReset
+    self.arrowEdge = arrowEdge
   }
 
   public var body: some View {
@@ -25,7 +29,8 @@ public struct LevelMenu: View {
         ? ChoiceFooter("Reset Selection", symbol: "arrow.counterclockwise") {
           withAnimation(reduceMotion ? nil : .snappy) { model.resetSelection() }
         }
-        : nil
+        : nil,
+      arrowEdge: arrowEdge
     )
     .disabled(model.isCleaning)
     .accessibilityIdentifier("levelMenu")

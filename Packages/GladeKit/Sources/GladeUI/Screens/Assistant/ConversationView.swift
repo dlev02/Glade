@@ -17,7 +17,7 @@ struct ConversationView: View {
   @State private var isAtBottom = true
 
   /// The widest the reading column gets, shared with the composer.
-  static let columnWidth: CGFloat = 700
+  static let columnWidth: CGFloat = 660
   private static let thinkingID = "thinking"
 
   var body: some View {
@@ -28,7 +28,6 @@ struct ConversationView: View {
             MessageRow(
               message: message,
               isLiveAdvice: message.advice.map(isLive) ?? false,
-              showsProvider: model.answeredByOther(message.provider, chosen: chosen),
               showWhatWasSent: { showWhatWasSent(message) }
             )
             .id(message.id.uuidString)

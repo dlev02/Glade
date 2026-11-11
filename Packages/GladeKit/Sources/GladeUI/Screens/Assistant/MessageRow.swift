@@ -4,14 +4,12 @@ import SwiftUI
 
 /// One turn: the person's words in a quiet bubble on the right, the assistant's answer
 /// as plain reading text on the left, or a notice when something went wrong.
-/// Everything a model wrote is shown verbatim: never as Markdown, never as a link.
+/// Answers are rendered from their Markdown; Copy copies the Markdown itself.
 struct MessageRow: View {
   @Environment(AppModel.self) private var model
   var message: AppModel.Message
   /// This message's advice still describes the selection, so its card can act on it.
   var isLiveAdvice: Bool
-  /// Another provider than the chosen one answered, so say who.
-  var showsProvider: Bool
   var showWhatWasSent: () -> Void
   @State private var isHovered = false
   @FocusState private var focusedAction: Action?
@@ -39,16 +37,13 @@ struct MessageRow: View {
 
   private var assistant: some View {
     VStack(alignment: .leading, spacing: Metrics.s) {
-      if showsProvider {
-        Text(model.responderName(message.provider))
-          .font(.caption)
-          .foregroundStyle(.secondary)
-          .accessibilityLabel("\(model.responderName(message.provider)) answered")
-      }
-      Text(verbatim: message.text)
+      // Every answer says which AI wrote it, quietly.
+      Text(model.responderName(message.provider, model: message.model))
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .accessibilityLabel("\(model.responderName(message.provider, model: message.model)) answered")
+      MarkdownText(message.text, spacing: Metrics.m)
         .lineSpacing(3)
-        .textSelection(.enabled)
-        .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contextMenu {
           Button("Copy", systemImage: "document.on.document", action: copy)

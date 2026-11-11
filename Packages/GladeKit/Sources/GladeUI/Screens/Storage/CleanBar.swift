@@ -20,7 +20,7 @@ struct CleanBar: View {
           .monospacedDigit()
           .contentTransition(.numericText())
           .animation(reduceMotion ? nil : .snappy(duration: 0.18), value: free + trash)
-        LevelMenu()
+        LevelMenu(arrowEdge: .bottom)
           .font(.callout)
           .foregroundStyle(.secondary)
       }

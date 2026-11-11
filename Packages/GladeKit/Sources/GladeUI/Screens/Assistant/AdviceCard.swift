@@ -13,6 +13,7 @@ struct AdviceCard: View {
   var isLive: Bool
   @State private var showsRefused = false
   @State private var showsEarlier = false
+  @State private var showsAllNotes = false
 
   private static let noteLimit = 3
 
@@ -25,6 +26,9 @@ struct AdviceCard: View {
             details
           }
         }
+        // The card's fill reaches outside the answer's text edge, so its words
+        // start exactly where the answer's do.
+        .padding(.horizontal, -Metrics.l)
       } else {
         // No card: an earlier selection is a note in the conversation, not a thing to act on.
         AdviceDisclosure(isExpanded: $showsEarlier) {
@@ -36,7 +40,7 @@ struct AdviceCard: View {
         }
       }
     }
-    .frame(maxWidth: 560, alignment: .leading)
+    .frame(maxWidth: 560 + (isLive ? Metrics.l * 2 : 0), alignment: .leading)
   }
 
   private var header: some View {
@@ -52,7 +56,7 @@ struct AdviceCard: View {
       }
       .accessibilityElement(children: .combine)
       Spacer(minLength: Metrics.m)
-      Button("Review Selection", systemImage: Symbols.review) { model.section = .storage }
+      Button("Review Selection") { model.section = .storage }
         .principalAction()
         .accessibilityIdentifier("advice.review")
     }
@@ -65,8 +69,17 @@ struct AdviceCard: View {
       let notes = self.notes
       if !notes.isEmpty {
         VStack(alignment: .leading, spacing: Metrics.s) {
-          ForEach(notes) { note in
+          ForEach(showsAllNotes ? notes : Array(notes.prefix(Self.noteLimit))) { note in
             NoteRow(note: note)
+          }
+          if notes.count > Self.noteLimit {
+            AdviceDisclosure(isExpanded: $showsAllNotes) {
+              Text(showsAllNotes ? "Fewer reasons" : "\(notes.count - Self.noteLimit) more reasons")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            } content: {
+              EmptyView()
+            }
           }
         }
       }
@@ -95,15 +108,21 @@ struct AdviceCard: View {
     }
   }
 
-  /// The first few reasons, additions first.
+  /// Every reason, taking one of each kind in turn (to review, added, left alone) so
+  /// the first few always include each kind there is.
   private var notes: [AdviceNote] {
-    let all = AdviceNote.Kind.allCases.flatMap { kind in
+    let kinds: [AdviceNote.Kind] = [.review, .added, .leftAlone]
+    let lists = kinds.map { kind in
       kind.notes(in: advice).map { note in
         let finding = model.scan?.finding(note.id)
         return AdviceNote(kind: kind, note: note, title: finding?.title, bytes: finding?.bytes)
       }
     }
-    return Array(all.prefix(Self.noteLimit))
+    var ordered: [AdviceNote] = []
+    for index in 0..<(lists.map(\.count).max() ?? 0) {
+      for list in lists where index < list.count { ordered.append(list[index]) }
+    }
+    return ordered
   }
 
   private func refused(_ note: StorageAdvice.Note) -> some View {
@@ -145,7 +164,6 @@ private struct NoteRow: View {
           Text(verbatim: note.note.why)
             .font(.callout)
             .foregroundStyle(.secondary)
-            .lineLimit(2)
             .fixedSize(horizontal: false, vertical: true)
         }
       }

@@ -169,7 +169,7 @@ public enum Assistant {
     config: GladeConfig = ConfigStore.load(),
     proactive: Bool = false,
     providers: [any AgentProvider]
-  ) async throws -> (answer: String, provider: String, runID: String) {
+  ) async throws -> (answer: String, provider: String, model: String?, runID: String) {
     let provider = try await pick(config: config, providers: providers, proactive: proactive)
     let budget = provider.isLocal ? 9_000 : 60_000
     let prompt = "QUESTION\n\(question)\n\nWHAT GLADE SEES\n\(snapshot.prefix(budget))"
@@ -177,7 +177,7 @@ public enum Assistant {
       provider: provider, purpose: "question", system: StoragePrompt.questionSystem, prompt: prompt,
       model: config.assistant.models[provider.id], config: config, proactive: proactive, schema: nil
     )
-    return (reply.text.trimmingCharacters(in: .whitespacesAndNewlines), reply.provider, runID)
+    return (reply.text.trimmingCharacters(in: .whitespacesAndNewlines), reply.provider, reply.model ?? config.assistant.models[provider.id], runID)
   }
 
   // MARK: Running

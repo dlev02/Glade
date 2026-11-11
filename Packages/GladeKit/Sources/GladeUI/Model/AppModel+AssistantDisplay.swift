@@ -15,8 +15,12 @@ extension AppModel {
   }
 
   /// The name shown for whoever answered: the same words as the composer's menu.
-  func responderName(_ reference: String?) -> String {
-    responder(reference)?.name ?? reference ?? "Assistant"
+  /// With a model, it follows the name: "Claude Code · Opus". The model only shows
+  /// when one was chosen rather than the provider's default.
+  func responderName(_ reference: String?, model: String? = nil) -> String {
+    let name = responder(reference)?.name ?? reference ?? "Assistant"
+    guard let model, !model.isEmpty else { return name }
+    return "\(name) · \(ModelName.display(model))"
   }
 
   /// Whether an answer came from someone other than the provider chosen now, so its
