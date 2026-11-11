@@ -10,7 +10,14 @@ extension AppModel {
       if case .trashed = entry.outcome { return entry.title }
       return nil
     }
-    let json = try? JSONSerialization.data(withJSONObject: ["restored": titles, "missing": [], "blocked": []])
+    // `-demoPutBack partial|none` pretends some or all of them were gone, for screenshots.
+    let lost = switch DemoState.value("demoPutBack") {
+    case "partial": min(2, titles.count)
+    case "none": titles.count
+    default: 0
+    }
+    let restored = Array(titles.dropLast(lost)), missing = Array(titles.suffix(lost))
+    let json = try? JSONSerialization.data(withJSONObject: ["restored": restored, "missing": missing, "blocked": []])
     return json.flatMap { try? JSONDecoder().decode(Cleaner.RestoreResult.self, from: $0) }
       ?? (try! JSONDecoder().decode(Cleaner.RestoreResult.self, from: Data(#"{"restored":[],"missing":[],"blocked":[]}"#.utf8)))
   }

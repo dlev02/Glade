@@ -24,7 +24,10 @@ struct CleanSummary: View {
       headline(freed: freed, trashed: trashed)
 
       if freed > 0, trashed > 0 {
-        line(symbol: restored == nil ? "trash" : Symbols.putBack, tint: .secondary) {
+        line(
+          symbol: restored.map { isComplete($0) ? Symbols.putBack : "exclamationmark.triangle" } ?? "trash",
+          tint: restored.map { isComplete($0) ? Color.secondary : Palette.warning } ?? .secondary
+        ) {
           if let restored {
             Text(backText(restored))
             stuckText(restored)
@@ -70,12 +73,18 @@ struct CleanSummary: View {
   private func headline(freed: Int64, trashed: Int64) -> some View {
     let warns = !problems.isEmpty
     if freed == 0, trashed > 0, let restored {
-      // Everything went to the Trash and has come back.
-      line(symbol: Symbols.putBack, tint: accentMark, large: true) {
-        Text(restored.restored.count == 1 ? "Put back 1 item" : "Put back \(restored.restored.count) items")
+      // Everything went to the Trash; it's reassuring only once all of it is back.
+      let complete = isComplete(restored)
+      line(
+        symbol: complete ? Symbols.putBack : "exclamationmark.triangle.fill",
+        tint: complete ? accentMark : Palette.warning, large: true
+      ) {
+        Text(backText(restored))
           .font(.title2.weight(.semibold))
-        Text("Back where they were.")
-          .foregroundStyle(.secondary)
+        if complete {
+          Text("Back where they were.")
+            .foregroundStyle(.secondary)
+        }
         stuckText(restored)
       }
     } else if freed == 0, trashed > 0 {
@@ -140,8 +149,22 @@ struct CleanSummary: View {
 
   // MARK: Put back
 
+  /// "Put back 19 items", "Put back 17 of 19 items" or "Nothing was put back."
   private func backText(_ result: Cleaner.RestoreResult) -> String {
-    result.restored.count == 1 ? "Put back 1 item" : "Put back \(result.restored.count) items"
+    let back = result.restored.count
+    let total = back + result.missing.count + result.blocked.count
+    if back == 0 { return "Nothing was put back." }
+    if back == total { return back == 1 ? "Put back 1 item" : "Put back \(back) items" }
+    return "Put back \(back) of \(total) items"
+  }
+
+  private func isComplete(_ result: Cleaner.RestoreResult) -> Bool {
+    !result.restored.isEmpty && result.missing.isEmpty && result.blocked.isEmpty
+  }
+
+  private func showTrash() {
+    guard let trash = FileManager.default.urls(for: .trashDirectory, in: .userDomainMask).first else { return }
+    NSWorkspace.shared.open(trash)
   }
 
   @ViewBuilder
