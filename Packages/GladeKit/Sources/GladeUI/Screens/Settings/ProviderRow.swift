@@ -48,14 +48,17 @@ struct ProviderRow: View {
       Label("Not installed", systemImage: "circle.dashed")
         .labelStyle(StatusLabelStyle(color: .secondary))
     case .unavailable(let reason):
-      Label(reason, systemImage: "xmark.circle")
+      Label(Self.plain(reason), systemImage: "xmark.circle")
         .labelStyle(StatusLabelStyle(color: .secondary))
     }
   }
 
-  /// Hints are written with Markdown-style backticks; show them as plain text.
+  /// Hints are written as sentences with Markdown-style backticks; a status is a
+  /// label, so it shows as plain text with no full stop, like "Ready".
   private static func plain(_ hint: String) -> String {
-    hint.replacingOccurrences(of: "`", with: "")
+    var text = hint.replacingOccurrences(of: "`", with: "")
+    while text.hasSuffix(".") { text.removeLast() }
+    return text
   }
 }
 

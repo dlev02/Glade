@@ -70,9 +70,9 @@ struct AgentConnectionRow: View {
     case .notInstalled: "Not installed"
     case .connected: "Connected"
     case .notConnected:
-      AgentConnection.gladeExecutable == nil && overrides.agents == nil ? "Available after installing the app." : "Not connected"
+      AgentConnection.gladeExecutable == nil && overrides.agents == nil ? "Available after installing the app" : "Not connected"
     case .connectedElsewhere: "Connected to another copy of \(Brand.name)"
-    case .unavailable(let reason): reason
+    case .unavailable(let reason): reason.hasSuffix(".") ? String(reason.dropLast()) : reason
     }
   }
 
