@@ -41,3 +41,6 @@ build-*/
 # A project or workspace named like a build directory
 !*.xcodeproj/
 !*.xcworkspace/
+
+# Local scratch
+/dist/
