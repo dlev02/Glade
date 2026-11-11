@@ -43,11 +43,13 @@ public enum Guide {
     glade apps --json       # per app: memory, CPU, GPU, frontmost, last active, playing audio, keeping the Mac awake
     glade processes --sort memory --json
     glade context --json    # what the person is doing right now
-    glade suggest --json    # what Glade would quit, and why
+    glade simulators --json # running simulators and the memory each holds
+    glade suggest --json    # what Glade would quit or shut down, and why
     glade quit "<app name>" # ask an app to quit
+    glade simulators shutdown "<name>"   # turn a simulator off; its data stays
     ```
 
-    Judging what to quit: never the frontmost app, anything playing or recording audio, anything holding the Mac awake (an export, a download, a call), anything using real CPU right now (it's working), or system apps. Good candidates are apps that are large, idle for 20+ minutes and not visible. Always tell the person what you'll quit and why before doing it, unless they've already told you to go ahead. There is no "purge memory" command, because clearing caches the system manages doesn't help; quitting what isn't needed does.
+    Judging what to quit: never the frontmost app, anything playing or recording audio, anything holding the Mac awake (an export, a download, a call), anything using real CPU right now (it's working), or system apps. Good candidates are apps that are large, idle for 20+ minutes and not visible, and simulators nobody is using: on a developer's Mac, idle simulators are often the largest memory user of all. Always tell the person what you'll quit and why before doing it, unless they've already told you to go ahead. There is no "purge memory" command, because clearing caches the system manages doesn't help; quitting what isn't needed does.
 
     ## Asking Glade's own assistant
 
