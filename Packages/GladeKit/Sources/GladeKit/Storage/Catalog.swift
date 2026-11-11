@@ -250,13 +250,21 @@ public enum Catalog {
     pkg("pub", "Dart & Flutter packages", ["~/.pub-cache"], "Dart packages already downloaded. `pub get` fetches them again."),
     // Not a cache: the browsers testing and agent tools launch. Most tools stop with
     // an error until you install them again rather than downloading them by themselves.
+    // Each downloaded version is its own finding (`chromium-1140`, `mac_arm-131.0…`,
+    // Cypress `13.6.0`), so a version run today doesn’t hold back ones unused for months.
     LocationRule(
-      id: "pkg.playwright", category: .packageCaches, title: "Test browsers",
-      detail: "Browsers that testing and agent tools such as Playwright, Puppeteer and Cypress run. Those tools stop working until you install the browsers again (for Playwright, `npx playwright install`).",
+      id: "pkg.playwright", category: .packageCaches, title: "Test browser",
+      detail: "One version of a browser that testing and agent tools such as Playwright, Puppeteer and Cypress run. A tool that still needs it stops working until you install it again (for Playwright, `npx playwright install`).",
       paths: [
-        "~/Library/Caches/ms-playwright", "~/Library/Caches/ms-playwright-go", "~/.cache/puppeteer",
-        "~/Library/Caches/Cypress", "~/.cache/selenium", "~/Library/Caches/camoufox",
+        "~/Library/Caches/ms-playwright/*-[0-9]*", "~/Library/Caches/ms-playwright-go/*-[0-9]*",
+        "~/.cache/puppeteer/*/*-[0-9]*", "~/Library/Caches/Cypress/[0-9]*",
       ],
+      split: .each, titleStyle: .child, recovery: .reinstall, risk: .caution, used: .accessed
+    ),
+    LocationRule(
+      id: "pkg.playwright-other", category: .packageCaches, title: "Test browsers",
+      detail: "Browsers and drivers that Selenium and Camoufox run. Those tools stop working until you install the browsers again.",
+      paths: ["~/.cache/selenium", "~/Library/Caches/camoufox"],
       recovery: .reinstall, risk: .caution, used: .accessed
     ),
     pkg("electron", "Electron & native build caches", ["~/Library/Caches/electron", "~/.cache/electron", "~/.cache/electron-builder", "~/Library/Caches/node-gyp", "~/.cache/node-gyp", "~/.node-gyp", "~/Library/Caches/typescript", "~/.cache/prisma", "~/.cache/pre-commit", "~/.cache/turbo"], "Build tools and headers downloaded for Node projects. Fetched again when a build needs them."),
