@@ -151,9 +151,10 @@ public struct SampleData: Sendable {
     ]
   }
 
-  /// When the sample cleans are dated from: fixed for the whole run, so every place
-  /// that shows a sample clean's time agrees.
-  private static let receiptsAnchor = Date()
+  /// When the sample cleans are dated from: the start of today, so every place and
+  /// every launch shows the same times (yesterday at 7:00 PM, three days ago at
+  /// 10:30 AM and nine days ago at 8:15 AM).
+  private static let receiptsAnchor = Calendar.current.startOfDay(for: Date())
 
   static func sampleReceipts() -> [Receipt] {
     let day: TimeInterval = 86_400
@@ -173,7 +174,7 @@ public struct SampleData: Sendable {
         freeBefore: 9_600_000_000, freeAfter: 32_700_000_000
       ),
       Receipt(
-        id: "A1B2C3D4-0000-0000-0000-000000000002", date: now.addingTimeInterval(-day * 3), initiator: .assistant(provider: "Claude"), dryRun: false,
+        id: "A1B2C3D4-0000-0000-0000-000000000002", date: now.addingTimeInterval(-day * 3 + 3600 * 10.5), initiator: .assistant(provider: "Claude"), dryRun: false,
         entries: [
           entry("Simulator system · iOS 18.0", .simulators, 8.4, .deleted),
           entry("Claude Code sessions – Developer-Harbor", .agentHistory, 1.1, .deleted),
@@ -182,7 +183,7 @@ public struct SampleData: Sendable {
         freeBefore: 4_100_000_000, freeAfter: 23_400_000_000
       ),
       Receipt(
-        id: "A1B2C3D4-0000-0000-0000-000000000003", date: now.addingTimeInterval(-day * 9), initiator: .automation(rule: "low storage"), dryRun: false,
+        id: "A1B2C3D4-0000-0000-0000-000000000003", date: now.addingTimeInterval(-day * 9 + 3600 * 8.25), initiator: .automation(rule: "low storage"), dryRun: false,
         entries: [entry("App caches", .appCaches, 2.3, .deleted), entry("Crash reports", .logs, 0.1, .deleted)],
         freeBefore: 18_900_000_000, freeAfter: 21_300_000_000
       ),
