@@ -42,3 +42,18 @@ struct Snapshot: AsyncParsableCommand {
     print(out)
   }
 }
+
+/// A maintenance aid: removes a login item that a copy of the app registered.
+struct ForgetLoginItem: AsyncParsableCommand {
+  static let configuration = CommandConfiguration(
+    commandName: "forget-login-item",
+    abstract: "Remove this copy of the app from the system's login items.",
+    shouldDisplay: false
+  )
+
+  @MainActor
+  func run() async throws {
+    LoginItem.removeRegardless()
+    print("Done.")
+  }
+}
