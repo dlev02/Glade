@@ -6,7 +6,7 @@ import GladeUI
 /// leaves it running.
 final class AppDelegate: NSObject, NSApplicationDelegate {
   static let model = AppModel()
-  static var updates: UpdateController?
+  static let updates = UpdateController()
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     // A second copy would double every alert and fight over the same settings.
@@ -19,7 +19,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       return
     }
     Self.model.start()
-    Self.updates?.start()
   }
 
   func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
