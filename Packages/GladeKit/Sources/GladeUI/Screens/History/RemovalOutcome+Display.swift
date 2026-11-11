@@ -33,4 +33,12 @@ extension RemovalOutcome {
     if case .trashed(let locations) = self { return locations.count }
     return 0
   }
+
+  /// Whether the item left its place, removed or moved to the Trash.
+  var removedSomething: Bool {
+    switch self {
+    case .deleted, .trashed: true
+    default: false
+    }
+  }
 }

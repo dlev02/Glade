@@ -18,6 +18,21 @@ struct CleanDay: Identifiable {
       : day.formatted(.dateTime.month(.wide).day().year())
   }
 
+  /// The last grouping, kept so that returning to History draws its first frame
+  /// without grouping again. Rebuilt only when the cleans or the day change.
+  private static var cache: (key: [String], day: Date, days: [CleanDay])?
+
+  /// Groups receipts by day, newest first, reusing the last grouping when nothing
+  /// has changed since.
+  static func grouped(_ receipts: [Receipt]) -> [CleanDay] {
+    let key = receipts.map(\.id)
+    let today = Calendar.current.startOfDay(for: Date())
+    if let cache, cache.key == key, cache.day == today { return cache.days }
+    let days = group(receipts)
+    cache = (key, today, days)
+    return days
+  }
+
   /// Groups receipts by day, keeping them newest first.
   static func group(_ receipts: [Receipt]) -> [CleanDay] {
     let calendar = Calendar.current

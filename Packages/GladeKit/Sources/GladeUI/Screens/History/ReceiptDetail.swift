@@ -1,8 +1,9 @@
 import GladeKit
 import SwiftUI
 
-/// One clean in full: how much it removed, free space before and after, what happened
-/// to each item, and Put Back for anything that went to the Trash.
+/// One clean in full: how much it freed, who started it and when, free space before
+/// and after, and its items grouped by what happened to them, with Put Back beside
+/// the ones in the Trash.
 struct ReceiptDetail: View {
   @Environment(AppModel.self) private var model
   var receipt: Receipt
@@ -10,87 +11,97 @@ struct ReceiptDetail: View {
   @State private var restore: Cleaner.RestoreResult?
 
   var body: some View {
-    let trashed = receipt.entries.reduce(0) { $0 + $1.outcome.trashedCount }
-    let deleted = receipt.entries.contains { $0.outcome == .deleted }
+    let trashed = receipt.entries.filter { $0.outcome.trashedCount > 0 }
+    let removed = receipt.entries.filter { $0.outcome == .deleted }
+    let kept = receipt.entries.filter { !$0.outcome.removedSomething }
     ScrollView {
-      VStack(alignment: .leading, spacing: Metrics.l) {
-        VStack(alignment: .leading, spacing: 2) {
-          Text(Format.bytes(receipt.removedBytes))
-            .font(.figure(34))
-          Text("removed by \(who) · \(receipt.date.formatted(date: .abbreviated, time: .shortened))")
-            .font(.title3)
-            .foregroundStyle(.secondary)
-        }
+      VStack(alignment: .leading, spacing: Metrics.xl) {
+        header
 
-        HStack(spacing: Metrics.s) {
-          Text("Free space")
-            .foregroundStyle(.secondary)
-          Text(Format.bytes(receipt.freeBefore))
-          Image(systemName: "arrow.right")
-            .foregroundStyle(.tertiary)
-            .accessibilityLabel("to")
-          Text(Format.bytes(receipt.freeAfter))
-            .fontWeight(.medium)
-        }
-        .monospacedDigit()
-        .accessibilityElement(children: .combine)
-
-        Card(padding: 0) {
-          VStack(spacing: 0) {
-            ForEach(Array(receipt.entries.enumerated()), id: \.element.id) { index, entry in
-              if index > 0 { Divider().padding(.leading, 56) }
-              EntryRow(entry: entry)
+        if !trashed.isEmpty {
+          group("In the Trash", entries: trashed) {
+            Button(trashed.count == 1 ? "Put Back 1 Item" : "Put Back \(trashed.count) Items", systemImage: Symbols.putBack) {
+              confirmsPutBack = true
             }
+            .secondaryAction()
+            .controlSize(.small)
+            .confirmationDialog(
+              trashed.count == 1 ? "Put back 1 item from the Trash?" : "Put back \(trashed.count) items from the Trash?",
+              isPresented: $confirmsPutBack
+            ) {
+              Button("Put Back") { restore = model.putBack(receipt) }
+                .keyboardShortcut(.defaultAction)
+              Button("Cancel", role: .cancel) {}
+            } message: {
+              Text("They go back where they were.")
+            }
+          } footer: {
+            if let restore { outcome(restore) }
           }
         }
-
-        if trashed > 0 {
-          putBack(count: trashed, alsoDeleted: deleted)
-        } else if deleted {
-          Text("Removed items rebuild or download again when they’re needed, so there’s nothing to put back.")
-            .font(.callout)
-            .foregroundStyle(.secondary)
+        if !removed.isEmpty {
+          group("Removed", entries: removed)
+        }
+        if !kept.isEmpty {
+          group("Not Removed", entries: kept, showsOutcome: true)
         }
       }
-      .padding(Metrics.xl)
-      .frame(maxWidth: Metrics.contentWidth, alignment: .leading)
+      .padding(Metrics.l)
+      .frame(maxWidth: .infinity, alignment: .leading)
     }
   }
 
-  private var who: String {
-    switch receipt.initiator {
-    case .user: "you"
-    case .commandLine: "the command line"
-    case .assistant(let provider): model.providerName(provider)
-    case .automation(let rule): "automation (\(rule))"
-    }
-  }
-
-  private func putBack(count: Int, alsoDeleted: Bool) -> some View {
-    VStack(alignment: .leading, spacing: Metrics.s) {
-      HStack(spacing: Metrics.m) {
-        Button("Put Back", systemImage: "arrow.uturn.backward") { confirmsPutBack = true }
-          .buttonStyle(.glassProminent)
-          .controlSize(.large)
-        if let restore {
-          outcome(restore)
-        }
-      }
-      .confirmationDialog(
-        count == 1 ? "Put back 1 item from the Trash?" : "Put back \(count) items from the Trash?",
-        isPresented: $confirmsPutBack
-      ) {
-        Button("Put Back") { restore = model.putBack(receipt) }
-          .keyboardShortcut(.defaultAction)
-        Button("Cancel", role: .cancel) {}
-      } message: {
-        Text("They go back where they were.")
-      }
-      if alsoDeleted {
-        Text("Only items in the Trash can come back. Removed items rebuild or download again when they’re needed.")
-          .font(.callout)
+  private var header: some View {
+    let name = receipt.initiator.name(providerName: { model.providerName($0) })
+    return VStack(alignment: .leading, spacing: Metrics.s) {
+      VStack(alignment: .leading, spacing: 2) {
+        Text(Format.bytes(receipt.removedBytes))
+          .font(.figure(34))
+        Text("\(name) · \(receipt.date.formatted(date: .abbreviated, time: .shortened))")
           .foregroundStyle(.secondary)
       }
+      .accessibilityElement(children: .combine)
+
+      HStack(spacing: Metrics.s) {
+        Text("Free space")
+          .foregroundStyle(.secondary)
+        Text(Format.bytes(receipt.freeBefore))
+        Image(systemName: "arrow.right")
+          .foregroundStyle(.tertiary)
+          .accessibilityLabel("to")
+        Text(Format.bytes(receipt.freeAfter))
+          .fontWeight(.medium)
+      }
+      .monospacedDigit()
+      .accessibilityElement(children: .combine)
+    }
+  }
+
+  /// A heading, an optional action level with it, and the items in one card.
+  private func group(
+    _ title: String, entries: [ReceiptEntry], showsOutcome: Bool = false,
+    @ViewBuilder action: () -> some View = { EmptyView() },
+    @ViewBuilder footer: () -> some View = { EmptyView() }
+  ) -> some View {
+    VStack(alignment: .leading, spacing: Metrics.s) {
+      HStack(alignment: .center) {
+        Text(title)
+          .font(.headline)
+          .foregroundStyle(.secondary)
+          .accessibilityAddTraits(.isHeader)
+        Spacer(minLength: Metrics.s)
+        action()
+      }
+      .frame(minHeight: 24)
+      Card(padding: 0) {
+        VStack(spacing: 0) {
+          ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
+            if index > 0 { Divider().padding(.leading, 52) }
+            EntryRow(entry: entry, showsOutcome: showsOutcome)
+          }
+        }
+      }
+      footer()
     }
   }
 

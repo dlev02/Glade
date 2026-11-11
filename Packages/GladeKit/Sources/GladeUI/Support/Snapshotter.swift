@@ -12,7 +12,7 @@ public enum Snapshotter {
       "window": { _ in AnyView(RootView()) },
       "overview": { _ in AnyView(NavigationStack { OverviewScreen() }) },
     ]
-    for group in [StorageSnapshots.all, PerformanceSnapshots.all, AssistantSnapshots.all, SettingsSnapshots.all] {
+    for group in [StorageSnapshots.all, PerformanceSnapshots.all, AssistantSnapshots.all, SettingsSnapshots.all, HistorySnapshots.all] {
       all.merge(group) { _, new in new }
     }
     return all
@@ -54,7 +54,7 @@ public enum Snapshotter {
 
     let root = content
       .environment(model)
-      .tint(model.tint)
+      .accent(model.tint)
       .frame(width: size.width, height: size.height)
       .background(Color(nsColor: .windowBackgroundColor))
     let host = NSHostingView(rootView: root)
