@@ -8,7 +8,8 @@
 - The confirmation lists every item with whole rows and a count, says up front how many can't be recreated, and its button says what will happen: "Free Up 102 GB" or "Move to Trash". The result shows free space before and after only as measured, warns when something was left in place, and says "Put back 18 items" once you've put them back.
 - After a clean that moved things to the Trash, Show Trash opens it in Finder. Putting things back says plainly when only some came back ("Put back 9 of 11 items") or none did.
 - The setting that sends things to the Trash is now called "Use the Trash where possible": simulators and worktrees are always removed by Xcode's and git's own tools.
-- When only some of the items removed straight away can't be recreated, the confirmation says the rest rebuild or download again and counts the exceptions in red.
+- When only some of the items removed straight away can't be recreated, the confirmation says the rest rebuild or download again and names the exceptions ("Can't be recreated: Archive – Lantern 2.3"), or counts them when there are more than three. Long names wrap instead of being cut short.
+- The clean levels say what they actually select: Careful takes things that rebuild themselves and haven't been used lately, Balanced adds old downloads, idle simulators and stale agent history, and Aggressive adds tools you'd reinstall and things used recently.
 - History keeps freed and moved-to-the-Trash apart in its total and in each clean, and groups a clean's items as "In the Trash", "Deleted" and "Left in place".
 - A folder inside another selected folder is counted once, and cleaned with it, so the number of items agrees from Storage to the result.
 
@@ -25,6 +26,11 @@
 - Performance hides the Graphics and Last Used columns when nothing in them has a reading, and its search field is narrower.
 - Settings uses shorter labels ("Ask AI at alert thresholds", "Daily limit", "Search file contents") and the same effort choices as the chat.
 - Simulators are named one way everywhere: "iPad Air 11-inch · iOS 27.2".
+- The chat's AI, model and effort menus open above the question box instead of over it, and every answer names its AI and model the same way.
+- The second opinion's AI and model sit together in one row of Settings, apart from each AI's everyday model. Setup and Settings use the same names ("Open at login", "Command line tool").
+- Overview's cards share one inner margin, and the storage key keeps one four-column layout at every window size.
+- The advice counts' lists show each item's size, and refused suggestions read "1 suggestion refused".
+- Checkboxes and the main button turn grey when Glade's window isn't the active one, like the rest of macOS. Warning colours sit on symbols, so the words beside them stay easy to read.
 - Calmer details throughout: plain recovery words ("Downloads again", "Needs reinstall", "Can't be undone"), one figure style, a shorter search prompt, wider inspectors, and tidier Settings, Setup and menu bar wording.
 
 ### Storage
