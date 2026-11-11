@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0 — unreleased
+
+### Safety
+
+- Caches of Chromium-based apps such as Slack, Discord, VS Code and Docker Desktop are left alone while that app is open, even when they haven't changed for days, and a toolkit or runtime that a running program was started from is never removed. Both are checked again at the moment of removal.
+
 ## 0.1.0 — 2026-11-11
 
 The first version of Glade. It shows what is using your Mac's storage, memory, processors and graphics, and clears it safely.

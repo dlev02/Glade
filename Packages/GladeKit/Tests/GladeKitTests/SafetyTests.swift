@@ -161,6 +161,43 @@ struct SafetyTests {
     for trashed in locations.values { try? FileManager.default.removeItem(atPath: trashed) }
   }
 
+  @Test func cleanerKeepsWhatIsInUse() async throws {
+    let support = home + "/Library/Application Support"
+    for folder in ["LiveApp/Cache", "StaleApp/Cache", "MovedApp/Cache"] {
+      try FileManager.default.createDirectory(atPath: support + "/" + folder, withIntermediateDirectories: true)
+      try Data(repeating: 1, count: 4096).write(to: URL(fileURLWithPath: support + "/" + folder + "/data_0"))
+    }
+    // An open Chromium-style app, one that has quit, and one whose lock came from another Mac.
+    try FileManager.default.createSymbolicLink(atPath: support + "/LiveApp/SingletonLock", withDestinationPath: "\(InUse.hostName)-\(getpid())")
+    try FileManager.default.createSymbolicLink(atPath: support + "/StaleApp/SingletonLock", withDestinationPath: "\(InUse.hostName)-0")
+    try FileManager.default.createSymbolicLink(atPath: support + "/MovedApp/SingletonLock", withDestinationPath: "Another-Mac.local-\(getpid())")
+    // A toolkit version a program is running from.
+    let toolkit = home + "/.toolkit/versions/1.0"
+    try FileManager.default.createDirectory(atPath: toolkit + "/bin", withIntermediateDirectories: true)
+    try Data(repeating: 2, count: 4096).write(to: URL(fileURLWithPath: toolkit + "/bin/tool"))
+
+    let findings = [
+      finding("live", support + "/LiveApp/Cache"), finding("stale", support + "/StaleApp/Cache"),
+      finding("moved", support + "/MovedApp/Cache"), finding("toolkit", toolkit),
+    ]
+    let running = RunningApps(executablePaths: [toolkit + "/bin/tool"])
+    let receipt = try await Cleaner.clean(
+      ids: findings.map(\.id), from: scan(findings), config: GladeConfig(),
+      options: CleanOptions(dryRun: false), protection: protection, running: running
+    )
+    let outcomes = Dictionary(uniqueKeysWithValues: receipt.entries.map { ($0.id, $0.outcome) })
+    for kept in ["live", "toolkit"] {
+      guard case .skipped = outcomes[kept] else {
+        Issue.record("\(kept) is in use and must be kept, got \(String(describing: outcomes[kept]))")
+        continue
+      }
+    }
+    #expect(outcomes["stale"] == .deleted)
+    #expect(outcomes["moved"] == .deleted)
+    #expect(FileManager.default.fileExists(atPath: support + "/LiveApp/Cache/data_0"))
+    #expect(FileManager.default.fileExists(atPath: toolkit + "/bin/tool"))
+  }
+
   @Test func scannerNeverReportsProtectedPlaces() async {
     let rules = [
       LocationRule(id: "t.caches", category: .appCaches, title: "cache", detail: "", paths: ["~/Library/Caches/*"], split: .each, minimumBytes: 0),
