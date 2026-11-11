@@ -13,6 +13,10 @@ struct SetupView: View {
   @State private var askedForNotifications = false
   @State private var installing = false
   @State private var problem: String?
+  /// Set once the person has gone to System Settings for Full Disk Access, so the
+  /// "quit and reopen" hint appears only when it can help.
+  @State private var openedFullDiskAccess = false
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   /// Open at login is switched on once, the first time setup appears.
   @AppStorage("setupTurnedOnLoginItem") private var turnedOnLoginItem = false
 
@@ -22,51 +26,64 @@ struct SetupView: View {
       HStack(spacing: Metrics.m) {
         Image(nsImage: NSApp.applicationIconImage)
           .resizable()
-          .frame(width: 48, height: 48)
+          .frame(width: 56, height: 56)
           .accessibilityHidden(true)
         Text("Set Up \(Brand.name)")
           .font(.title2.bold())
       }
 
-      Card(padding: 0) {
-        VStack(spacing: 0) {
-          fullDiskAccessStep(status)
-          Divider().padding(.leading, 52)
-          notificationsStep(status)
-          Divider().padding(.leading, 52)
-          assistantStep(status)
-          Divider().padding(.leading, 52)
-          loginStep(status)
-          Divider().padding(.leading, 52)
-          commandLineStep(status)
-        }
+      group("Access") {
+        fullDiskAccessStep(status)
+        Divider().padding(.leading, 52)
+        notificationsStep(status)
+        Divider().padding(.leading, 52)
+        assistantStep(status)
+      }
+
+      group("Optional") {
+        loginStep(status)
+        Divider().padding(.leading, Metrics.l)
+        commandLineStep(status)
       }
 
       if let problem {
         Text(problem)
           .font(.callout)
           .foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
       }
 
       Spacer(minLength: 0)
 
       HStack {
-        Text("You can come back here from Help › Set Up \(Brand.name)…")
-          .font(.callout)
-          .foregroundStyle(.secondary)
         Spacer()
         Button("Done") { model.finishSetup() }
-          .keyboardShortcut(.defaultAction)
+          .principalAction()
           .controlSize(.large)
+          .keyboardShortcut(.defaultAction)
       }
     }
     .padding(Metrics.xl)
     .frame(width: 560, height: 560)
-    .animation(.smooth, value: status.fullDiskAccess)
-    .animation(.smooth, value: status.notifications)
+    .animation(reduceMotion ? nil : .smooth, value: status.fullDiskAccess)
+    .animation(reduceMotion ? nil : .smooth, value: status.notifications)
     .onAppear(perform: turnOnLoginOnce)
     .task { await load() }
     .task(id: status.fullDiskAccess) { await watchFullDiskAccess(done: status.fullDiskAccess) }
+  }
+
+  /// A small heading over one card of steps.
+  private func group(_ title: String, @ViewBuilder steps: () -> some View) -> some View {
+    VStack(alignment: .leading, spacing: Metrics.s) {
+      Text(title)
+        .font(.headline)
+        .foregroundStyle(.secondary)
+        .padding(.leading, Metrics.xs)
+        .accessibilityAddTraits(.isHeader)
+      Card(padding: 0) {
+        VStack(spacing: 0) { steps() }
+      }
+    }
   }
 
   // MARK: Steps
@@ -74,12 +91,17 @@ struct SetupView: View {
   private func fullDiskAccessStep(_ status: SetupStatus) -> some View {
     SetupStepRow(
       title: "Full Disk Access",
-      detail: "So \(Brand.name) can measure the Trash and app data.",
-      note: status.fullDiskAccess ? nil : "Already on in System Settings? Quit and reopen \(Brand.name).",
+      detail: "Lets \(Brand.name) measure the Trash and app data.",
+      note: status.fullDiskAccess || !openedFullDiskAccess
+        ? nil : "Already on in System Settings? Quit and reopen \(Brand.name).",
       done: status.fullDiskAccess
     ) {
       if !status.fullDiskAccess {
-        Button("Open Settings") { model.openFullDiskAccessSettings() }
+        Button("Open Settings") {
+          openedFullDiskAccess = true
+          model.openFullDiskAccessSettings()
+        }
+        .secondaryAction()
       }
     }
   }
@@ -87,7 +109,7 @@ struct SetupView: View {
   private func notificationsStep(_ status: SetupStatus) -> some View {
     SetupStepRow(
       title: "Notifications",
-      detail: "For alerts when space runs low or the Mac is struggling.",
+      detail: "For low space and a struggling Mac.",
       done: status.notifications
     ) {
       if !status.notifications {
@@ -97,6 +119,7 @@ struct SetupView: View {
               NSWorkspace.shared.open(url)
             }
           }
+          .secondaryAction()
         } else {
           Button("Allow") {
             Task {
@@ -104,6 +127,7 @@ struct SetupView: View {
               askedForNotifications = true
             }
           }
+          .secondaryAction()
         }
       }
     }
@@ -118,7 +142,7 @@ struct SetupView: View {
     ) {
       if checkingProviders {
         ProgressView().controlSize(.small)
-      } else {
+      } else if ready.isEmpty {
         Button("Check Again") {
           checkingProviders = true
           Task {
@@ -126,6 +150,7 @@ struct SetupView: View {
             checkingProviders = false
           }
         }
+        .secondaryAction()
       }
     }
   }
@@ -134,8 +159,7 @@ struct SetupView: View {
     SetupStepRow(
       title: "Open at Login",
       detail: "Keeps \(Brand.name) in the menu bar.",
-      note: LoginItem.isAvailable || overrides.setup != nil ? nil : "Available in the installed app.",
-      done: status.opensAtLogin
+      note: LoginItem.isAvailable || overrides.setup != nil ? nil : "Available in the installed app."
     ) {
       Toggle("Open at Login", isOn: Binding(get: { status.opensAtLogin }, set: setOpensAtLogin))
         .toggleStyle(.switch)
@@ -148,15 +172,17 @@ struct SetupView: View {
     let detail = switch status.commandLine {
     case .installed(let path, _): "Installed at \(Redactor.tilde(path))."
     case .unavailable: "Available after installing the app."
-    default: "Optional. Use \(Brand.cli) in Terminal and connect coding agents."
+    default: "Use \(Brand.cli) in Terminal and connect coding agents."
     }
-    return SetupStepRow(title: "Command Line", detail: detail, done: status.commandLine.isInstalled) {
+    return SetupStepRow(title: "Command Line", detail: detail) {
       if installing {
         ProgressView().controlSize(.small)
       } else if case .notInstalled = status.commandLine {
         Button("Install", action: installCommandLine)
+          .secondaryAction()
       } else if case .otherCopy = status.commandLine {
         Button("Update", action: installCommandLine)
+          .secondaryAction()
       }
     }
   }

@@ -1,23 +1,27 @@
 import SwiftUI
 
-/// One line of the setup checklist: a check once it's done, what the step is and why,
-/// and the one control that does the next thing.
+/// One line of the setup checklist: what the step is, one line about it, and the one
+/// control that does the next thing. Steps Glade needs show a circle that fills when
+/// done; optional ones show only their control.
 struct SetupStepRow<Action: View>: View {
   var title: String
   var detail: String
-  /// A second, quieter line, such as what to try if a step looks done but isn't.
+  /// An instruction that only applies now, such as restarting after granting access.
   var note: String?
-  var done: Bool
+  /// Whether the step is done; nil for an optional step, which has no circle.
+  var done: Bool?
   @ViewBuilder var action: Action
 
   var body: some View {
     HStack(alignment: .center, spacing: Metrics.m) {
-      Image(systemName: done ? "checkmark.circle.fill" : "circle")
-        .font(.title2)
-        .frame(width: 24)
-        .foregroundStyle(done ? AnyShapeStyle(Palette.good) : AnyShapeStyle(.tertiary))
-        .contentTransition(.symbolEffect(.replace))
-        .accessibilityHidden(true)
+      if let done {
+        Image(systemName: done ? "checkmark.circle.fill" : "circle")
+          .font(.title2)
+          .frame(width: 24)
+          .foregroundStyle(done ? AnyShapeStyle(Palette.good) : AnyShapeStyle(.tertiary))
+          .contentTransition(.symbolEffect(.replace))
+          .accessibilityHidden(true)
+      }
       VStack(alignment: .leading, spacing: 2) {
         Text(title)
           .font(.headline)
@@ -27,8 +31,8 @@ struct SetupStepRow<Action: View>: View {
           .fixedSize(horizontal: false, vertical: true)
         if let note {
           Text(note)
-            .font(.caption)
-            .foregroundStyle(.tertiary)
+            .font(.callout)
+            .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
         }
       }
@@ -36,8 +40,8 @@ struct SetupStepRow<Action: View>: View {
       action
     }
     .padding(.horizontal, Metrics.l)
-    .padding(.vertical, 14)
+    .padding(.vertical, Metrics.m)
     .accessibilityElement(children: .contain)
-    .accessibilityLabel("\(title), \(done ? "done" : "not done")")
+    .accessibilityLabel(done.map { "\(title), \($0 ? "done" : "not done")" } ?? title)
   }
 }
