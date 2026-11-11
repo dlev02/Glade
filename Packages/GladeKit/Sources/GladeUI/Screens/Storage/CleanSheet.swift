@@ -54,6 +54,8 @@ private struct CleanFailure: View {
       HStack {
         Spacer()
         Button("Done", action: done)
+          .principalAction()
+          .controlSize(.large)
           .keyboardShortcut(.defaultAction)
       }
     }

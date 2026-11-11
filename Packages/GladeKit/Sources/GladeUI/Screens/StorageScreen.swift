@@ -14,27 +14,24 @@ struct StorageScreen: View {
     var query: String
   }
 
-  private static let inspectorKey = "storageShowsInspector"
-
   @Environment(AppModel.self) private var model
-  @State private var list = StorageListModel()
-  @State private var scope: StorageScope
-  @State private var query = ""
-  @State private var highlighted: Set<String>
-  @State private var collapsed: Set<StorageCategory> = []
-  @State private var showsInspector: Bool
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  /// Kept by the window, so it outlives a visit to another section.
+  @Bindable var state: StorageViewState
   @State private var showsCleanSheet = false
   @State private var protectedPath: String?
-  /// The list is too narrow for full recovery badges.
+  /// The list is too narrow for words in the recovery column.
   @State private var isCompact = false
   /// Advice to show instead of the model's, for drawing the screen in snapshots.
   private let adviceOverride: StorageAdvice?
 
-  init(scope: StorageScope = .ready, highlighted: String? = nil, showsInspector: Bool? = nil, advice: StorageAdvice? = nil) {
-    _scope = State(initialValue: scope)
-    _highlighted = State(initialValue: highlighted.map { [$0] } ?? [])
-    let saved = UserDefaults.standard.object(forKey: Self.inspectorKey) as? Bool
-    _showsInspector = State(initialValue: showsInspector ?? saved ?? true)
+  /// Set by the snapshots. The offscreen renderer has nothing behind glass, so a
+  /// scroll-edge effect under the clean bar paints over the whole list; snapshots
+  /// use a plain inset instead.
+  static var drawsOffscreen = false
+
+  init(state: StorageViewState, advice: StorageAdvice? = nil) {
+    self.state = state
     adviceOverride = advice
   }
 
@@ -42,10 +39,14 @@ struct StorageScreen: View {
     content
       .navigationTitle("Storage")
       .toolbar { toolbar }
-      .searchable(text: $query, placement: .toolbar, prompt: "Titles, projects, paths")
-      .inspector(isPresented: $showsInspector) {
-        FindingInspector(finding: highlightedFinding, highlightedCount: highlighted.count)
+      .searchable(text: $state.query, placement: .toolbar, prompt: "Titles, projects, paths")
+      .inspector(isPresented: $state.showsInspector) {
+        FindingInspector(finding: state.highlightedFinding, highlightedFindings: highlightedFindings)
           .inspectorColumnWidth(min: 260, ideal: 300, max: 420)
+          .toolbar {
+            // Declared here so it sits above the inspector, at the far trailing edge.
+            ToolbarItem(placement: .primaryAction) { inspectorButton }
+          }
       }
       .sheet(isPresented: $showsCleanSheet) {
         CleanSheet { showsCleanSheet = false }
@@ -59,20 +60,17 @@ struct StorageScreen: View {
         Text("\(Brand.name) will leave \(protectedPath.map(Redactor.tilde) ?? "it") alone from the next scan on.")
       }
       .onChange(of: inputs, initial: true) {
-        list.update(scan: model.scan, scope: scope, query: query)
-        let visible = Set(list.groups.flatMap { $0.entries.map(\.id) })
-        if !highlighted.isSubset(of: visible) { highlighted.formIntersection(visible) }
+        state.refresh(scan: model.scan)
       }
-      .onChange(of: showsInspector) { UserDefaults.standard.set(showsInspector, forKey: Self.inspectorKey) }
   }
 
   private var inputs: ListInputs {
-    ListInputs(scanID: model.scan?.id, findingCount: model.scan?.findings.count ?? 0, scope: scope, query: query)
+    ListInputs(scanID: model.scan?.id, findingCount: model.scan?.findings.count ?? 0, scope: state.scope, query: state.query)
   }
 
-  private var highlightedFinding: Finding? {
-    guard highlighted.count == 1, let id = highlighted.first else { return nil }
-    return list.finding(id)
+  private var highlightedFindings: [Finding] {
+    guard state.highlighted.count > 1 else { return [] }
+    return state.highlighted.compactMap(state.list.finding)
   }
 
   // MARK: Content
@@ -86,41 +84,57 @@ struct StorageScreen: View {
     } else {
       VStack(spacing: 0) {
         header
-        Divider()
-        findings
-          .safeAreaInset(edge: .bottom) {
-            CleanBar { showsCleanSheet = true }
-          }
+        if Self.drawsOffscreen {
+          findings
+            .safeAreaInset(edge: .bottom) {
+              CleanBar { showsCleanSheet = true }
+            }
+        } else {
+          // A bar rather than an inset, so rows fade under the glass instead of
+          // showing through it, and the last row can scroll clear of it.
+          findings
+            .safeAreaBar(edge: .bottom) {
+              CleanBar { showsCleanSheet = true }
+            }
+            .scrollEdgeEffectStyle(.soft, for: .bottom)
+        }
       }
     }
   }
 
+  /// The Full Disk Access line and the assistant's advice, only when there's
+  /// something to say.
+  @ViewBuilder
   private var header: some View {
-    VStack(alignment: .leading, spacing: Metrics.m) {
-      if !model.hasFullDiskAccess { StorageAccessBanner() }
-      StorageHeader()
-      if let advice = adviceOverride ?? model.advice {
-        AdviceBanner(advice: advice) { list.finding($0)?.title }
-      } else if case .failed(let message) = model.assistantState {
-        Label(message, systemImage: "exclamationmark.triangle")
-          .font(.callout)
-          .foregroundStyle(.secondary)
-          .lineLimit(2)
+    let advice = adviceOverride ?? model.advice
+    let failure: String? = if case .failed(let message) = model.assistantState { message } else { nil }
+    if !model.hasFullDiskAccess || advice != nil || failure != nil {
+      VStack(alignment: .leading, spacing: Metrics.m) {
+        if !model.hasFullDiskAccess { FullDiskAccessBanner() }
+        if let advice {
+          AdviceBanner(advice: advice) { state.list.finding($0)?.title }
+        } else if let failure {
+          Label(failure, systemImage: "exclamationmark.triangle")
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .lineLimit(2)
+        }
       }
+      .padding(.horizontal, Metrics.l)
+      .padding(.vertical, Metrics.m)
+      Divider()
     }
-    .padding(.horizontal, Metrics.l)
-    .padding(.vertical, Metrics.m)
   }
 
   @ViewBuilder
   private var findings: some View {
-    if list.groups.isEmpty {
+    if state.list.groups.isEmpty {
       emptyScope
     } else {
-      List(selection: $highlighted) {
-        ForEach(list.groups) { group in
+      List(selection: $state.highlighted) {
+        ForEach(state.list.groups) { group in
           Section {
-            if !collapsed.contains(group.category) {
+            if !state.collapsed.contains(group.category) {
               ForEach(group.entries) { entry in
                 FindingRow(entry: entry, compact: isCompact)
                   .tag(entry.id)
@@ -136,10 +150,11 @@ struct StorageScreen: View {
       .contextMenu(forSelectionType: String.self) { ids in
         menu(for: ids)
       } primaryAction: { _ in
-        showsInspector = true
+        // Double-click or Return.
+        state.showsInspector = true
       }
       .onKeyPress(.space) {
-        toggleChecks(highlighted)
+        toggleChecks(state.highlighted)
         return .handled
       }
     }
@@ -147,35 +162,34 @@ struct StorageScreen: View {
 
   @ViewBuilder
   private var emptyScope: some View {
-    if !query.trimmingCharacters(in: .whitespaces).isEmpty {
-      ContentUnavailableView.search(text: query)
+    if !state.query.trimmingCharacters(in: .whitespaces).isEmpty {
+      ContentUnavailableView.search(text: state.query)
     } else {
-      switch scope {
+      switch state.scope {
       case .ready: EmptyState("Nothing to free right now", symbol: "checkmark.circle")
-      case .review: EmptyState("Nothing to review", symbol: "checklist")
-      case .everything: EmptyState("Nothing found", symbol: "internaldrive")
+      case .review: EmptyState("Nothing to review", symbol: Symbols.review)
+      case .everything: EmptyState("Nothing found", symbol: AppModel.Section.storage.symbol)
       }
     }
   }
 
   private func expanded(_ category: StorageCategory) -> Binding<Bool> {
     Binding(
-      get: { !collapsed.contains(category) },
+      get: { !state.collapsed.contains(category) },
       set: { isExpanded in
-        if isExpanded { collapsed.remove(category) } else { collapsed.insert(category) }
+        if isExpanded { state.collapsed.remove(category) } else { state.collapsed.insert(category) }
       }
     )
   }
 
   // MARK: Toolbar
 
+  /// Title leading, scope in the middle, then Scan and Ask, search, and the
+  /// inspector button at the far trailing edge.
   @ToolbarContentBuilder
   private var toolbar: some ToolbarContent {
-    ToolbarItem(placement: .navigation) {
-      ScanButton()
-    }
     ToolbarItem(placement: .principal) {
-      Picker("Show", selection: $scope) {
+      Picker("Show", selection: $state.scope) {
         ForEach(StorageScope.allCases) { scope in
           Text(scope.title).tag(scope)
         }
@@ -184,17 +198,32 @@ struct StorageScreen: View {
       .labelsHidden()
       .disabled(model.scan == nil)
     }
-    ToolbarItem(placement: .primaryAction) {
-      Toggle("Inspector", systemImage: "sidebar.trailing", isOn: $showsInspector)
-        .help(showsInspector ? "Hide the inspector" : "Show the inspector")
+    ToolbarItemGroup(placement: .primaryAction) {
+      ScanButton()
+      AskButton()
     }
+    DefaultToolbarItem(kind: .search, placement: .primaryAction)
+    if !state.showsInspector {
+      // While the inspector is open its own toolbar carries this button.
+      ToolbarItem(placement: .primaryAction) { inspectorButton }
+    }
+  }
+
+  /// A plain button rather than a toggle, so it never shows a tinted "on" state.
+  private var inspectorButton: some View {
+    Button("Inspector", systemImage: Symbols.inspector) {
+      withAnimation(reduceMotion ? nil : .default) { state.showsInspector.toggle() }
+    }
+    .keyboardShortcut("i", modifiers: [.command, .option])
+    .help(state.showsInspector ? "Hide the inspector (⌥⌘I)" : "Show the inspector (⌥⌘I)")
+    .accessibilityValue(state.showsInspector ? "Shown" : "Hidden")
   }
 
   // MARK: Actions
 
   @ViewBuilder
   private func menu(for ids: Set<String>) -> some View {
-    let chosen = ids.compactMap(list.finding)
+    let chosen = ids.compactMap(state.list.finding)
     let selectable = chosen.filter { !$0.isBlocked }
     if selectable.contains(where: { !model.isSelected($0.id) }) {
       Button("Select", systemImage: "checkmark.circle") { model.setSelected(selectable.map(\.id), true) }
@@ -205,7 +234,7 @@ struct StorageScreen: View {
     let paths = chosen.flatMap(\.paths)
     if !paths.isEmpty {
       Divider()
-      Button("Show in Finder", systemImage: "folder") {
+      Button("Show in Finder", systemImage: Symbols.showInFinder) {
         NSWorkspace.shared.activateFileViewerSelecting(paths.map { URL(fileURLWithPath: $0) })
       }
       Button("Copy Path", systemImage: "document.on.document") {
@@ -221,7 +250,7 @@ struct StorageScreen: View {
 
   /// Space ticks the highlighted rows, or clears them when they're all ticked already.
   private func toggleChecks(_ ids: Set<String>) {
-    let selectable = ids.compactMap(list.finding).filter { !$0.isBlocked }.map(\.id)
+    let selectable = ids.compactMap(state.list.finding).filter { !$0.isBlocked }.map(\.id)
     guard !selectable.isEmpty else { return }
     let selectAll = selectable.contains { !model.isSelected($0) }
     model.setSelected(selectable, selectAll)

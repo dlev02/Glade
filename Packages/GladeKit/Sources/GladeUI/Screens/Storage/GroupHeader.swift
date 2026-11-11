@@ -2,37 +2,22 @@ import GladeKit
 import SwiftUI
 
 /// The heading of one category in the storage list: a checkbox for the whole group,
-/// its name (which folds the group away), how much of it is selected, and its size.
+/// its name (which folds the group away), how much of it is selected, and its size,
+/// lined up with the sizes of the rows below.
 struct GroupHeader: View {
   @Environment(AppModel.self) private var model
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   var group: FindingGroup
   @Binding var isExpanded: Bool
+  @State private var isHovering = false
 
   var body: some View {
-    HStack(spacing: Metrics.s) {
-      checkbox
-        .frame(width: 18)
-      Button {
-        withAnimation(.snappy) { isExpanded.toggle() }
-      } label: {
-        HStack(spacing: Metrics.s) {
-          CategoryIcon(group.category, size: 22)
-          Text(group.category.title)
-            .font(.headline)
-            .foregroundStyle(.primary)
-            .lineLimit(1)
-          Image(systemName: "chevron.right")
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(.tertiary)
-            .rotationEffect(.degrees(isExpanded ? 90 : 0))
-            .accessibilityHidden(true)
-        }
-        .contentShape(.rect)
+    HStack(spacing: Metrics.m) {
+      HStack(spacing: Metrics.s) {
+        checkbox
+          .frame(width: FindingRow.checkWidth)
+        disclosure
       }
-      .buttonStyle(.plain)
-      .accessibilityLabel(group.category.title)
-      .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
-      .accessibilityHint(isExpanded ? "Hides this group’s items" : "Shows this group’s items")
       Spacer(minLength: Metrics.s)
       let selected = selectedBytes
       if selected > 0 {
@@ -41,6 +26,7 @@ struct GroupHeader: View {
           .foregroundStyle(.secondary)
           .monospacedDigit()
           .lineLimit(1)
+          .contentTransition(.numericText())
       }
       Text(Format.bytes(group.totalBytes))
         .font(.headline)
@@ -48,6 +34,40 @@ struct GroupHeader: View {
         .frame(width: FindingRow.sizeWidth, alignment: .trailing)
     }
     .padding(.vertical, Metrics.xs)
+  }
+
+  private var disclosure: some View {
+    Button {
+      withAnimation(reduceMotion ? nil : .snappy(duration: 0.18)) { isExpanded.toggle() }
+    } label: {
+      HStack(spacing: Metrics.s) {
+        CategoryIcon(group.category, size: 22)
+        Text(group.category.title)
+          .font(.headline)
+          .foregroundStyle(.primary)
+          .lineLimit(1)
+        Image(systemName: "chevron.right")
+          .font(.caption.weight(.semibold))
+          .foregroundStyle(.secondary)
+          .rotationEffect(.degrees(isExpanded ? 90 : 0))
+          .accessibilityHidden(true)
+      }
+      .padding(.vertical, 2)
+      .padding(.leading, 2)
+      .padding(.trailing, 6)
+      .background(
+        Color.primary.opacity(isHovering ? 0.06 : 0),
+        in: .rect(cornerRadius: 6)
+      )
+      .contentShape(.rect)
+    }
+    .buttonStyle(.plain)
+    .onHover { hovering in
+      withAnimation(.snappy(duration: 0.12)) { isHovering = hovering }
+    }
+    .accessibilityLabel(group.category.title)
+    .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+    .accessibilityHint(isExpanded ? "Hides this group’s items" : "Shows this group’s items")
   }
 
   @ViewBuilder
@@ -62,8 +82,7 @@ struct GroupHeader: View {
         Binding(get: { model.isSelected(id) }, set: { model.setSelected(id, $0) })
       }
       Toggle("Select all \(group.category.title)", sources: bindings, isOn: \.self)
-        .toggleStyle(.checkbox)
-        .labelsHidden()
+        .toggleStyle(CheckToggleStyle())
     }
   }
 

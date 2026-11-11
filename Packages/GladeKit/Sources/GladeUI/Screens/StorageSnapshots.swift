@@ -5,26 +5,37 @@ import SwiftUI
 /// The storage screens that can be drawn to an image with `glade snapshot <name>`.
 /// Sheets are drawn on their own; render them with `--width 440 --height 460`.
 enum StorageSnapshots {
-  static let all: [String: (AppModel) -> AnyView] = [
-    "storage": { _ in AnyView(NavigationStack { StorageScreen(showsInspector: false) }) },
-    "storage-everything": { _ in AnyView(NavigationStack { StorageScreen(scope: .everything, showsInspector: false) }) },
-    "storage-review": { _ in AnyView(NavigationStack { StorageScreen(scope: .review, showsInspector: false) }) },
+  /// Reading these means a snapshot is being drawn, so the screen switches to what
+  /// the offscreen renderer can draw.
+  static var all: [String: (AppModel) -> AnyView] {
+    StorageScreen.drawsOffscreen = true
+    return screens
+  }
+
+  private static let screens: [String: (AppModel) -> AnyView] = [
+    "storage": { _ in screen(StorageViewState(showsInspector: false)) },
+    "storage-everything": { _ in screen(StorageViewState(scope: .everything, showsInspector: false)) },
+    "storage-review": { _ in screen(StorageViewState(scope: .review, showsInspector: false)) },
     "storage-inspector": { model in
       let id = model.scan?.findings.first { $0.title.hasPrefix("Build data – Lantern") }?.id
-      return AnyView(NavigationStack { StorageScreen(highlighted: id, showsInspector: true) })
+      return screen(StorageViewState(highlighted: id, showsInspector: true))
     },
     // The offscreen renderer leaves the inspector column blank, so its content is
     // drawn on its own too.
     "storage-inspector-panel": { model in
       let finding = model.scan?.findings.first { $0.title.hasPrefix("Worktree – Lantern") }
-      return AnyView(FindingInspector(finding: finding).frame(width: 300).frame(maxHeight: .infinity, alignment: .top))
+      return panel(FindingInspector(finding: finding))
     },
     "storage-inspector-blocked": { model in
-      let finding = model.scan?.findings.first(where: \.isBlocked)
-      return AnyView(FindingInspector(finding: finding).frame(width: 300).frame(maxHeight: .infinity, alignment: .top))
+      panel(FindingInspector(finding: model.scan?.findings.first(where: \.isBlocked)))
     },
+    "storage-inspector-permanent": { model in
+      panel(FindingInspector(finding: model.scan?.findings.first { $0.recovery == .permanent }))
+    },
+    // Open with nothing highlighted: what's selected, by category.
+    "storage-inspector-selection": { _ in panel(FindingInspector(finding: nil)) },
     "storage-advice": { model in
-      AnyView(NavigationStack { StorageScreen(showsInspector: false, advice: sampleAdvice(model)) })
+      screen(StorageViewState(showsInspector: false), advice: sampleAdvice(model))
     },
     "storage-advice-banner": { model in
       AnyView(sampleAdvice(model).map { advice in
@@ -47,6 +58,14 @@ enum StorageSnapshots {
     },
     "storage-result-problems": { _ in AnyView(sheet(CleanSummary(receipt: troubledReceipt, done: {}))) },
   ]
+
+  private static func screen(_ state: StorageViewState, advice: StorageAdvice? = nil) -> AnyView {
+    AnyView(NavigationStack { StorageScreen(state: state, advice: advice) })
+  }
+
+  private static func panel(_ inspector: FindingInspector) -> AnyView {
+    AnyView(inspector.frame(width: 300).frame(maxHeight: .infinity, alignment: .top))
+  }
 
   private static func sheet(_ content: some View) -> some View {
     content
