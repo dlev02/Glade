@@ -17,6 +17,7 @@ public struct GladeCommand: AsyncParsableCommand {
     subcommands: [Doctor.self, Scan.self, Plan.self, Clean.self, Undo.self, Receipts.self, Protect.self, Config.self, Categories.self, Logs.self, Report.self, MCP.self, Guidance.self,
       Status.self, Processes.self, Apps.self, Simulators.self, Context.self, Suggest.self, Quit.self,
       Advise.self, Ask.self, Runs.self, Providers.self, Prompt.self, Snapshot.self,
+      Index.self, Search.self, Similar.self, Lookalikes.self,
     ]
   )
 
