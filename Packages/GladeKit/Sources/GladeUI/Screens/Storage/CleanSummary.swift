@@ -35,7 +35,7 @@ struct CleanSummary: View {
           } else {
             Text("\(Format.bytes(trashed)) is in the Trash")
               .monospacedDigit()
-            Text("Space is freed when the Trash is emptied.")
+            Text("Space is freed when the Trash is emptied")
               .font(.callout)
               .foregroundStyle(.secondary)
           }
@@ -90,7 +90,7 @@ struct CleanSummary: View {
         Text(backText(restored))
           .font(.title2.weight(.semibold))
         if complete {
-          Text("Back where they were.")
+          Text("Back where they were")
             .foregroundStyle(.secondary)
         }
         stuckText(restored)
@@ -100,7 +100,7 @@ struct CleanSummary: View {
         Text("Moved \(Format.bytes(trashed)) to the Trash")
           .font(.title2.weight(.semibold))
           .monospacedDigit()
-        Text("Space is freed when the Trash is emptied.")
+        Text("Space is freed when the Trash is emptied")
           .foregroundStyle(.secondary)
       }
     } else if freed > 0 {
@@ -157,11 +157,11 @@ struct CleanSummary: View {
 
   // MARK: Put back
 
-  /// "Put back 19 items", "Put back 17 of 19 items" or "Nothing was put back."
+  /// "Put back 19 items", "Put back 17 of 19 items" or "Nothing was put back".
   private func backText(_ result: Cleaner.RestoreResult) -> String {
     let back = result.restored.count
     let total = back + result.missing.count + result.blocked.count
-    if back == 0 { return "Nothing was put back." }
+    if back == 0 { return "Nothing was put back" }
     if back == total { return back == 1 ? "Put back 1 item" : "Put back \(back) items" }
     return "Put back \(back) of \(total) items"
   }
@@ -179,7 +179,7 @@ struct CleanSummary: View {
   private func stuckText(_ result: Cleaner.RestoreResult) -> some View {
     let stuck = result.missing.count + result.blocked.count
     if stuck > 0 {
-      Text(stuck == 1 ? "1 couldn’t be put back: it’s no longer in the Trash or something took its place." : "\(stuck) couldn’t be put back: they’re no longer in the Trash or something took their place.")
+      Text(stuck == 1 ? "1 couldn’t be put back: it’s no longer in the Trash or something took its place" : "\(stuck) couldn’t be put back: they’re no longer in the Trash or something took their place")
         .font(.callout)
         .foregroundStyle(Palette.warning)
         .fixedSize(horizontal: false, vertical: true)

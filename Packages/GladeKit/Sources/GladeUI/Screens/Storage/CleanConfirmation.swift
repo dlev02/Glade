@@ -14,9 +14,10 @@ struct CleanConfirmation: View {
   /// The list opens at its first row.
   @State private var position = ScrollPosition(edge: .top)
 
-  /// Rows are one line each, so the list can show whole rows only.
-  static let rowHeight: CGFloat = 32
-  static let visibleRows = 7
+  /// Every row is tall enough for a name on two lines, so the list can show whole
+  /// rows only.
+  static let rowHeight: CGFloat = 44
+  static let visibleRows = 6
   /// The list's inner leading inset: icons in the list and in the outcome lines above
   /// it share this edge.
   private static let inset = Metrics.m
@@ -25,7 +26,7 @@ struct CleanConfirmation: View {
     let items = model.cleanItems
     let immediate = model.immediateBytes
     let trash = model.trashBytes
-    let permanent = items.filter { $0.recovery == .permanent }.count
+    let permanent = items.filter { $0.recovery == .permanent }
     VStack(alignment: .leading, spacing: Metrics.l) {
       Text(title(items: items.count, immediate: immediate, trash: trash))
         .font(.title2.weight(.semibold))
@@ -41,7 +42,7 @@ struct CleanConfirmation: View {
         if trash > 0 {
           outcome(
             "\(Format.bytes(trash)) to the Trash",
-            symbol: "trash", detail: "Space is freed when the Trash is emptied."
+            symbol: "trash", detail: "Space is freed when the Trash is emptied"
           )
         }
       }
@@ -49,16 +50,23 @@ struct CleanConfirmation: View {
 
       if !items.isEmpty {
         VStack(alignment: .leading, spacing: Metrics.s) {
-          HStack(spacing: Metrics.s) {
-            Text(items.count == 1 ? "1 item" : "\(items.count) items")
-              .foregroundStyle(.secondary)
-            Spacer(minLength: Metrics.s)
-            if permanent > 0 {
-              Label(
-                permanent == 1 ? "1 item can’t be recreated" : "\(permanent) items can’t be recreated",
-                systemImage: Recovery.permanent.symbol
-              )
-              .foregroundStyle(Recovery.permanent.color)
+          // The count and, at the other end, what can't be recreated; when that's too
+          // long for one line, it goes under the count and wraps.
+          ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: Metrics.l) {
+              itemCount(items.count)
+              Spacer(minLength: 0)
+              if !permanent.isEmpty {
+                permanentLabel(permanent)
+                  .fixedSize()
+              }
+            }
+            VStack(alignment: .leading, spacing: Metrics.xs) {
+              itemCount(items.count)
+              if !permanent.isEmpty {
+                permanentLabel(permanent)
+                  .fixedSize(horizontal: false, vertical: true)
+              }
             }
           }
           .font(.callout)
@@ -104,6 +112,29 @@ struct CleanConfirmation: View {
     return !removed.isEmpty && removed.allSatisfy { $0.recovery == .permanent }
       ? "Can’t be put back"
       : "Rebuilds or downloads again when needed"
+  }
+
+  private func itemCount(_ count: Int) -> some View {
+    Text(count == 1 ? "1 item" : "\(count) items")
+      .foregroundStyle(.secondary)
+  }
+
+  /// The red stays on the glyph; red words are too faint to read.
+  private func permanentLabel(_ items: [Finding]) -> some View {
+    Label {
+      Text(permanentText(items))
+    } icon: {
+      Image(systemName: Recovery.permanent.symbol)
+        .foregroundStyle(Recovery.permanent.color)
+    }
+  }
+
+  /// Names up to three things that can't be recreated, otherwise counts them.
+  private func permanentText(_ items: [Finding]) -> String {
+    if items.count <= 3 {
+      return "Can’t be recreated: " + items.map(\.title).formatted(.list(type: .and))
+    }
+    return "\(items.count) items can’t be recreated"
   }
 
   private func list(_ items: [Finding]) -> some View {
@@ -154,8 +185,9 @@ struct CleanConfirmation: View {
     HStack(spacing: Metrics.s) {
       CategoryIcon(finding.category, size: 20)
       Text(finding.title)
-        .lineLimit(1)
+        .lineLimit(2)
         .truncationMode(.middle)
+        .fixedSize(horizontal: false, vertical: true)
       Spacer(minLength: Metrics.s)
       if finding.recovery == .permanent {
         Image(systemName: Recovery.permanent.symbol)
