@@ -203,6 +203,12 @@ public final class AppModel {
         if let first = DemoState.value("demoProvider") {
           config.assistant.order = [first] + config.assistant.order.filter { $0 != first }
         }
+        // `-demoTrashOnly YES` unticks what never goes to the Trash (simulators and
+        // worktrees are removed by their own tools), as a person might, so a clean can
+        // be all Trash.
+        if DemoState.value("demoTrashOnly") != nil {
+          setSelected(cleanItems.filter { !$0.goesToTrash(config) }.map(\.id), false)
+        }
         // `-demoAsking YES` shows the assistant at work on the selection.
         if DemoState.value("demoAsking") != nil { assistantState = .thinking("Looking at what's safe to clear…") }
         // `-demoScan YES` starts a (made-up) scan straight away.
@@ -666,7 +672,7 @@ public final class AppModel {
     assistantState = .thinking("Thinking…")
     if isDemo {
       try? await Task.sleep(for: .seconds(2.5))
-      messages.append(Message(role: .assistant, text: SampleData.formattedAnswer, provider: "claude"))
+      messages.append(Message(role: .assistant, text: SampleData.formattedAnswer(snapshot: snapshot, apps: apps), provider: "claude"))
       assistantState = .idle
       return
     }
@@ -691,9 +697,12 @@ public final class AppModel {
     for note in sample.deselect { if let index = updated.items.firstIndex(where: { $0.id == note.id }) { updated.items[index].selected = false } }
     Planner.total(&updated, scan: scan, config: config)
     plan = updated
-    advice = sample
     overrides = [:]
-    messages.append(Message(role: .assistant, text: sample.summary, provider: sample.provider, model: sample.model, advice: sample))
+    // The answer names the total the clean bar now shows.
+    var answer = sample
+    answer.summary = answer.summary.replacingOccurrences(of: "{total}", with: Format.bytes(immediateBytes))
+    advice = answer
+    messages.append(Message(role: .assistant, text: answer.summary, provider: answer.provider, model: answer.model, advice: answer))
   }
 
   public func clearConversation() {

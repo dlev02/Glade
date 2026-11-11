@@ -43,14 +43,8 @@ public struct SampleData: Sendable {
       suggestions: PerformanceAdvisor.suggestions(snapshot: latest, apps: apps, context: context, config: config),
       scan: sampleScan(volume: latest.disk), receipts: sampleReceipts(), providers: sampleProviders(),
       messages: [
-        AppModel.Message(role: .person, text: "Free up about 40 GB without touching anything I'm working on."),
-        AppModel.Message(
-          role: .assistant,
-          text: "I'd clear about 46 GB: build data for three projects you haven't opened in over a month, an iOS 18 simulator system nothing uses, old package downloads and agent sessions from the summer. I left Atlas and Harbor alone because you built both this week.",
-          provider: "Claude"
-        ),
         AppModel.Message(role: .person, text: "Why is my Mac slow?"),
-        AppModel.Message(role: .assistant, text: formattedAnswer, provider: "claude"),
+        AppModel.Message(role: .assistant, text: formattedAnswer(snapshot: latest, apps: apps), provider: "claude"),
       ]
     )
   }
@@ -88,17 +82,21 @@ public struct SampleData: Sendable {
   public static func sampleAdvice(scan: ScanResult, short: Bool = false) -> StorageAdvice? {
     func id(_ prefix: String) -> String { scan.findings.first { $0.title.hasPrefix(prefix) }?.id ?? prefix }
     func note(_ prefix: String, _ why: String) -> [String: String] { ["id": id(prefix), "why": why] }
+    // `{total}` becomes what the clean bar shows once the advice is applied.
     let summary = short
-      ? "I’d add the Pocket Notes build data and leave Atlas alone, since you built it this morning."
-      : "I’d clear about **46 GB**: build data for projects you haven’t opened in over a month, an iOS 18 simulator system nothing uses, old package downloads and agent sessions from the summer. I left Atlas and Harbor alone because you built both this week, and kept the npm cache because you installed packages yesterday. Your CleanShot history, a second copy of a holiday video and an old film are worth a look yourself if you want more space."
+      ? "I’d add the older speech model, which MacWhisper no longer loads, and leave Atlas alone, since you built it this morning."
+      : "I’d clear about **{total}**: build data for projects you haven’t opened in over a month, an iOS 18 simulator system nothing uses, an older speech model, old package downloads and agent sessions from the summer. I left Harbor’s build data alone because you built it this week, and kept the npm cache because you installed packages yesterday. Your CleanShot history, a second copy of a holiday video and an old film are worth a look yourself if you want more space."
+    // Only what the rules didn't already tick is added, and only what they ticked is
+    // left alone, so every chip changes the selection.
+    let added = note("Speech models", "MacWhisper now uses a newer model; this one hasn’t loaded in three weeks.")
     let object: [String: Any] = [
       "summary": summary,
-      "select": short ? [note("Build data – Pocket Notes", "Not opened in three months.")] : [
-        note("Build data – Pocket Notes", "Not opened in three months."),
+      "select": short ? [added] : [
+        added,
         note("Codex sessions", "Untouched since August."),
         note("Homebrew downloads", "Installers already unpacked."),
       ],
-      "deselect": short ? [] : [note("build – Atlas", "Built this morning."), note("Ollama models", "Used five days ago.")],
+      "deselect": short ? [] : [note("Build data – Harbor", "Built two days ago."), note("npm cache", "Packages installed yesterday.")],
       "review": short ? [] : [note("CleanShot", "Mostly old recordings."), note("Sintel", "Not opened in ten months."), note("holiday-2025", "A second copy.")],
       "rejected": short ? [] : [note("Worktree – Harbor", "It has 3 uncommitted files, so only you can remove it.")],
       "provider": "claude",
@@ -111,23 +109,34 @@ public struct SampleData: Sendable {
   }
 
   /// A written answer with the formatting AIs use, for showing how answers render.
-  public static let formattedAnswer = """
-    Your Mac is busy mostly because of **two things**:
+  /// Its figures come from the sample's own readings, so it agrees with Performance.
+  public static func formattedAnswer(snapshot: SystemSnapshot?, apps: [AppUsage]) -> String {
+    let hog = apps.first { $0.name == "Docker" }
+      ?? apps.filter { $0.kind == .app && !$0.isSystem && !$0.isGlade && !$0.isFrontmost }.max { $0.memoryBytes < $1.memoryBytes }
+    let first = hog.map { "**\($0.name)** is holding **\(Format.bytes($0.memoryBytes))** of memory\($0.name == "Docker" ? " with no containers running" : " and hasn’t been used for hours")." }
+      ?? "**An idle app** is holding memory it doesn’t need."
+    let advice = hog.map { "Quit \($0.name) until you need it; it starts again in a few seconds." }
+      ?? "Quit apps you aren’t using; they start again in a few seconds."
+    let memory = snapshot?.memory
+    let used = memory.map { "Memory used   \(Format.bytes($0.usedBytes)) of \(Format.bytes($0.totalBytes))" } ?? "Memory used   —"
+    let pressure = (memory?.pressure ?? .normal).title.lowercased()
+    return """
+      Your Mac is busy mostly because of **two things**:
 
-    1. **Docker** is holding **6.5 GB** of memory with no containers running.
-    2. An **iPad Pro simulator** has been idle for 31 hours and uses *10.3 GB*.
+      1. \(first)
+      2. An **iPad Pro simulator** has been idle for 31 hours and uses *10.3 GB*.
 
-    ### What I'd do
-    - Quit Docker until you need it; it starts again in a few seconds.
-    - Shut down the simulator with `xcrun simctl shutdown all`, or from Performance.
+      ### What I'd do
+      - \(advice)
+      - Shut down the simulator with `xcrun simctl shutdown all`, or from Performance.
 
-    Memory pressure is **normal**, so nothing is urgent:
+      Memory pressure is **\(pressure)**, so nothing is urgent:
 
-    ```
-    Memory used   30.1 GB of 38.7 GB
-    Swap          13.4 GB
-    ```
-    """
+      ```
+      \(used)
+      ```
+      """
+  }
 
   static func sampleProviders() -> [ProviderStatus] {
     [
@@ -202,21 +211,21 @@ public struct SampleData: Sendable {
     add("Build data – Harbor", .xcode, 6.8, daysAgo: 2, .automatic, .safe, .careful, idle: 3, path: "Library/Developer/Xcode/DerivedData/Harbor-c", detail: build)
     add("Build data – Pocket Notes", .xcode, 3.1, daysAgo: 96, .automatic, .safe, .careful, idle: 3, path: "Library/Developer/Xcode/DerivedData/PocketNotes-d", detail: build)
     add("Archive – Lantern 2.3", .xcode, 2.4, daysAgo: 120, .permanent, .caution, nil, path: "Library/Developer/Xcode/Archives/2026-07-12/Lantern.xcarchive", detail: "A build you archived for release. Needed to symbolicate crashes from that version; nothing recreates it.", method: .trash)
-    add("Simulator system · iOS 18.0", .simulators, 8.4, daysAgo: 210, .redownload, .caution, .balanced, path: "sim/ios18", detail: "A downloaded simulator system version that none of your simulators use. Xcode offers to download it again if you ever add one.", evidence: ["No simulator uses this version.", "Never used since it was installed."])
-    add("iPhone 17 Pro · iOS 27.2", .simulators, 8.8, daysAgo: 1, .reinstall, .caution, .balanced, idle: 14, path: "Library/Developer/CoreSimulator/Devices/A", detail: "Apps and data inside this simulator. Erasing it keeps the simulator and returns it to a fresh state.")
-    add("iPad Air 11-inch · iOS 27.2", .simulators, 6.5, daysAgo: 38, .reinstall, .caution, .balanced, idle: 14, path: "Library/Developer/CoreSimulator/Devices/B", detail: "Apps and data inside this simulator. Erasing it keeps the simulator and returns it to a fresh state.")
-    add("Test simulators", .simulators, 25.1, daysAgo: 6, .automatic, .safe, .careful, idle: 3, path: "Library/Developer/XCTestDevices", detail: "Copies of simulators Xcode makes to run tests in parallel. Xcode makes fresh ones the next time tests run.")
-    add("Worktree – Lantern / fix-sync-crash", .agentWorktrees, 4.6, daysAgo: 33, .reinstall, .caution, .balanced, idle: 14, path: "Developer/Lantern/.claude/worktrees/fix-sync", detail: "An extra working copy an agent made. Its branch and commits stay in the repository.", evidence: ["Branch fix-sync-crash, merged into main.", "Nothing uncommitted."], project: "Lantern")
-    add("Worktree – Harbor / onboarding-redesign", .agentWorktrees, 3.9, daysAgo: 4, .reinstall, .caution, nil, path: "Developer/Harbor/.claude/worktrees/onboarding", detail: "An extra working copy an agent made. Its branch and commits stay in the repository.", blocked: Blocker(.uncommittedWork, "3 uncommitted files"), project: "Harbor")
-    add("Worktree – Atlas / t3-9e10", .agentWorktrees, 1.8, daysAgo: 52, .reinstall, .caution, .balanced, idle: 14, path: ".t3/worktrees/atlas/t3-9e10", detail: "An extra working copy an agent made. Its branch and commits stay in the repository.", project: "Atlas")
+    add("Simulator system · iOS 18.0", .simulators, 8.4, daysAgo: 210, .redownload, .caution, .balanced, path: "sim/ios18", detail: "A downloaded simulator system version that none of your simulators use. Xcode offers to download it again if you ever add one.", method: .simulatorRuntime(identifier: "com.apple.CoreSimulator.SimRuntime.iOS-18-0"), evidence: ["No simulator uses this version.", "Never used since it was installed."])
+    add("iPhone 17 Pro · iOS 27.2", .simulators, 8.8, daysAgo: 1, .reinstall, .caution, .balanced, idle: 14, path: "Library/Developer/CoreSimulator/Devices/A", detail: "Apps and data inside this simulator. Erasing it keeps the simulator and returns it to a fresh state.", method: .simulatorErase(udid: "A"))
+    add("iPad Air 11-inch · iOS 27.2", .simulators, 6.5, daysAgo: 38, .reinstall, .caution, .balanced, idle: 14, path: "Library/Developer/CoreSimulator/Devices/B", detail: "Apps and data inside this simulator. Erasing it keeps the simulator and returns it to a fresh state.", method: .simulatorErase(udid: "B"))
+    add("Test simulators", .simulators, 25.1, daysAgo: 6, .automatic, .safe, .careful, idle: 3, path: "Library/Developer/XCTestDevices", detail: "Copies of simulators Xcode makes to run tests in parallel. Xcode makes fresh ones the next time tests run.", method: .simulatorSet(name: "testing"))
+    add("Worktree – Lantern / fix-sync-crash", .agentWorktrees, 4.6, daysAgo: 33, .reinstall, .caution, .balanced, idle: 14, path: "Developer/Lantern/.claude/worktrees/fix-sync", detail: "An extra working copy an agent made. Its branch and commits stay in the repository.", method: .gitWorktree(repository: home + "/Developer/Lantern"), evidence: ["Branch fix-sync-crash, merged into main.", "Nothing uncommitted."], project: "Lantern")
+    add("Worktree – Harbor / onboarding-redesign", .agentWorktrees, 3.9, daysAgo: 4, .reinstall, .caution, nil, path: "Developer/Harbor/.claude/worktrees/onboarding", detail: "An extra working copy an agent made. Its branch and commits stay in the repository.", blocked: Blocker(.uncommittedWork, "3 uncommitted files"), method: .gitWorktree(repository: home + "/Developer/Harbor"), project: "Harbor")
+    add("Worktree – Atlas / t3-9e10", .agentWorktrees, 1.8, daysAgo: 52, .reinstall, .caution, .balanced, idle: 14, path: ".t3/worktrees/atlas/t3-9e10", detail: "An extra working copy an agent made. Its branch and commits stay in the repository.", method: .gitWorktree(repository: home + "/Developer/Atlas"), project: "Atlas")
     add("Claude Code sessions – Developer-Lantern", .agentHistory, 2.2, daysAgo: 22, .permanent, .caution, .balanced, path: ".claude/projects/lantern", detail: "Conversation transcripts from Claude Code sessions in this folder. Removing them means those sessions can no longer be resumed; your memory and skills are untouched.", evidence: ["184 sessions untouched for 14 days or more.", "12 recent sessions are kept."])
-    add("Codex sessions – 2026-08", .agentHistory, 0.9, daysAgo: 74, .permanent, .caution, .balanced, path: ".codex/sessions/2026/08", detail: "Conversation transcripts from Codex sessions. Removing them means those sessions can no longer be resumed.")
+    add("Codex sessions – 2026-08", .agentHistory, 0.9, daysAgo: 74, .permanent, .caution, .balanced, idle: 90, path: ".codex/sessions/2026/08", detail: "Conversation transcripts from Codex sessions. Removing them means those sessions can no longer be resumed.")
     add("node_modules – harbor-web", .projectDependencies, 1.4, daysAgo: 47, .reinstall, .safe, .balanced, idle: 14, path: "Developer/harbor-web/node_modules", detail: "Packages this project installed. `npm install` brings them back.", project: "harbor-web")
     add("build – Atlas", .buildOutputs, 2.9, daysAgo: 0.3, .automatic, .safe, .balanced, idle: 14, path: "Developer/Atlas/build", detail: "This project's build folder. Rebuilt the next time you build.", project: "Atlas")
     add("uv cache", .packageCaches, 9.8, daysAgo: 3, .redownload, .safe, .balanced, path: ".cache/uv", detail: "Python packages and builds uv has cached. It fetches them again when needed.")
     add("npm cache", .packageCaches, 4.2, daysAgo: 1, .redownload, .safe, .balanced, path: ".npm/_cacache", detail: "Packages npm has downloaded. It fetches them again on the next install.")
-    add("Homebrew downloads", .packageCaches, 1.3, daysAgo: 18, .redownload, .safe, .balanced, path: "Library/Caches/Homebrew", detail: "Installers Homebrew already unpacked. It downloads them again if you reinstall.")
-    add("Speech models – large-v3", .aiModels, 3.1, daysAgo: 64, .redownload, .caution, .balanced, idle: 30, path: ".whisper-models/large-v3.bin", detail: "Transcription models downloaded by MacWhisper and similar apps. The app downloads them again when you pick that model.")
+    add("Homebrew downloads", .packageCaches, 1.3, daysAgo: 18, .redownload, .safe, .balanced, idle: 30, path: "Library/Caches/Homebrew", detail: "Installers Homebrew already unpacked. It downloads them again if you reinstall.")
+    add("Speech models – large-v3", .aiModels, 3.1, daysAgo: 21, .redownload, .caution, .balanced, idle: 30, path: ".whisper-models/large-v3.bin", detail: "Transcription models downloaded by MacWhisper and similar apps. The app downloads them again when you pick that model.")
     add("Ollama models", .aiModels, 14.7, daysAgo: 5, .redownload, .caution, .balanced, idle: 30, path: ".ollama/models", detail: "Language models pulled with Ollama. `ollama pull` downloads them again.")
     add("Slack cache", .appCaches, 0.9, daysAgo: 9, .automatic, .safe, .careful, path: "Library/Application Support/Slack/Cache", detail: "Files this app saved to load faster. It rebuilds them as you use it.")
     add("Spotify cache", .appCaches, 1.6, daysAgo: 0, .automatic, .safe, .careful, path: "Library/Caches/com.spotify.client", detail: "Files this app saved to load faster. It rebuilds them as you use it.", blocked: Blocker(.appRunning, "Spotify is open."))
