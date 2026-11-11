@@ -66,6 +66,9 @@ struct SafetyTests {
       "proj", "proj/.git", "proj/.git/HEAD", "proj/.env", "Library/Caches/escape/victim",
       "Library/Caches/com.example.withlibrary/Old.photoslibrary", "Library/Caches/com.example.withlibrary/Old.photoslibrary/originals/a.jpg",
       "Library/Keychains/login.keychain-db", "Library/Messages/chat.db", "Pictures/Photos Library.photoslibrary",
+      // Security agents: touching their files sets off tamper alarms.
+      "Library/Caches/com.crowdstrike.falcon", "Library/Group Containers/X9E956P446.com.crowdstrike.falcon/data",
+      "Library/Application Support/com.jamf.connect/state", "Library/Caches/com.cisco.secureclient.gui",
     ]
     for relative in refused {
       let path = relative.isEmpty ? home : home + "/" + relative
@@ -82,7 +85,7 @@ struct SafetyTests {
     for relative in allowed {
       #expect(protection.verdict(forRemoving: home + "/" + relative).isAllowed, "should allow \(relative)")
     }
-    for hidden in [".ssh", "proj/.git", "proj/.env", "Library/Mobile Documents", ".claude/projects/-Users-me-App/memory"] {
+    for hidden in [".ssh", "proj/.git", "proj/.env", "Library/Mobile Documents", ".claude/projects/-Users-me-App/memory", "Library/Caches/com.sentinelone.agent"] {
       #expect(!protection.canScan(home + "/" + hidden), "scans must not see \(hidden)")
     }
   }
@@ -159,6 +162,132 @@ struct SafetyTests {
     #expect(restored.restored.count == 1)
     #expect(exists("Downloads/old-installer.dmg"))
     for trashed in locations.values { try? FileManager.default.removeItem(atPath: trashed) }
+  }
+
+  @Test func cleanerKeepsWhatIsInUse() async throws {
+    let support = home + "/Library/Application Support"
+    for folder in ["LiveApp/Cache", "StaleApp/Cache", "MovedApp/Cache"] {
+      try FileManager.default.createDirectory(atPath: support + "/" + folder, withIntermediateDirectories: true)
+      try Data(repeating: 1, count: 4096).write(to: URL(fileURLWithPath: support + "/" + folder + "/data_0"))
+    }
+    // An open Chromium-style app, one that has quit, and one whose lock came from another Mac.
+    try FileManager.default.createSymbolicLink(atPath: support + "/LiveApp/SingletonLock", withDestinationPath: "\(InUse.hostName)-\(getpid())")
+    try FileManager.default.createSymbolicLink(atPath: support + "/StaleApp/SingletonLock", withDestinationPath: "\(InUse.hostName)-0")
+    try FileManager.default.createSymbolicLink(atPath: support + "/MovedApp/SingletonLock", withDestinationPath: "Another-Mac.local-\(getpid())")
+    // A toolkit version a program is running from.
+    let toolkit = home + "/.toolkit/versions/1.0"
+    try FileManager.default.createDirectory(atPath: toolkit + "/bin", withIntermediateDirectories: true)
+    try Data(repeating: 2, count: 4096).write(to: URL(fileURLWithPath: toolkit + "/bin/tool"))
+
+    let findings = [
+      finding("live", support + "/LiveApp/Cache"), finding("stale", support + "/StaleApp/Cache"),
+      finding("moved", support + "/MovedApp/Cache"), finding("toolkit", toolkit),
+    ]
+    let running = RunningApps(executablePaths: [toolkit + "/bin/tool"])
+    let receipt = try await Cleaner.clean(
+      ids: findings.map(\.id), from: scan(findings), config: GladeConfig(),
+      options: CleanOptions(dryRun: false), protection: protection, running: running
+    )
+    let outcomes = Dictionary(uniqueKeysWithValues: receipt.entries.map { ($0.id, $0.outcome) })
+    for kept in ["live", "toolkit"] {
+      guard case .skipped = outcomes[kept] else {
+        Issue.record("\(kept) is in use and must be kept, got \(String(describing: outcomes[kept]))")
+        continue
+      }
+    }
+    #expect(outcomes["stale"] == .deleted)
+    #expect(outcomes["moved"] == .deleted)
+    #expect(FileManager.default.fileExists(atPath: support + "/LiveApp/Cache/data_0"))
+    #expect(FileManager.default.fileExists(atPath: toolkit + "/bin/tool"))
+  }
+
+  /// Agents keep live state in folders named like scratch space. Even long untouched,
+  /// the catalog must not offer it.
+  @Test func agentStateNamedLikeScratchIsNotOffered() async throws {
+    let old = Date().addingTimeInterval(-90 * 86_400)
+    let live = [
+      ".codex/.tmp/plugins/plugins/tool/manifest.json", ".codex/.tmp/bundled-marketplaces/openai-bundled/index.json",
+      ".codex/.tmp/plugins-backup-abc123/manifest.json", ".gemini/antigravity/brain/conv/notes.md",
+      ".gemini/antigravity/knowledge/item/overview.md", ".gemini/antigravity/skills/review/SKILL.md",
+    ]
+    let scratch = [".codex/.tmp/git-Ab12Cd/objects/pack.bin"]
+    for file in live + scratch {
+      let path = home + "/" + file
+      try FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+      try Data(repeating: 3, count: 2_000_000).write(to: URL(fileURLWithPath: path))
+      try FileManager.default.setAttributes([.modificationDate: old], ofItemAtPath: path)
+    }
+    let context = ScanContext(config: GladeConfig(), protection: protection, home: home, running: RunningApps())
+    let findings = await CatalogScanner(rules: Catalog.rules.filter { $0.category == .agentHistory }).scan(context)
+    let paths = findings.flatMap(\.paths)
+    #expect(paths.contains { $0.hasSuffix("/.codex/.tmp/git-Ab12Cd") }, "stale scratch clones should still be found")
+    for forbidden in ["/.codex/.tmp/plugins", "/bundled-marketplaces/openai-bundled", "/plugins-backup-", "/.gemini/antigravity"] {
+      #expect(!paths.contains { $0.contains(forbidden) }, "offered live agent state \(forbidden)")
+    }
+    for kept in [".gemini/antigravity/knowledge", ".gemini/antigravity/skills", ".gemini/skills", ".gemini/commands"] {
+      #expect(!protection.canScan(home + "/" + kept), "\(kept) is agent memory")
+    }
+  }
+
+  /// Things that live in cache folders but aren't caches: removing them breaks projects
+  /// or loses downloads a person chose. The catalog must never offer them as a cache.
+  @Test func catalogDoesNotMistakeLiveDataForCaches() async throws {
+    let files = [
+      "Library/Caches/pypoetry/virtualenvs/app-x1y2-py3.12/bin/python", "Library/Caches/pypoetry/cache/repositories/pypi/a.json",
+      "Library/Caches/deno/location_data/abc/local_storage", "Library/Caches/deno/npm/registry.npmjs.org/pkg/a.tgz",
+      "Library/Caches/org.R-project.R/R/renv/cache/v5/pkg/DESCRIPTION", "Library/Caches/llama.cpp/model-Q4_K_M.gguf",
+      "Library/Caches/Buzz/models/whisper/ggml-base.bin", ".yarn/berry/cache/left-pad-npm-1.3.0.zip",
+    ]
+    for file in files {
+      let path = home + "/" + file
+      try FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+      try Data(repeating: 4, count: 6_000_000).write(to: URL(fileURLWithPath: path))
+    }
+    let context = ScanContext(config: GladeConfig(), protection: protection, home: home, running: RunningApps())
+    let findings = await CatalogScanner().scan(context)
+    func covering(_ relative: String) -> [Finding] {
+      let path = home + "/" + relative
+      return findings.filter { $0.paths.contains { path == $0 || path.hasPrefix($0 + "/") } }
+    }
+    for kept in ["Library/Caches/pypoetry/virtualenvs", "Library/Caches/deno/location_data", "Library/Caches/org.R-project.R"] {
+      #expect(covering(kept).isEmpty, "\(kept) must not be offered")
+    }
+    #expect(!covering("Library/Caches/pypoetry/cache").isEmpty, "Poetry's download cache should still be found")
+    #expect(!covering("Library/Caches/deno/npm").isEmpty, "Deno's download cache should still be found")
+    for model in ["Library/Caches/llama.cpp", "Library/Caches/Buzz/models/whisper"] {
+      for finding in covering(model) {
+        #expect(finding.risk != .safe && finding.recovery == .redownload, "\(model) is a downloaded model, offered as \(finding.ruleID)")
+      }
+    }
+    for finding in covering(".yarn/berry/cache") {
+      #expect(finding.risk == .caution && finding.recovery == .reinstall, "Yarn's Plug'n'Play packages offered as \(finding.ruleID)")
+    }
+  }
+
+  /// Old agent versions: the one the command runs, any newer download and the one
+  /// before it must stay, and nothing is offered when the live one is unknown.
+  @Test func oldAgentVersionsKeepTheLiveOnes() throws {
+    let root = home + "/.local/share/claude/versions"
+    let bin = home + "/.local/bin"
+    try FileManager.default.createDirectory(atPath: root, withIntermediateDirectories: true)
+    try FileManager.default.createDirectory(atPath: bin, withIntermediateDirectories: true)
+    let now = Date()
+    for (index, version) in ["1.0.1", "1.0.2", "1.0.3", "1.0.4", "1.0.5"].enumerated() {
+      let path = root + "/" + version
+      try Data(repeating: 5, count: 1024).write(to: URL(fileURLWithPath: path))
+      try FileManager.default.setAttributes([.modificationDate: now.addingTimeInterval(Double(index - 5) * 86_400)], ofItemAtPath: path)
+    }
+    let command = bin + "/claude"
+    #expect(AgentVersionScanner.plan(root: root, command: command) == nil, "no command link: keep everything")
+    // The command runs 1.0.4; 1.0.5 is an update waiting to switch over.
+    try FileManager.default.createSymbolicLink(atPath: command, withDestinationPath: root + "/1.0.4")
+    let plan = try #require(AgentVersionScanner.plan(root: root, command: command))
+    #expect(Set(plan.keep) == Set(["1.0.3", "1.0.4", "1.0.5"].map { root + "/" + $0 }))
+    #expect(plan.remove == ["1.0.1", "1.0.2"].map { root + "/" + $0 })
+    // A link that points somewhere else says nothing about which version is live.
+    try FileManager.default.removeItem(atPath: command)
+    try FileManager.default.createSymbolicLink(atPath: command, withDestinationPath: home + "/elsewhere/claude")
+    #expect(AgentVersionScanner.plan(root: root, command: command) == nil)
   }
 
   @Test func scannerNeverReportsProtectedPlaces() async {

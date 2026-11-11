@@ -119,7 +119,12 @@ public struct CatalogScanner: StorageScanner {
 
   private func scan(_ rule: LocationRule, _ context: ScanContext) async -> [Finding] {
     if context.cancel.isCancelled { return [] }
-    let matches = Self.expand(rule, context)
+    var matches = Self.expand(rule, context)
+    // A rule that gathers many apps' folders into one finding leaves out the apps that
+    // are open, rather than holding back everyone else's.
+    if rule.split == .whole {
+      matches.removeAll { InUse.liveAppLock(for: $0, home: context.home) != nil }
+    }
     guard !matches.isEmpty else { return [] }
 
     switch rule.split {
@@ -216,6 +221,13 @@ public struct CatalogScanner: StorageScanner {
     }
     if rule.blockWhileRunning, let owner, let running = context.running.runningName(of: owner) {
       blockers.append(Blocker(.appRunning, "\(running) is open."))
+    }
+    if !blockers.contains(where: { $0.kind == .appRunning }),
+       let app = paths.lazy.compactMap({ InUse.liveAppLock(for: $0, home: context.home) }).first {
+      blockers.append(Blocker(.appRunning, "\(app) is open."))
+    }
+    if let program = paths.lazy.compactMap({ InUse.runningExecutable(inside: $0, executables: context.running.executablePaths) }).first {
+      blockers.append(Blocker(.inUse, "\(program) is running from here."))
     }
     for path in paths {
       let verdict = context.protection.verdict(forRemoving: path)

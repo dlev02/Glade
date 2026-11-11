@@ -7,11 +7,15 @@ public struct RunningApps: Sendable {
   public var processNames: Set<String>
   /// Lowercased app names, for owners known only by the folder they write to.
   public var appNames: Set<String>
+  /// Where each running program was started from, so a toolkit or runtime that's
+  /// running isn't offered for removal.
+  public var executablePaths: [String]
 
-  public init(bundleIDs: Set<String> = [], processNames: Set<String> = [], appNames: Set<String> = []) {
+  public init(bundleIDs: Set<String> = [], processNames: Set<String> = [], appNames: Set<String> = [], executablePaths: [String] = []) {
     self.bundleIDs = bundleIDs
     self.processNames = processNames
     self.appNames = appNames
+    self.executablePaths = executablePaths
   }
 
   public static func current() -> RunningApps {
@@ -22,7 +26,7 @@ public struct RunningApps: Sendable {
       if let executable = app.executableURL?.lastPathComponent { processNames.insert(executable.lowercased()) }
     }
     for name in ProcessNames.all() { processNames.insert(name.lowercased()) }
-    return RunningApps(bundleIDs: bundleIDs, processNames: processNames, appNames: appNames)
+    return RunningApps(bundleIDs: bundleIDs, processNames: processNames, appNames: appNames, executablePaths: InUse.executablePaths())
   }
 
   private static func normalise(_ name: String) -> String {
@@ -198,6 +202,7 @@ public enum ScanEngine {
       WorktreeScanner(),
       ProjectScanner(),
       EditorExtensionScanner(),
+      AgentVersionScanner(),
       DownloadsScanner(),
       AppCopyScanner(),
       AppLeftoverScanner(),

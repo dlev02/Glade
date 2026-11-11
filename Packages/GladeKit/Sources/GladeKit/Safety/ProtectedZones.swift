@@ -86,7 +86,8 @@ public enum ProtectedZones {
         "~/.codex/skills", "~/.codex/memories", "~/.codex/prompts", "~/.codex/rules",
         "~/.cursor/mcp.json", "~/.cursor/rules", "~/.cursor/cli-config.json", "~/.cursor/skills",
         "~/.gemini/oauth_creds.json", "~/.gemini/settings.json", "~/.gemini/GEMINI.md",
-        "~/.gemini/google_accounts.json", "~/.gemini/extensions",
+        "~/.gemini/google_accounts.json", "~/.gemini/extensions", "~/.gemini/skills", "~/.gemini/agents",
+        "~/.gemini/commands", "~/.gemini/hooks", "~/.gemini/antigravity/knowledge", "~/.gemini/antigravity/skills",
         "~/.config/opencode", "~/.local/share/opencode/auth.json", "~/.config/agents", "~/.agents",
       ],
       names: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "MEMORY.md", "SKILL.md"]
@@ -178,6 +179,18 @@ public enum ProtectedZones {
         "~/Library/Application Support/DuckDuckGo", "~/Library/Containers/com.duckduckgo.*",
         "~/Library/Application Support/Sidekick", "~/Library/Application Support/Thorium",
         "~/Library/Application Support/TorBrowser-Data", "~/Library/Application Support/Ladybird",
+      ]
+    ),
+    ProtectedZone(
+      id: "security-software",
+      title: "Security & Device Management",
+      reason: "Endpoint security, VPN and device management agents. Removing their files can set off tamper alarms your organisation's security team sees.",
+      // Matched wherever they appear: ~/Library, app containers with a team prefix,
+      // and the per-user temporary and cache folders under /private/var/folders.
+      names: [
+        "*com.crowdstrike.*", "*com.sentinelone.*", "*com.sentinel-labs.*", "*com.eset.*", "*com.jamf.*",
+        "*com.jamfsoftware.*", "*com.paloaltonetworks.*", "*com.cisco.anyconnect*", "*com.cisco.secureclient*",
+        "*com.alibaba.security.*",
       ]
     ),
     ProtectedZone(

@@ -147,6 +147,18 @@ public enum Cleaner {
       present.append(target)
     }
     guard !present.isEmpty else { return .skipped(reason: "Already gone.") }
+    // Asked again now, whatever the scan saw: an app may have opened since, or a
+    // program may have started from one of these folders.
+    for target in present {
+      if let app = InUse.liveAppLock(for: target, home: protection.home) {
+        Log.info(.clean, "Kept \(finding.ruleID): \(app) is open")
+        return .skipped(reason: "\(app) is open. Quit it first.")
+      }
+      if let program = InUse.runningExecutable(inside: target, executables: running.executablePaths) {
+        Log.info(.clean, "Kept \(finding.ruleID): \(program) is running from it")
+        return .skipped(reason: "\(program) is running from here.")
+      }
+    }
 
     let toTrash = finding.method == .trash || config.trashEverything || finding.risk == .personal
       || present.contains { protection.isPersonalArea($0) && !rebuildable.contains(finding.category) }
