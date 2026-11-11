@@ -38,13 +38,9 @@ struct MemoryPanel: View {
     ]
   }
 
+  /// Pressure, not fill: the same signal as the status beside the figure.
   private var color: Color {
-    guard let memory else { return .secondary }
-    switch memory.pressure {
-    case .normal: return Palette.load(Double(memory.usedBytes) / Double(max(memory.totalBytes, 1)) * 0.85)
-    case .warning: return Palette.warning
-    case .critical: return Palette.critical
-    }
+    memory?.pressure.color ?? .secondary
   }
 }
 

@@ -21,7 +21,44 @@ enum PerformanceSnapshots {
         PerformanceScreen(readings: { _ in PerformanceReadings(snapshot: nil, history: [], apps: [], suggestions: []) })
       })
     },
+    // The shared suggestion row with a caveat, in each place it appears.
+    "performance-suggestions": { _ in
+      AnyView(NavigationStack {
+        PerformanceScreen(readings: { model in
+          var readings = PerformanceReadings(model: model)
+          readings.suggestions = sampleSuggestions(model)
+          return readings
+        })
+      })
+    },
+    "popover-suggestion": { model in
+      AnyView(MenuBarView().environment(\.screenOverrides, ScreenOverrides(suggestions: sampleSuggestions(model))))
+    },
   ]
+
+  /// An idle simulator with a doubt about it, and an idle app, so the suggestion row
+  /// can be seen with and without a caveat whatever this Mac is doing.
+  private static func sampleSuggestions(_ model: AppModel) -> [PerformanceSuggestion] {
+    var entries: [[String: Any]] = [[
+      "id": "shutDownIdleSimulator:simulator:sample", "kind": "shutDownIdleSimulator", "appID": "simulator:sample",
+      "appName": "iPad Pro 13-inch (M5)", "title": "Shut down iPad Pro 13-inch (M5)",
+      "reason": "iPad Pro 13-inch (M5) (iOS 27.2) has been idle since it started 31 hours ago and is using 10.3 GB. Bitrig is open and may be showing it; Glade can’t tell which simulator Bitrig shows.",
+      "frees": ["memoryBytes": 10_300_000_000, "cpuPercent": 0.2], "confidence": "low", "actionable": true,
+      "simulatorUDID": "sample", "facts": "Idle 31 h · 10.3 GB", "caveat": "May be in use by Bitrig",
+    ]]
+    if let app = model.apps.filter({ $0.kind == .app && !$0.isSystem }).max(by: { $0.memoryBytes < $1.memoryBytes }) {
+      entries.append([
+        "id": "quitIdleApp:\(app.id)", "kind": "quitIdleApp", "appID": app.id, "appName": app.name,
+        "title": "Quit \(app.name)",
+        "reason": "\(app.name) is using \(Format.bytes(app.memoryBytes)) and hasn’t been used for 3 hours.",
+        "frees": ["memoryBytes": app.memoryBytes, "cpuPercent": 0.4], "confidence": "high", "actionable": true,
+        "facts": "Idle 3 h · \(Format.bytes(app.memoryBytes))",
+      ])
+    }
+    // The engine's initialiser isn't public, so build them the way they arrive from disk.
+    guard let data = try? JSONSerialization.data(withJSONObject: entries) else { return [] }
+    return (try? JSONDecoder().decode([PerformanceSuggestion].self, from: data)) ?? []
+  }
 
   /// The live readings with memory nearly full, compressing hard and swapping, and
   /// climbing over the last two minutes.
