@@ -5,6 +5,7 @@ import SwiftUI
 /// that shapes the selection, not a view switch, so it isn't a segmented control.
 public struct LevelMenu: View {
   @Environment(AppModel.self) private var model
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   /// Offers "Reset Selection" when the person has changed choices by hand.
   var offersReset: Bool
 
@@ -13,34 +14,21 @@ public struct LevelMenu: View {
   }
 
   public var body: some View {
-    Menu {
-      Picker("Clean level", selection: Binding(get: { model.level }, set: { level in
-        withAnimation(.smooth(duration: 0.3)) { model.level = level }
-      })) {
-        ForEach(CleanLevel.allCases) { level in
-          Text(level.title)
-          Text(level.consequence)
+    ChoicePopover(
+      "Clean level",
+      value: model.level.title,
+      selection: Binding(get: { model.level }, set: { level in
+        withAnimation(reduceMotion ? nil : .smooth(duration: 0.3)) { model.level = level }
+      }),
+      sections: [ChoiceSection(choices: CleanLevel.allCases.map { Choice($0, $0.title, subtitle: $0.consequence) })],
+      footer: offersReset && model.hasManualChoices
+        ? ChoiceFooter("Reset Selection", symbol: "arrow.counterclockwise") {
+          withAnimation(reduceMotion ? nil : .snappy) { model.resetSelection() }
         }
-      }
-      .pickerStyle(.inline)
-      .labelsHidden()
-      if offersReset, model.hasManualChoices {
-        Divider()
-        Button("Reset Selection", systemImage: "arrow.counterclockwise") {
-          withAnimation(.snappy) { model.resetSelection() }
-        }
-      }
-    } label: {
-      Text(model.level.title)
-    }
-    .menuStyle(.borderlessButton)
-    .menuIndicator(.visible)
-    .fixedSize()
-    // The accent fill is too dark to read as text on a dark surface.
-    .tint(.secondary)
+        : nil
+    )
     .disabled(model.isCleaning)
-    .accessibilityLabel("Clean level")
-    .accessibilityValue(model.level.title)
+    .accessibilityIdentifier("levelMenu")
     .help("What a clean selects")
   }
 }

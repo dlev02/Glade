@@ -20,6 +20,8 @@ struct Composer: View {
         .textFieldStyle(.plain)
         .lineLimit(1...6)
         .focused($isFocused)
+        .accessibilityLabel("Question")
+        .accessibilityIdentifier("composer.field")
         .padding(.horizontal, Metrics.xs)
         .padding(.top, 2)
         .onKeyPress(.return, phases: .down) { press in
@@ -41,7 +43,8 @@ struct Composer: View {
           .labelStyle(.iconOnly)
           .buttonStyle(SendButtonStyle())
           .disabled(!canSend)
-          .help("Send")
+          .help("Send (Return)")
+          .accessibilityIdentifier("composer.send")
       }
       .font(.callout)
     }
@@ -55,16 +58,14 @@ struct Composer: View {
   }
 
   private var providerMenu: some View {
-    Menu {
-      Picker("Answers", selection: Binding(get: { active.id }, set: { model.preferProvider($0) })) {
-        ForEach(ready) { provider in
-          Text(provider.name).tag(provider.id)
-        }
-      }
-      .pickerStyle(.inline)
-      .labelsHidden()
-      Divider()
-      Button("Assistant Settings…") {
+    ChoicePopover(
+      "Answers",
+      value: active.name,
+      selection: Binding(get: { active.id }, set: { model.preferProvider($0) }),
+      sections: [ChoiceSection(choices: ready.map {
+        Choice($0.id, $0.name, subtitle: $0.isLocal ? "On this Mac" : "Sees names, sizes and dates")
+      })],
+      footer: ChoiceFooter("Assistant Settings…", symbol: Symbols.settings) {
         openSettings()
         Task {
           // Give the Settings window a moment to start listening.
@@ -72,37 +73,20 @@ struct Composer: View {
           NotificationCenter.default.post(name: .gladeShowAssistantSettings, object: nil)
         }
       }
-    } label: {
-      Text(active.name)
-    }
-    .menuStyle(.borderlessButton)
-    .menuIndicator(.visible)
-    .fixedSize()
-    .tint(.secondary)
-    .accessibilityLabel("Answers")
-    .accessibilityValue(active.name)
+    )
+    .accessibilityIdentifier("composer.provider")
     .help("Which AI answers")
   }
 
   private var effortMenu: some View {
     @Bindable var model = model
-    return Menu {
-      Picker("Effort", selection: $model.config.assistant.effort) {
-        ForEach(Effort.allCases) { effort in
-          Text(effort.title).tag(effort)
-        }
-      }
-      .pickerStyle(.inline)
-      .labelsHidden()
-    } label: {
-      Text("\(model.config.assistant.effort.title) effort")
-    }
-    .menuStyle(.borderlessButton)
-    .menuIndicator(.visible)
-    .fixedSize()
-    .tint(.secondary)
-    .accessibilityLabel("Effort")
-    .accessibilityValue(model.config.assistant.effort.title)
+    return ChoicePopover(
+      "Effort",
+      value: "\(model.config.assistant.effort.title) effort",
+      selection: $model.config.assistant.effort,
+      sections: [ChoiceSection(choices: Effort.allCases.map { Choice($0, $0.title, subtitle: $0.consequence) })]
+    )
+    .accessibilityIdentifier("composer.effort")
     .help("How hard it thinks")
   }
 
@@ -132,5 +116,18 @@ private struct SendButtonStyle: ButtonStyle {
       .opacity(configuration.isPressed ? 0.8 : 1)
       .contentShape(.circle)
       .animation(.snappy(duration: 0.12), value: isEnabled)
+  }
+}
+
+extension Effort {
+  /// What the effort means, in a few words, for the choice list.
+  var consequence: String {
+    switch self {
+    case .automatic: "The AI’s own setting"
+    case .low: "Quickest answers"
+    case .medium: "A balance of speed and care"
+    case .high: "Thinks longer"
+    case .max: "Thinks longest; slowest"
+    }
   }
 }
