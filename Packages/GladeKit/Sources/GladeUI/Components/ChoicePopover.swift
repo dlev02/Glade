@@ -93,6 +93,9 @@ public struct ChoicePopover<Value: Hashable>: View {
       .padding(.vertical, 2)
       .background(Color.primary.opacity(hovering || isPresented ? 0.08 : 0), in: .capsule)
       .contentShape(.capsule)
+      // The words sit on the same edge as the text beside them; the capsule and the
+      // hit area keep their padding outside that edge.
+      .padding(.horizontal, -6)
     }
     .buttonStyle(.plain)
     .foregroundStyle(.secondary)

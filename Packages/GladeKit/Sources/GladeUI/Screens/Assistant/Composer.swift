@@ -51,6 +51,8 @@ struct Composer: View {
           .help("Send (Return)")
           .accessibilityIdentifier("composer.send")
       }
+      // The choices' words start on the question's text edge.
+      .padding(.leading, Metrics.xs)
       .font(.callout)
     }
     .padding(Metrics.m)

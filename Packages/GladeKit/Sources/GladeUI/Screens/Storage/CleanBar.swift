@@ -14,22 +14,24 @@ struct CleanBar: View {
     let free = model.immediateBytes
     let trash = model.trashBytes
     HStack(spacing: Metrics.l) {
-      VStack(alignment: .leading, spacing: 0) {
-        // In a narrow window the shorter wording keeps it on one line.
-        ViewThatFits(in: .horizontal) {
-          Text(summary(count: count, free: free, trash: trash))
-          Text(summary(count: count, free: free, trash: trash, short: true))
-        }
-          .lineLimit(1)
-          .font(.headline)
-          .monospacedDigit()
-          .contentTransition(.numericText())
-          .animation(reduceMotion ? nil : .snappy(duration: 0.18), value: free + trash)
-        LevelMenu(arrowEdge: .top)
-          .font(.callout)
-          .foregroundStyle(.secondary)
+      // In a narrower window the shorter wordings keep it on one line.
+      ViewThatFits(in: .horizontal) {
+        Text(summary(count: count, free: free, trash: trash))
+        Text(summary(count: count, free: free, trash: trash, short: true))
+        Text(itemCount(count))
       }
-      Spacer(minLength: Metrics.m)
+      .lineLimit(1)
+      .font(.headline)
+      .monospacedDigit()
+      .contentTransition(.numericText())
+      .animation(reduceMotion ? nil : .snappy(duration: 0.18), value: free + trash)
+      .layoutPriority(-1)
+      Spacer(minLength: 0)
+      // On the button's line, so its popover opens over the list and covers nothing
+      // in the bar.
+      LevelMenu(arrowEdge: .top)
+        .font(.callout)
+        .foregroundStyle(.secondary)
       FullDiskAccessGlyph()
       Button(free > 0 ? "Free Up \(Format.bytes(free))" : trash > 0 ? "Move to Trash" : "Free Up", action: freeUp)
         .filledAction()
@@ -51,7 +53,7 @@ struct CleanBar: View {
   /// and the Trash is named separately because it frees nothing until it's emptied.
   private func summary(count: Int, free: Int64, trash: Int64, short: Bool = false) -> String {
     guard count > 0 else { return "Nothing selected" }
-    let items = count == 1 ? "1 item" : "\(count) items"
+    let items = itemCount(count)
     if short, free > 0, trash > 0 {
       return "\(items) · \(Format.bytes(free)) + \(Format.bytes(trash)) to Trash"
     }
@@ -59,5 +61,13 @@ struct CleanBar: View {
     if free > 0 { parts.append("\(Format.bytes(free)) to free") }
     if trash > 0 { parts.append("\(Format.bytes(trash)) to the Trash") }
     return parts.joined(separator: " · ")
+  }
+
+  private func itemCount(_ count: Int) -> String {
+    switch count {
+    case 0: "Nothing selected"
+    case 1: "1 item"
+    default: "\(count) items"
+    }
   }
 }
