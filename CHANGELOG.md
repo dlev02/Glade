@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 — unreleased
+## 0.2.0 — 2026-11-11
 
 ### Honest about the Trash
 
@@ -31,6 +31,7 @@
 - Overview's cards share one inner margin, and the storage key keeps one four-column layout at every window size.
 - The advice counts' lists show each item's size, and refused suggestions read "1 suggestion refused".
 - Checkboxes and the main button turn grey when Glade's window isn't the active one, like the rest of macOS. Warning colours sit on symbols, so the words beside them stay easy to read.
+- The Glade menu has Check for Updates… in an installed copy (0.1.0 left it out) and a new Open at Login item.
 - Calmer details throughout: plain recovery words ("Downloads again", "Needs reinstall", "Can't be undone"), one figure style, a shorter search prompt, wider inspectors, and tidier Settings, Setup and menu bar wording.
 
 ### Storage

@@ -92,6 +92,12 @@ struct GladeCommands: Commands {
       if let check = updater.checkForUpdates {
         Button("Check for Updates…") { check() }
       }
+      // Only an installed copy can open at login, so the item is dimmed elsewhere.
+      Toggle("Open at Login", isOn: Binding(
+        get: { LoginItem.isEnabled },
+        set: { try? LoginItem.set($0) }
+      ))
+      .disabled(!LoginItem.isAvailable)
     }
     CommandGroup(replacing: .newItem) {}
     CommandMenu("Scan") {
