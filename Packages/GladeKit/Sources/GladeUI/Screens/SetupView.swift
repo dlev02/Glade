@@ -135,9 +135,11 @@ struct SetupView: View {
 
   private func assistantStep(_ status: SetupStatus) -> some View {
     let ready = status.providers.filter(\.isReady)
+    let detail = Self.assistantDetail(providers: status.providers)
     return SetupStepRow(
       title: "Connect an AI",
-      detail: Self.assistantDetail(providers: status.providers),
+      detail: detail.text,
+      note: detail.instruction,
       done: !ready.isEmpty
     ) {
       if checkingProviders {
@@ -196,18 +198,19 @@ struct SetupView: View {
     )
   }
 
-  /// "Claude Code and Apple Intelligence are ready.", or what to do when none is.
-  static func assistantDetail(providers: [ProviderStatus]) -> String {
+  /// "Claude Code and Apple Intelligence are ready.", or what to do when none is:
+  /// "Sign in to Claude Code" with how on the line under it.
+  static func assistantDetail(providers: [ProviderStatus]) -> (text: String, instruction: String?) {
     let ready = providers.filter(\.isReady).map(\.name)
     if !ready.isEmpty {
-      return "\(ready.formatted(.list(type: .and))) \(ready.count == 1 ? "is" : "are") ready."
+      return ("\(ready.formatted(.list(type: .and))) \(ready.count == 1 ? "is" : "are") ready.", nil)
     }
     for provider in providers {
       if case .needsSignIn(let hint) = provider.state {
-        return "Sign in to \(provider.name): \(hint.replacingOccurrences(of: "`", with: ""))"
+        return ("Sign in to \(provider.name)", hint.replacingOccurrences(of: "`", with: ""))
       }
     }
-    return "Install Claude Code or Codex, or turn on Apple Intelligence in System Settings."
+    return ("Install Claude Code or Codex, or turn on Apple Intelligence in System Settings.", nil)
   }
 
   private func load() async {
