@@ -187,7 +187,16 @@ private struct SuggestionList: View {
   private func row(_ suggestion: PerformanceSuggestion) -> some View {
     let app = model.apps.first { $0.id == suggestion.appID }
     return HStack(spacing: Metrics.m) {
-      AppIconView(path: app?.bundlePath)
+      if let symbol = model.symbol(for: suggestion) {
+        Image(systemName: symbol)
+          .font(.system(size: 15, weight: .medium))
+          .foregroundStyle(.teal)
+          .frame(width: 28, height: 28)
+          .background(.teal.opacity(0.14), in: .rect(cornerRadius: 7))
+          .accessibilityHidden(true)
+      } else {
+        AppIconView(path: app?.bundlePath)
+      }
       VStack(alignment: .leading, spacing: 2) {
         Text(suggestion.title)
         Text(suggestion.reason)
@@ -196,15 +205,16 @@ private struct SuggestionList: View {
           .lineLimit(2)
       }
       Spacer(minLength: Metrics.m)
-      if suggestion.actionable, let app {
-        Button("Quit") {
+      if let title = model.actionTitle(for: suggestion) {
+        Button(title) {
           working.insert(suggestion.id)
           Task {
-            outcome = await model.quit(app)
+            outcome = await model.perform(suggestion)
             working.remove(suggestion.id)
           }
         }
         .disabled(working.contains(suggestion.id))
+        .accessibilityLabel("\(title) \(suggestion.appName)")
       }
     }
     .padding(.horizontal, Metrics.l)
