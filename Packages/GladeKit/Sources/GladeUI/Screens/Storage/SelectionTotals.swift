@@ -10,6 +10,15 @@ struct SelectionTotals: View {
   var body: some View {
     let rows = byCategory
     let total = rows.reduce(0) { $0 + $1.bytes }
+    if findings.isEmpty {
+      // Nothing to add up: say so plainly instead of "0 KB, 0 items".
+      EmptyState("Nothing selected", symbol: "checklist.unchecked")
+    } else {
+      totals(rows: rows, total: total)
+    }
+  }
+
+  private func totals(rows: [(category: StorageCategory, bytes: Int64)], total: Int64) -> some View {
     VStack(alignment: .leading, spacing: Metrics.l) {
       VStack(alignment: .leading, spacing: Metrics.xs) {
         Text(title)

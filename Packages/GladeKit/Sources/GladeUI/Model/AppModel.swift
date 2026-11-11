@@ -498,7 +498,7 @@ public final class AppModel {
       guard let finding = scan.finding(id) else { continue }
       cleanState = .cleaning(done: index, total: ids.count, title: finding.title)
       try? await Task.sleep(for: .milliseconds(120))
-      let trashed = finding.method == .trash || finding.recovery == .permanent
+      let trashed = finding.goesToTrash(config)
       let outcome: RemovalOutcome = trashed
         ? .trashed(locations: Dictionary(uniqueKeysWithValues: finding.paths.map { ($0, "~/.Trash/" + ($0 as NSString).lastPathComponent) }))
         : .deleted
