@@ -7,4 +7,7 @@ struct AssistantPreview {
   var messages: [AppModel.Message]?
   var state: AppModel.AssistantState?
   var providers: [ProviderStatus]?
+  var runs: [AssistantRun]?
+  /// Whether the advice in `messages` still describes the selection.
+  var adviceIsLive: Bool?
 }

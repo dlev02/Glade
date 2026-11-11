@@ -1,41 +1,49 @@
 import GladeKit
 import SwiftUI
 
-/// A new conversation: who will answer, and a few questions to start with.
+/// A new conversation: a few questions to start with.
 struct ConversationStart: View {
   @Environment(AppModel.self) private var model
-  var provider: ProviderStatus
+  @Environment(\.accentMark) private var accentMark
 
-  private static let suggestions = [
-    ["Free up 30 GB", "Why is my Mac slow right now?"],
-    ["What’s using my memory?", "What’s safe to remove?"],
+  private static let suggestions: [[(symbol: String, question: String)]] = [
+    [("internaldrive", "Free up 30 GB"), ("gauge.with.dots.needle.67percent", "Why is my Mac slow?")],
+    [("memorychip", "What’s using memory?"), ("checkmark.shield", "What’s safe to remove?")],
   ]
 
   var body: some View {
     VStack(spacing: Metrics.xl) {
       VStack(spacing: Metrics.m) {
-        Image(systemName: "sparkles")
-          .font(.largeTitle)
-          .foregroundStyle(.tint)
+        Image(systemName: Symbols.assistant)
+          .font(.system(size: 30, weight: .medium))
+          .foregroundStyle(accentMark)
           .accessibilityHidden(true)
-        Text("Ask \(provider.name) about this Mac")
+        Text("Ask about this Mac")
           .font(.title2.weight(.semibold))
-          .multilineTextAlignment(.center)
       }
-      VStack(spacing: Metrics.s) {
-        ForEach(Self.suggestions, id: \.self) { row in
-          HStack(spacing: Metrics.s) {
-            ForEach(row, id: \.self) { question in
-              Button(question) { Task { await model.ask(question) } }
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
+      GlassEffectContainer(spacing: Metrics.m) {
+        Grid(horizontalSpacing: Metrics.m, verticalSpacing: Metrics.m) {
+          ForEach(Self.suggestions.indices, id: \.self) { row in
+            GridRow {
+              ForEach(Self.suggestions[row], id: \.question) { suggestion in
+                Button {
+                  Task { await model.ask(suggestion.question) }
+                } label: {
+                  Label(suggestion.question, systemImage: suggestion.symbol)
+                    .frame(maxWidth: .infinity)
+                }
+                .secondaryAction()
                 .controlSize(.large)
+              }
             }
           }
         }
       }
+      .fixedSize()
     }
     .padding(Metrics.xl)
+    // Sits a little above the centre, as the eye expects.
+    .padding(.bottom, Metrics.xxl)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
   }
 }

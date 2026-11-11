@@ -58,7 +58,7 @@ public struct SampleData: Sendable {
       ProviderStatus(id: "claude", name: "Claude Code", state: .ready, path: "/usr/local/bin/claude", version: "2.1", supportsEffort: true, models: ["haiku", "sonnet", "opus", "fable"]),
       ProviderStatus(id: "codex", name: "Codex", state: .ready, path: "/opt/homebrew/bin/codex", version: "0.167", supportsEffort: true, models: ["gpt-6.1-sol", "gpt-6-luna"]),
       ProviderStatus(id: "apple", name: "Apple Intelligence", state: .ready, isLocal: true),
-      ProviderStatus(id: "apple-cloud", name: "Apple Private Cloud Compute", state: .unavailable(reason: "Apple hasn’t granted this app access yet.")),
+      ProviderStatus(id: "apple-cloud", name: "Apple Private Cloud Compute", state: .unavailable(reason: "Only for apps from the App Store")),
       ProviderStatus(id: "gemini", name: "Gemini", state: .needsSignIn(hint: "Run `gemini` in Terminal and sign in."), verified: false),
       ProviderStatus(id: "cursor", name: "Cursor", state: .notInstalled, verified: false),
     ]
