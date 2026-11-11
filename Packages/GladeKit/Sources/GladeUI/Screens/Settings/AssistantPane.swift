@@ -73,32 +73,33 @@ struct AssistantPane: View {
       }
 
       Section {
-        menuPicker("Effort", selection: $model.config.assistant.effort, value: model.config.assistant.effort.title) {
-          ForEach(Effort.allCases) { effort in
-            Text(effort.title).tag(effort)
-          }
-        }
-        menuPicker("Second opinion from", selection: $model.config.assistant.deepProvider, value: deepTitle) {
-          Text("Same").tag(String?.none)
-          if !ready.isEmpty { Divider() }
-          ForEach(ready) { provider in
-            Text(provider.name).tag(Optional(provider.id))
-          }
-        }
+        // The same choices, with the same lines under them, as the composer's.
+        choicePicker(
+          "Effort", value: model.config.assistant.effort.title, selection: $model.config.assistant.effort,
+          choices: Effort.allCases.map { Choice($0, $0.title, subtitle: $0.consequence) }
+        )
+        choicePicker(
+          "Second opinion from", value: deepTitle, selection: $model.config.assistant.deepProvider,
+          sections: [
+            ChoiceSection(choices: [Choice(String?.none, "Same", subtitle: "The AI that answered")]),
+            ChoiceSection(choices: ready.map { Choice(Optional($0.id), $0.name) }),
+          ].filter { !$0.choices.isEmpty }
+        )
         if let deep = deepProvider, deep.takesModel {
-          LabeledContent("Model") {
+          // The day-to-day model is chosen in each AI's row above; this one is only
+          // for the closer look.
+          LabeledContent("Second opinion model") {
             ModelField(title: "\(deep.name) closer look", suggestions: deep.models, value: modelBinding(\.deepModels, deep.id))
           }
         }
       }
 
       Section {
-        Toggle("Check in by itself when a limit is crossed", isOn: $model.config.assistant.proactive)
-        menuPicker("Runs a day", selection: $model.config.assistant.runsPerDay, value: runsTitle(model.config.assistant.runsPerDay)) {
-          ForEach(Self.runChoices, id: \.self) { choice in
-            Text(runsTitle(choice)).tag(choice)
-          }
-        }
+        Toggle("Ask AI at alert thresholds", isOn: $model.config.assistant.proactive)
+        choicePicker(
+          "Daily limit", value: runsTitle(model.config.assistant.runsPerDay), selection: $model.config.assistant.runsPerDay,
+          choices: Self.runChoices.map { Choice($0, runsTitle($0)) }
+        )
         .disabled(!model.config.assistant.proactive)
       }
 
@@ -110,24 +111,19 @@ struct AssistantPane: View {
     }
   }
 
-  /// A setting chosen from a quiet menu: the label on the left, "Default ⌄" on the right.
-  private func menuPicker<Value: Hashable, Choices: View>(
-    _ title: String, selection: Binding<Value>, value: String, @ViewBuilder choices: () -> Choices
+  /// A setting chosen from a quiet popover, like the composer's and the clean level's:
+  /// the label on the left, "Medium ⌄" on the right.
+  private func choicePicker<Value: Hashable>(
+    _ title: String, value: String, selection: Binding<Value>, choices: [Choice<Value>]
+  ) -> some View {
+    choicePicker(title, value: value, selection: selection, sections: [ChoiceSection(choices: choices)])
+  }
+
+  private func choicePicker<Value: Hashable>(
+    _ title: String, value: String, selection: Binding<Value>, sections: [ChoiceSection<Value>]
   ) -> some View {
     LabeledContent(title) {
-      Menu {
-        Picker(title, selection: selection, content: choices)
-          .pickerStyle(.inline)
-          .labelsHidden()
-      } label: {
-        Text(value)
-      }
-      .menuStyle(.borderlessButton)
-      .menuIndicator(.visible)
-      .fixedSize()
-      .tint(.secondary)
-      .accessibilityLabel(title)
-      .accessibilityValue(value)
+      ChoicePopover(title, value: value, selection: selection, sections: sections)
     }
   }
 

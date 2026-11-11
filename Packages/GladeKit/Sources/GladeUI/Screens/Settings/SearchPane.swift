@@ -10,7 +10,7 @@ struct SearchPane: View {
     @Bindable var model = model
     Form {
       Section {
-        Toggle("Understand what files contain", isOn: $model.config.index.enabled)
+        Toggle("Search file contents", isOn: $model.config.index.enabled)
       }
 
       Section("Folders") {
