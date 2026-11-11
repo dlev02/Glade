@@ -21,6 +21,10 @@ struct SetupStepRow<Action: View>: View {
           .foregroundStyle(done ? AnyShapeStyle(Palette.good) : AnyShapeStyle(.tertiary))
           .contentTransition(.symbolEffect(.replace))
           .accessibilityHidden(true)
+      } else {
+        // Optional steps keep the circle's room empty, so every step's words start
+        // on one edge.
+        Color.clear.frame(width: 24, height: 1)
       }
       VStack(alignment: .leading, spacing: 2) {
         Text(title)

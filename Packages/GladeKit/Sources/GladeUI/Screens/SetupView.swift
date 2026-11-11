@@ -42,7 +42,7 @@ struct SetupView: View {
 
       group("Optional") {
         loginStep(status)
-        Divider().padding(.leading, Metrics.l)
+        Divider().padding(.leading, 52)
         commandLineStep(status)
       }
 
