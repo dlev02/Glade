@@ -124,6 +124,8 @@ public final class AppModel {
 
   public private(set) var scan: ScanResult?
   public private(set) var scanState: ScanState = .idle
+  /// While scanning: what was just looked at, and how much has been found so far.
+  public private(set) var scanActivity: (title: String, found: Int64)?
   public private(set) var plan: CleanPlan?
   public private(set) var cleanState: CleanState = .idle
   public private(set) var receipts: [Receipt] = []
@@ -388,13 +390,21 @@ public final class AppModel {
     let cancel = CancelFlag()
     scanCancel = cancel
     scanState = .scanning(done: 0, total: 1)
+    scanActivity = nil
     hasFullDiskAccess = FullDiskAccess.isGranted
     let config = config
+    // Sample data never scans the real disk: a made-up scan walks through the same
+    // steps and ends where it started.
+    if isDemo, let sample = scan {
+      Task { await simulateScan(sample, cancel: cancel) }
+      return
+    }
     Task {
       let result = await ScanEngine.run(config: config, deep: deep, cancel: cancel) { [weak self] progress in
         Task { @MainActor in
           guard let self, self.isScanning else { return }
           self.scanState = .scanning(done: progress.finished, total: progress.total)
+          self.scanActivity = (progress.message, progress.foundBytes)
         }
       }
       if !cancel.isCancelled {
@@ -406,6 +416,19 @@ public final class AppModel {
       }
       scanState = .idle
     }
+  }
+
+  /// Demo mode only: shows a scan's progress over the sample findings.
+  private func simulateScan(_ sample: ScanResult, cancel: CancelFlag) async {
+    let steps = ["Xcode build data", "Simulators", "Package caches", "AI models", "Agent sessions", "Worktrees", "App caches", "Downloads & installers", "Large files", "Logs"]
+    let total = sample.findings.filter { $0.within == nil }.reduce(Int64(0)) { $0 + $1.bytes }
+    for (index, title) in steps.enumerated() {
+      try? await Task.sleep(for: .milliseconds(900))
+      if cancel.isCancelled { break }
+      scanState = .scanning(done: index + 1, total: steps.count)
+      scanActivity = (title, total * Int64(index + 1) / Int64(steps.count))
+    }
+    scanState = .idle
   }
 
   public func cancelScan() {

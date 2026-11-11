@@ -90,9 +90,12 @@ public final class CancelFlag: @unchecked Sendable {
 
 public struct ScanProgress: Sendable {
   public var scanner: String
+  /// What the scanner that just finished looked at, in words ("Agent sessions").
   public var message: String
   public var finished: Int
   public var total: Int
+  /// Everything found so far, before nested findings are counted once.
+  public var foundBytes: Int64 = 0
 }
 
 /// Everything a scanner needs. Scanners never reach outside this.
@@ -225,21 +228,23 @@ public enum ScanEngine {
     Log.info(.scan, "Scan started: \(active.count) scanners, Full Disk Access \(fullDiskAccess ? "on" : "off")")
 
     var collected: [(order: Int, findings: [Finding], id: String, seconds: Double)] = []
-    await withTaskGroup(of: (Int, [Finding], String, Double).self) { group in
+    await withTaskGroup(of: (Int, [Finding], String, String, Double).self) { group in
       for (order, scanner) in active.enumerated() {
         group.addTask {
           let begin = Date()
           let findings = await scanner.scan(context)
-          return (order, findings, scanner.id, Date().timeIntervalSince(begin))
+          return (order, findings, scanner.id, scanner.title, Date().timeIntervalSince(begin))
         }
       }
       var finished = 0
-      for await (order, findings, id, seconds) in group {
+      var found: Int64 = 0
+      for await (order, findings, id, title, seconds) in group {
         finished += 1
         collected.append((order, findings, id, seconds))
-        let bytes = findings.reduce(0) { $0 + $1.bytes }
+        let bytes = findings.filter { $0.within == nil }.reduce(0) { $0 + $1.bytes }
+        found += bytes
         Log.info(.scan, "Scanner \(id): \(findings.count) findings, \(Format.bytes(bytes)), \(String(format: "%.1f", seconds))s")
-        progress(ScanProgress(scanner: id, message: "", finished: finished, total: active.count))
+        progress(ScanProgress(scanner: id, message: title, finished: finished, total: active.count, foundBytes: found))
       }
     }
 
