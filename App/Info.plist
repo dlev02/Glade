@@ -32,6 +32,8 @@
 	<string>NSApplication</string>
 	<key>SUFeedURL</key>
 	<string>https://raw.githubusercontent.com/dlev02/Glade/main/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>S72B6TkW+/wax7yFtJ+pue1eKNO5NESu4pvPiFldtpA=</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUAllowsAutomaticUpdates</key>
