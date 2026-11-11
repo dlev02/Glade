@@ -71,6 +71,16 @@ public struct Protection: Sendable {
         paths: custom, locked: false, strictInside: true
       ))
     }
+    // With iCloud's Desktop & Documents turned on, those two folders are cloud
+    // storage: removing a file removes it from every device.
+    if Protection.isInICloud(home + "/Documents") || Protection.isInICloud(home + "/Desktop") {
+      active.append(ProtectedZone(
+        id: "icloud-desktop", title: "iCloud Desktop & Documents",
+        reason: "These folders sync through iCloud, so removing a file removes it from every device.",
+        paths: [home + "/Desktop", home + "/Documents"], locked: false
+      ))
+      active.removeAll { $0.id == "icloud-desktop" && config.unlockedZones.contains("icloud-desktop") }
+    }
     zones = active
     userPaths = custom
 
@@ -211,6 +221,12 @@ public struct Protection: Sendable {
     "Library/Application Support/Code", "Library/Application Support/Cursor",
     "Library/Application Support/Claude", "Library/Android", "Library/Android/sdk",
   ]
+
+  /// Whether a folder is kept in iCloud Drive.
+  static func isInICloud(_ path: String) -> Bool {
+    let values = try? URL(fileURLWithPath: path).resourceValues(forKeys: [.isUbiquitousItemKey])
+    return values?.isUbiquitousItem == true
+  }
 
   // MARK: Path helpers
 
