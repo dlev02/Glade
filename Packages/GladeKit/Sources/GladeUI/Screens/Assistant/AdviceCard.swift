@@ -109,7 +109,7 @@ struct AdviceCard: View {
         HStack(alignment: .firstTextBaseline, spacing: Metrics.l) {
           if !advice.rejected.isEmpty {
             AdviceDisclosure(isExpanded: $showsRefused) {
-              Text(advice.rejected.count == 1 ? "Glade refused 1" : "Glade refused \(advice.rejected.count)")
+              Text(advice.rejected.count == 1 ? "1 suggestion refused" : "\(advice.rejected.count) suggestions refused")
             } content: {
               VStack(alignment: .leading, spacing: Metrics.s) {
                 ForEach(Array(advice.rejected.enumerated()), id: \.offset) { _, note in

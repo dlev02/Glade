@@ -43,7 +43,7 @@ struct AdviceBanner: View {
         .foregroundStyle(.secondary)
         if !advice.rejected.isEmpty {
           AdviceDisclosure(isExpanded: $showsRejected) {
-            Text(advice.rejected.count == 1 ? "Glade refused 1" : "Glade refused \(advice.rejected.count)")
+            Text(advice.rejected.count == 1 ? "1 suggestion refused" : "\(advice.rejected.count) suggestions refused")
               .font(.caption)
               .foregroundStyle(.secondary)
           } content: {

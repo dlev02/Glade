@@ -28,7 +28,7 @@ struct RunSheet: View {
 
       if !run.rejected.isEmpty {
         AdviceDisclosure(isExpanded: $showsRefused) {
-          Text(run.rejected.count == 1 ? "Glade refused 1" : "Glade refused \(run.rejected.count)")
+          Text(run.rejected.count == 1 ? "1 suggestion refused" : "\(run.rejected.count) suggestions refused")
             .font(.callout)
             .foregroundStyle(.secondary)
         } content: {
