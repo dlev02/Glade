@@ -94,7 +94,7 @@ public actor ThresholdMonitor {
     if !alerts.isEmpty {
       for alert in alerts {
         lastFired[alert.kind] = now
-        Log.info(.automation, "ThresholdAlert: \(alert.kind.rawValue): \(alert.body)")
+        Log.info(.automation, "Alert: \(alert.kind.rawValue): \(alert.body)")
       }
       save()
     }

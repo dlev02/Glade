@@ -113,6 +113,8 @@ public final class AppModel {
   public private(set) var apps: [AppUsage] = []
   public private(set) var context: ActivityContext?
   public private(set) var suggestions: [PerformanceSuggestion] = []
+  /// Running simulators, each with the memory it holds.
+  public private(set) var simulators: [SimulatorUsage] = []
   public private(set) var alerts: [ThresholdAlert] = []
 
   // MARK: Storage
@@ -235,10 +237,28 @@ public final class AppModel {
   public func refreshApps() async {
     let listing = await sampler.apps()
     let current = ActivityContext.current(apps: listing, power: snapshot?.power)
+    // Only worth working out when simulators are actually running.
+    let running = listing.contains { $0.name.localizedCaseInsensitiveContains("simulator") }
+    let devices = running ? await sampler.simulators() : []
     apps = listing
     context = current
+    simulators = devices
     if let snapshot {
-      suggestions = PerformanceAdvisor.suggestions(snapshot: snapshot, apps: listing, context: current, config: config)
+      suggestions = PerformanceAdvisor.suggestions(
+        snapshot: snapshot, apps: listing, context: current, simulators: devices, config: config
+      )
+    }
+  }
+
+  /// Shuts a simulator down, as turning a phone off would: its apps stop, its data stays.
+  @discardableResult
+  public func shutDown(_ simulator: SimulatorUsage) async -> String {
+    do {
+      let result = try await SimulatorControl.shutdown(simulator)
+      await refreshApps()
+      return result.message
+    } catch {
+      return error.localizedDescription
     }
   }
 

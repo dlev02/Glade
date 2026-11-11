@@ -1,10 +1,27 @@
+import AppKit
 import GladeKit
+import GladeUI
 import SwiftUI
 
+/// The app itself: one shared model, the scenes from the interface package, and
+/// software updates.
 struct GladeApp: App {
+  @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
+  @State private var updates = UpdateController()
+
   var body: some Scene {
-    Window(Brand.name, id: "main") {
-      ContentView()
-    }
+    GladeScenes(model: AppDelegate.model, updater: updaterHooks)
+  }
+
+  private var updaterHooks: UpdaterHooks {
+    guard updates.isAvailable else { return UpdaterHooks() }
+    return UpdaterHooks(
+      checkForUpdates: { updates.checkNow() },
+      automaticallyChecks: Binding(get: { updates.checksAutomatically }, set: { updates.checksAutomatically = $0 })
+    )
+  }
+
+  init() {
+    AppDelegate.updates = updates
   }
 }

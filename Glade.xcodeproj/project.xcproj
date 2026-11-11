@@ -67,6 +67,10 @@
           "product-name": "GladeKit",
           "build-phase": { "build-phase": "frameworks" },
         }, {
+          "package": "GladeKit",
+          "product-name": "GladeUI",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
           "package": "Sparkle",
           "product-name": "Sparkle",
           "build-phase": { "build-phase": "frameworks" },

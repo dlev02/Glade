@@ -446,7 +446,11 @@ final class SimulatorTracker: Sendable {
     if !unattributed.isEmpty {
       Log.debug(.system, "Simulator breakdown: \(unattributed.count) processes not tied to a device: \(unattributed.prefix(5).map(\.name).joined(separator: ", "))")
     }
-    Log.debug(.system, "Simulator breakdown: \(usages.count) devices, \(count) processes in \(String(format: "%.0f", Double(MachTime.now() &- started) / 1e6)) ms")
+    // This runs every few seconds while a window shows, so only note the slow ones.
+    let milliseconds = Double(MachTime.now() &- started) / 1e6
+    if milliseconds > 400 {
+      Log.debug(.system, "Simulator breakdown: \(usages.count) devices, \(count) processes in \(String(format: "%.0f", milliseconds)) ms")
+    }
     return SimulatorBreakdown(
       date: now, devices: usages, sharedBytes: sharedBytes, sharedProcessCount: shared.count,
       unattributedPIDs: unattributed.map(\.pid).sorted(), unattributedBytes: unattributedBytes,

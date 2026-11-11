@@ -8,12 +8,21 @@ public enum Brand {
   public static let issuesURL = "https://github.com/dlev02/Glade/issues/new"
 
   public static var version: String {
-    Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
+    appBundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
   }
 
   public static var build: String {
-    Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
+    appBundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
   }
+
+  /// The app bundle, found even when Glade was started through the `glade` link, where
+  /// the system's idea of the main bundle is the folder holding the link.
+  public static let appBundle: Bundle = {
+    if Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") != nil { return .main }
+    guard let executable = Bundle.main.executableURL?.resolvingSymlinksInPath() else { return .main }
+    let app = executable.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+    return app.pathExtension == "app" ? Bundle(url: app) ?? .main : .main
+  }()
 }
 
 /// Where Glade keeps its own files. Everything is local to this Mac.

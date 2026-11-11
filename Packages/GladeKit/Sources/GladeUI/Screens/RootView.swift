@@ -13,6 +13,7 @@ public struct RootView: View {
       List(selection: Binding(get: { model.section }, set: { model.section = $0 ?? .overview })) {
         ForEach(AppModel.Section.allCases) { section in
           Label(section.title, systemImage: section.symbol)
+            .listItemTint(model.tint)
             .tag(section)
         }
       }
