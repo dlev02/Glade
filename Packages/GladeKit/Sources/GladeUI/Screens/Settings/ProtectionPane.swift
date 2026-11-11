@@ -15,7 +15,7 @@ struct ProtectionPane: View {
     let locked = zones.filter(\.locked)
     let liftable = zones.filter { !$0.locked }
     Form {
-      Section("Protected Unless You Turn It Off") {
+      Section("Protected unless you turn it off") {
         ForEach(liftable) { zone in
           Toggle(isOn: binding(for: zone)) {
             HStack(alignment: .top, spacing: Metrics.m) {
@@ -26,7 +26,7 @@ struct ProtectionPane: View {
         }
       }
 
-      Section("Your Protected Folders") {
+      Section("Your protected folders") {
         FolderRows(paths: $model.config.protectedPaths, prompt: "Protect", confirmsRemoval: true)
       }
 
@@ -53,7 +53,7 @@ struct ProtectionPane: View {
           Button {
             withAnimation(reduceMotion ? nil : .snappy(duration: 0.2)) { showsAlwaysProtected.toggle() }
           } label: {
-            LabeledContent("Always Protected") {
+            LabeledContent("Always protected") {
               Text(locked.count == 1 ? "1 area" : "\(locked.count) areas")
                 .monospacedDigit()
             }

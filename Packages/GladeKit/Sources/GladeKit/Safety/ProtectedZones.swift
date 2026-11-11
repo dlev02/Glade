@@ -76,7 +76,7 @@ public enum ProtectedZones {
     ProtectedZone(
       id: "agent-memory",
       title: "Agent Memory, Skills & Sign-ins",
-      reason: "What you've taught your AI agents, their settings, and their sign-in files.",
+      reason: "What you’ve taught your AI agents, their settings, and their sign-in files.",
       paths: [
         "~/.claude/CLAUDE.md", "~/.claude/settings.json", "~/.claude/settings.local.json",
         "~/.claude/.credentials.json", "~/.claude.json", "~/.claude/skills", "~/.claude/agents",
@@ -124,7 +124,7 @@ public enum ProtectedZones {
     ProtectedZone(
       id: "apple-personal",
       title: "Notes, Contacts, Calendars & Health",
-      reason: "Personal records kept by Apple's own apps.",
+      reason: "Personal records kept by Apple’s own apps.",
       paths: [
         "~/Library/Group Containers/group.com.apple.notes", "~/Library/Containers/com.apple.Notes",
         "~/Library/Calendars", "~/Library/Group Containers/group.com.apple.calendar",
@@ -184,7 +184,7 @@ public enum ProtectedZones {
     ProtectedZone(
       id: "security-software",
       title: "Security & Device Management",
-      reason: "Endpoint security, VPN and device management agents. Removing their files can set off tamper alarms your organisation's security team sees.",
+      reason: "Endpoint security, VPN and device management agents. Removing their files can set off tamper alarms your organisation’s security team sees.",
       // Matched wherever they appear: ~/Library, app containers with a team prefix,
       // and the per-user temporary and cache folders under /private/var/folders.
       names: [
@@ -196,19 +196,19 @@ public enum ProtectedZones {
     ProtectedZone(
       id: "git",
       title: "Git Repositories",
-      reason: "Commit history. A project's .git folder is never touched, and a repository is never removed whole.",
+      reason: "Commit history. A project’s .git folder is never touched, and a repository is never removed whole.",
       names: [".git", ".jj", ".hg", ".svn"]
     ),
     ProtectedZone(
       id: "glade",
       title: "Glade",
-      reason: "Glade's own settings, receipts and logs.",
+      reason: "Glade’s own settings, receipts and logs.",
       paths: ["~/Library/Application Support/Glade", "~/Library/Logs/Glade"]
     ),
     ProtectedZone(
       id: "backups",
       title: "Time Machine & Backups",
-      reason: "Backups are only useful when they're complete.",
+      reason: "Backups are only useful when they’re complete.",
       paths: ["~/Library/Application Support/Backblaze", "~/Library/Application Support/Arq*"],
       names: ["*.backupbundle", "*.sparsebundle", "Backups.backupdb", "*.timemachine", "*.arqbackup"],
       strictInside: true
@@ -216,7 +216,7 @@ public enum ProtectedZones {
     ProtectedZone(
       id: "virtual-machines",
       title: "Virtual Machines",
-      reason: "Whole computers stored as one file. They can't be partly cleaned.",
+      reason: "Whole computers stored as one file. They can’t be partly cleaned.",
       names: ["*.pvm", "*.vmwarevm", "*.utm", "*.vbox", "*.qcow2", "*.vmdk"],
       locked: false,
       strictInside: true

@@ -24,7 +24,7 @@ struct AdvancedPane: View {
         CommandLineRows()
       }
 
-      Section("Connect to Agents") {
+      Section("Connect to agents") {
         ForEach(AgentConnection.Agent.allCases) { agent in
           AgentConnectionRow(agent: agent)
         }

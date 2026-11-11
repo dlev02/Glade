@@ -67,7 +67,7 @@ public struct Protection: Sendable {
     let custom = config.protectedPaths.map { Protection.clean(Protection.expand($0, home: home)) }
     if !custom.isEmpty {
       active.append(ProtectedZone(
-        id: "custom", title: "Your Protected Folders", reason: "Folders you've put off limits.",
+        id: "custom", title: "Your Protected Folders", reason: "Folders you’ve put off limits.",
         paths: custom, locked: false, strictInside: true
       ))
     }
