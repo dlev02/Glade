@@ -16,7 +16,7 @@ Glade has no accounts, advertising, analytics, crash reporting or remote logging
 
 ## What Glade never reads
 
-Protected areas are never scanned, listed, measured or shown to an AI: SSH, GPG and cloud credentials, `.env`, key and certificate files, Keychains and password managers, your AI agents' memory, skills, settings and sign-ins, Photos, Music, TV and other media libraries, Messages, Mail and other chat apps, Notes, Contacts, Calendars, Reminders, Health and other personal records kept by Apple's apps, apps' preferences, iCloud Drive and other synced folders, browser profiles, Time Machine and other backups, virtual machines, and every `.git` folder. Folders you add under **Protected** in Settings (or with `glade protect add`) are treated the same way. `glade protect list` shows the full list, and `glade protect check <path>` explains any path.
+Protected areas are never scanned, listed, measured or shown to an AI: SSH, GPG and cloud credentials, `.env`, key and certificate files, Keychains and password managers, your AI agents' memory, skills, settings and sign-ins, Photos, Music, TV and other media libraries, Messages, Mail and other chat apps, Notes, Contacts, Calendars, Reminders, Health and other personal records kept by Apple's apps, apps' preferences, iCloud Drive and other synced folders, browser profiles, Time Machine and other backups, virtual machines, endpoint security, VPN and device management software, and every `.git` folder. Folders you add under **Protected** in Settings (or with `glade protect add`) are treated the same way. `glade protect list` shows the full list, and `glade protect check <path>` explains any path.
 
 ## What Glade stores, and where
 

@@ -66,6 +66,9 @@ struct SafetyTests {
       "proj", "proj/.git", "proj/.git/HEAD", "proj/.env", "Library/Caches/escape/victim",
       "Library/Caches/com.example.withlibrary/Old.photoslibrary", "Library/Caches/com.example.withlibrary/Old.photoslibrary/originals/a.jpg",
       "Library/Keychains/login.keychain-db", "Library/Messages/chat.db", "Pictures/Photos Library.photoslibrary",
+      // Security agents: touching their files sets off tamper alarms.
+      "Library/Caches/com.crowdstrike.falcon", "Library/Group Containers/X9E956P446.com.crowdstrike.falcon/data",
+      "Library/Application Support/com.jamf.connect/state", "Library/Caches/com.cisco.secureclient.gui",
     ]
     for relative in refused {
       let path = relative.isEmpty ? home : home + "/" + relative
@@ -82,7 +85,7 @@ struct SafetyTests {
     for relative in allowed {
       #expect(protection.verdict(forRemoving: home + "/" + relative).isAllowed, "should allow \(relative)")
     }
-    for hidden in [".ssh", "proj/.git", "proj/.env", "Library/Mobile Documents", ".claude/projects/-Users-me-App/memory"] {
+    for hidden in [".ssh", "proj/.git", "proj/.env", "Library/Mobile Documents", ".claude/projects/-Users-me-App/memory", "Library/Caches/com.sentinelone.agent"] {
       #expect(!protection.canScan(home + "/" + hidden), "scans must not see \(hidden)")
     }
   }

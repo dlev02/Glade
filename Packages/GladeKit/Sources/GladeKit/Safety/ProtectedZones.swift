@@ -182,6 +182,18 @@ public enum ProtectedZones {
       ]
     ),
     ProtectedZone(
+      id: "security-software",
+      title: "Security & Device Management",
+      reason: "Endpoint security, VPN and device management agents. Removing their files can set off tamper alarms your organisation's security team sees.",
+      // Matched wherever they appear: ~/Library, app containers with a team prefix,
+      // and the per-user temporary and cache folders under /private/var/folders.
+      names: [
+        "*com.crowdstrike.*", "*com.sentinelone.*", "*com.sentinel-labs.*", "*com.eset.*", "*com.jamf.*",
+        "*com.jamfsoftware.*", "*com.paloaltonetworks.*", "*com.cisco.anyconnect*", "*com.cisco.secureclient*",
+        "*com.alibaba.security.*",
+      ]
+    ),
+    ProtectedZone(
       id: "git",
       title: "Git Repositories",
       reason: "Commit history. A project's .git folder is never touched, and a repository is never removed whole.",
