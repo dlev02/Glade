@@ -13,8 +13,10 @@ struct StorageScanning: View {
           .frame(width: 240)
           .accessibilityLabel("Scan progress")
           .accessibilityValue("\(done) of \(total)")
-        Button("Stop", role: .cancel) { model.cancelScan() }
+        Button("Stop") { model.cancelScan() }
           .secondaryAction()
+          .controlSize(.large)
+          .accessibilityIdentifier("storage.stopScan")
       }
     }
   }

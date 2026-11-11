@@ -128,7 +128,7 @@ private struct StorageSummary: View {
             Text("Looking for what can be freed…")
               .foregroundStyle(.secondary)
             Spacer()
-            Button("Stop", role: .cancel) { model.cancelScan() }
+            Button("Stop") { model.cancelScan() }
               .secondaryAction()
           }
         } else if model.scan == nil {
@@ -138,6 +138,7 @@ private struct StorageSummary: View {
             Spacer()
             Button("Scan Storage", systemImage: Symbols.scan) { model.startScan() }
               .principalAction()
+              .accessibilityIdentifier("overview.scanStorage")
               .controlSize(.large)
           }
         } else {
@@ -157,6 +158,7 @@ private struct StorageSummary: View {
             Spacer()
             Button("Review", systemImage: Symbols.review) { model.section = .storage }
               .principalAction()
+              .accessibilityIdentifier("overview.review")
               .controlSize(.large)
               .keyboardShortcut(.return, modifiers: .command)
           }
