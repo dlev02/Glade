@@ -2,6 +2,23 @@
 
 ## 0.2.0 — unreleased
 
+### Honest about the Trash
+
+- Glade now says "freed" only for space that is free straight away. Things it moves to the Trash still take up space until you empty the Trash, so they're counted on their own everywhere: "102 GB ready to free · 12 GB to the Trash" on Overview and in Storage, and a clean that only moves things to the Trash asks "Move 18 items to the Trash?" and ends with "Moved 110 GB to the Trash. Space is freed when the Trash is emptied."
+- The confirmation lists every item with whole rows and a count, says up front how many can't be recreated, and its button says what will happen: "Free Up 102 GB" or "Move to Trash". The result shows free space before and after only as measured, warns when something was left in place, and says "Put back 18 items" once you've put them back.
+- History keeps freed and moved-to-the-Trash apart in its total and in each clean, and groups a clean's items as "In the Trash", "Deleted" and "Left in place".
+- A folder inside another selected folder is counted once, and cleaned with it, so the number of items agrees from Storage to the result.
+
+### Look and feel
+
+- The accent colour you choose now colours the sidebar too.
+- The assistant's answers are shown with their formatting: bold, lists, small headings, code and tables, each labelled with the AI (and model, if you picked one) that wrote it. You can choose the model right in the chat.
+- The assistant's advice on Storage sits on the list's own grid, and its reasons always include something to review when there is one. Ask keeps its size while it works.
+- Pointing at Overview's storage bar shows each slice's name and size, and the key separates what Glade can clear from everything else on the disk.
+- Performance has one status style that agrees with each chart's colour, quieter empty cells, and a table that ends on a whole row; power and uptime sit under the title.
+- History rows highlight under the pointer and when chosen. The scan shows what it has checked and how much it has found so far.
+- Calmer details throughout: plain recovery words ("Downloads again", "Needs reinstall", "Can't be undone"), one figure style, a shorter search prompt, wider inspectors, and tidier Settings, Setup and menu bar wording.
+
 ### Storage
 
 - Some things that live in cache folders aren't caches, and Glade now treats them that way: Poetry's project environments, the local storage of Deno programs and R's renv packages are left alone; models downloaded with llama.cpp or Buzz count as AI models; Yarn's Plug'n'Play packages and the browsers Playwright, Puppeteer and Cypress run say they need reinstalling and wait for a bolder level; and the Maven repository is flagged because it can hold your own `mvn install` builds.

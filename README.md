@@ -40,8 +40,8 @@ Every finding says how it comes back:
 | --- | --- |
 | Rebuilds itself | Caches, build data, logs. The app or tool makes them again when needed. |
 | Downloads again | Package caches, AI models, simulator runtimes. Fetched again the next time they're used. |
-| Reinstall to restore | Toolkits, SDKs, editor extensions. |
-| Permanent | Gone for good once emptied from the Trash, so only you can choose it. |
+| Needs reinstall | Toolkits, SDKs, editor extensions. |
+| Can't be undone | Nothing recreates it once it's gone. Your own files always go to the Trash first. |
 
 ### Three levels
 
@@ -60,7 +60,7 @@ This is the part to read.
 - **Protected areas are invisible.** SSH, GPG and cloud credentials, `.env` and key files, Keychains and password managers, your AI agents' memory, skills, settings and sign-ins, Photos, Music and other media libraries, Messages and Mail, Notes, Contacts, Calendars and Health, iCloud Drive, Dropbox, Google Drive and OneDrive, browser profiles, Time Machine and other backups, endpoint security, VPN and device management software, and every `.git` folder. Glade never scans, lists or removes them, and never shows them to an AI. `glade protect check <path>` explains why any path is off limits, and you can add folders of your own.
 - **Only findings can be removed.** Cleaning takes the identifiers of things a scan found, never a path. Before removing anything, Glade checks every path against the protected areas again, refuses anything outside your home and temporary folders or on another disk, follows no link out of where it may work, and won't remove a repository whole.
 - **Personal files are never chosen for you.** Anything in Desktop, Documents, Downloads, Movies, Music, Pictures, Public or Sites, and anything permanent, is only removed when you pick it.
-- **Cleaning can be undone where it matters.** Things that rebuild or download again are deleted. Everything else goes to the Trash, and **Put Back** in History (or `glade undo`) returns it to where it was.
+- **Cleaning can be undone where it matters.** Things that rebuild or download again are deleted. Everything else goes to the Trash, and **Put Back** in History (or `glade undo`) returns it to where it was. Space held in the Trash is only freed when you empty it, so Glade counts it separately from space it frees.
 - **Apps in use are left alone.** A cache isn't offered while its app is open, a toolkit, runtime or app version that a running program was started from isn't removed, an agent's worktree with uncommitted changes is never removed, and a scan older than 12 hours must be redone before cleaning from it. Both checks are made again at the moment of removal.
 
 ### Performance
