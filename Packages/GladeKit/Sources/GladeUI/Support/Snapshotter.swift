@@ -55,6 +55,8 @@ public enum Snapshotter {
     let root = content
       .environment(model)
       .accent(model.tint)
+      // Drawn as the frontmost window would be; the render's own window never is.
+      .environment(\.appearsActive, true)
       .frame(width: size.width, height: size.height)
       .background(Color(nsColor: .windowBackgroundColor))
     let host = NSHostingView(rootView: root)
