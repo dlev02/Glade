@@ -12,7 +12,7 @@ Glade has no accounts, advertising, analytics, crash reporting or remote logging
 - **Git worktrees.** To tell an agent's leftover worktree from work in progress, Glade runs `git status` in it and reads the small `.git` pointer file that links it to its repository.
 - **What's running.** Memory, processor and graphics use per process, which app is in front, which apps are playing or recording audio or keeping the Mac awake, how long since you last used the keyboard or pointer, and booted simulators. Glade reads these from macOS and from `ps` and `xcrun simctl`. So that nothing in use is removed, a scan and a clean also note which folder each running program was started from, and read where an app's `SingletonLock` link points (the computer name and process number Chromium-based apps such as Slack or VS Code leave there while they're open).
 - **Which apps are installed**, through Spotlight and the Applications folders, so leftovers of apps you've removed can be found.
-- **Which AI tools you have.** Glade looks for each tool on your `PATH`, asks it for its version, and checks whether its sign-in file or Keychain item exists. It never opens a sign-in file or reads a password; for Keychain items it only asks whether one exists.
+- **Which AI tools you have.** Glade looks for each tool on your `PATH`, asks it for its version, and checks whether its sign-in file or Keychain item exists. It never opens a sign-in file or reads a password; for Keychain items it only asks whether one exists. In **Settings > Advanced**, Glade also asks Claude Code and Codex whether Glade is connected to them (`claude mcp get glade`, `codex mcp get glade`); those tools may contact their own services when they start.
 
 ## What Glade never reads
 

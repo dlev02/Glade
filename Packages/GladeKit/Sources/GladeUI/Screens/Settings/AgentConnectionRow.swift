@@ -7,6 +7,7 @@ import SwiftUI
 struct AgentConnectionRow: View {
   var agent: AgentConnection.Agent
   @Environment(\.screenOverrides) private var overrides
+  @Environment(AppModel.self) private var model
   @State private var state: AgentConnection.State?
   @State private var working = false
   @State private var problem: String?
@@ -79,6 +80,11 @@ struct AgentConnectionRow: View {
   private func load() async {
     if let fixed = overrides.agents?[agent] {
       state = fixed
+      return
+    }
+    // Sample-data mode never starts the person's own tools.
+    if model.isDemo {
+      state = .notConnected
       return
     }
     state = await AgentConnection.state(agent)
