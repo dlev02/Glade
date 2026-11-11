@@ -122,11 +122,12 @@ public enum CategoryFamily: String, CaseIterable, Identifiable, Sendable {
     }
   }
 
-  /// The colour for a symbol on the family's pale tile: yellow is too light to read on
-  /// its own tint in light mode, so it darkens there.
+  /// The colour for a symbol on the family's pale tile: yellow and teal are too light
+  /// to read on their own tint in light mode, so they darken there.
   public var glyphColor: Color {
     switch self {
     case .files: Color(light: 0x9A6700, dark: 0xFFD60A)
+    case .simulators: Color(light: 0x0A7A8C, dark: 0x40C8E0)
     default: color
     }
   }
