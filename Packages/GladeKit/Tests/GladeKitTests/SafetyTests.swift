@@ -198,6 +198,34 @@ struct SafetyTests {
     #expect(FileManager.default.fileExists(atPath: toolkit + "/bin/tool"))
   }
 
+  /// Agents keep live state in folders named like scratch space. Even long untouched,
+  /// the catalog must not offer it.
+  @Test func agentStateNamedLikeScratchIsNotOffered() async throws {
+    let old = Date().addingTimeInterval(-90 * 86_400)
+    let live = [
+      ".codex/.tmp/plugins/plugins/tool/manifest.json", ".codex/.tmp/bundled-marketplaces/openai-bundled/index.json",
+      ".codex/.tmp/plugins-backup-abc123/manifest.json", ".gemini/antigravity/brain/conv/notes.md",
+      ".gemini/antigravity/knowledge/item/overview.md", ".gemini/antigravity/skills/review/SKILL.md",
+    ]
+    let scratch = [".codex/.tmp/git-Ab12Cd/objects/pack.bin"]
+    for file in live + scratch {
+      let path = home + "/" + file
+      try FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+      try Data(repeating: 3, count: 2_000_000).write(to: URL(fileURLWithPath: path))
+      try FileManager.default.setAttributes([.modificationDate: old], ofItemAtPath: path)
+    }
+    let context = ScanContext(config: GladeConfig(), protection: protection, home: home, running: RunningApps())
+    let findings = await CatalogScanner(rules: Catalog.rules.filter { $0.category == .agentHistory }).scan(context)
+    let paths = findings.flatMap(\.paths)
+    #expect(paths.contains { $0.hasSuffix("/.codex/.tmp/git-Ab12Cd") }, "stale scratch clones should still be found")
+    for forbidden in ["/.codex/.tmp/plugins", "/bundled-marketplaces/openai-bundled", "/plugins-backup-", "/.gemini/antigravity"] {
+      #expect(!paths.contains { $0.contains(forbidden) }, "offered live agent state \(forbidden)")
+    }
+    for kept in [".gemini/antigravity/knowledge", ".gemini/antigravity/skills", ".gemini/skills", ".gemini/commands"] {
+      #expect(!protection.canScan(home + "/" + kept), "\(kept) is agent memory")
+    }
+  }
+
   @Test func scannerNeverReportsProtectedPlaces() async {
     let rules = [
       LocationRule(id: "t.caches", category: .appCaches, title: "cache", detail: "", paths: ["~/Library/Caches/*"], split: .each, minimumBytes: 0),

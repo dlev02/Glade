@@ -246,7 +246,12 @@ public enum Catalog {
     pkg("electron", "Electron & native build caches", ["~/Library/Caches/electron", "~/.cache/electron", "~/.cache/electron-builder", "~/Library/Caches/node-gyp", "~/.cache/node-gyp", "~/.node-gyp", "~/Library/Caches/typescript", "~/.cache/prisma", "~/.cache/pre-commit", "~/.cache/turbo"], "Build tools and headers downloaded for Node projects. Fetched again when a build needs them."),
     pkg("deno", "Deno cache", ["~/Library/Caches/deno", "~/.deno/npm", "~/.cache/deno"], "Modules Deno has downloaded. It fetches them again when needed."),
     pkg("nuget", ".NET packages", ["~/.nuget/packages", "~/.nuget/v3-cache", "~/.local/share/NuGet/http-cache"], "Packages NuGet has downloaded. It fetches them again on the next restore."),
-    pkg("agent-runtimes", "Agent tool runtimes", ["~/.cache/codex-runtimes"], "Runtimes an agent downloaded to run tools. It downloads them again when needed."),
+    LocationRule(
+      id: "pkg.agent-runtimes", category: .packageCaches, title: "Agent tool runtimes",
+      detail: "Runtimes an agent downloaded to run tools. It downloads them again when needed.",
+      paths: ["~/.cache/codex-runtimes"], recovery: .redownload,
+      owner: Owner("Codex", bundleIDs: ["com.openai.codex"], processNames: ["codex"]), blockWhileRunning: true
+    ),
     pkg("nvm", "Node version manager cache", ["~/.nvm/.cache", "~/.fnm/node-versions/.downloads", "~/.volta/cache", "~/.cache/node/corepack", "~/.rustup/downloads", "~/.rustup/tmp"], "Installer downloads kept by version managers. Fetched again if you reinstall."),
   ]
 
@@ -400,13 +405,20 @@ public enum Catalog {
     LocationRule(
       id: "agent.codex-scratch", category: .agentHistory, title: "Codex working files",
       detail: "Logs and temporary files from Codex runs.",
-      paths: ["~/.codex/log/*", "~/.codex/logs/*", "~/.codex/tmp/*", "~/.codex/shell_snapshots/*", "~/.codex/.tmp/*", "~/.codex/cache/*"],
+      // Not all of `~/.codex/.tmp`: despite the name it holds Codex's synced plugins,
+      // its bundled marketplace, backups and lock files. Only scratch clones and
+      // abandoned marketplace staging folders are taken from it.
+      paths: [
+        "~/.codex/log/*", "~/.codex/logs/*", "~/.codex/tmp/*", "~/.codex/shell_snapshots/*", "~/.codex/cache/*",
+        "~/.codex/.tmp/git-*", "~/.codex/.tmp/bundled-marketplaces/*.staging-*", "~/.codex/.tmp/marketplaces/.staging/marketplace-*",
+      ],
       risk: .caution, olderThanDays: staleAgentDays, auto: .at(.balanced), minimumBytes: 1_000_000
     ),
     LocationRule(
-      id: "agent.gemini-scratch", category: .agentHistory, title: "Gemini CLI working files",
-      detail: "Temporary files and checkpoints from Gemini CLI sessions.",
-      paths: ["~/.gemini/tmp/*", "~/.gemini/history/*", "~/.gemini/antigravity/*"],
+      id: "agent.gemini-scratch", category: .agentHistory, title: "Gemini CLI history",
+      detail: "Conversation checkpoints and prompt history from Gemini CLI sessions. Stale ones only matter if you'd go back to that old session.",
+      // `~/.gemini/antigravity` is left out: it holds Antigravity's knowledge, skills and conversations.
+      paths: ["~/.gemini/tmp/*", "~/.gemini/history/*"],
       recovery: .permanent, risk: .caution, olderThanDays: staleAgentDays, auto: .at(.balanced), minimumBytes: 1_000_000
     ),
     LocationRule(

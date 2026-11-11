@@ -86,7 +86,8 @@ public enum ProtectedZones {
         "~/.codex/skills", "~/.codex/memories", "~/.codex/prompts", "~/.codex/rules",
         "~/.cursor/mcp.json", "~/.cursor/rules", "~/.cursor/cli-config.json", "~/.cursor/skills",
         "~/.gemini/oauth_creds.json", "~/.gemini/settings.json", "~/.gemini/GEMINI.md",
-        "~/.gemini/google_accounts.json", "~/.gemini/extensions",
+        "~/.gemini/google_accounts.json", "~/.gemini/extensions", "~/.gemini/skills", "~/.gemini/agents",
+        "~/.gemini/commands", "~/.gemini/hooks", "~/.gemini/antigravity/knowledge", "~/.gemini/antigravity/skills",
         "~/.config/opencode", "~/.local/share/opencode/auth.json", "~/.config/agents", "~/.agents",
       ],
       names: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "MEMORY.md", "SKILL.md"]
