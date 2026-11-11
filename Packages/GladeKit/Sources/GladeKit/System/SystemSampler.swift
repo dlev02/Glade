@@ -36,6 +36,7 @@ public final class SystemSampler: Sendable {
 
   private let state = Mutex(State())
   private let gpu = GPURegistry()
+  private let simulatorTracker = SimulatorTracker()
 
   public init() {}
 
@@ -186,6 +187,30 @@ public final class SystemSampler: Sendable {
   /// Processes folded into apps, with audio, sleep, window and activity details.
   public func apps(full: Bool = false, activity: ActivityLog = .shared) async -> [AppUsage] {
     AppGrouper.group(await processes(full: full), activity: activity)
+  }
+
+  // MARK: Simulators
+
+  /// Each booted simulator device with its memory, processor and GPU use, and whether
+  /// anything is using it. The apps listing shows all of them as one "Simulator devices" row.
+  public func simulators(activity: ActivityLog = .shared) async -> [SimulatorUsage] {
+    await simulatorBreakdown(activity: activity).devices
+  }
+
+  /// The devices plus the CoreSimulator services they share.
+  ///
+  /// Not for periodic loops: the first call per device set runs `simctl list` (a few
+  /// hundred milliseconds); later calls reuse the names and the process-to-device mapping.
+  /// - Parameter processes: A listing already taken, so one interval serves both the
+  ///   apps listing and the breakdown. Takes a fresh one when `nil`.
+  public func simulatorBreakdown(processes: [ProcessSample]? = nil, activity: ActivityLog = .shared) async -> SimulatorBreakdown {
+    let list: [ProcessSample]
+    if let processes {
+      list = processes
+    } else {
+      list = await self.processes()
+    }
+    return await simulatorTracker.breakdown(processes: list, activity: activity)
   }
 
   /// What the person is doing right now, built from a fresh apps listing.
