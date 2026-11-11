@@ -16,19 +16,24 @@ struct AdviceCard: View {
   @State private var showsAllNotes = false
 
   private static let noteLimit = 3
+  /// The live card's side padding: the hanging glyphs' gutter and room around them.
+  private static let inset: CGFloat = Metrics.xxl
 
   var body: some View {
     Group {
       if isLive {
-        Card(padding: Metrics.l) {
+        Card(padding: 0) {
           VStack(alignment: .leading, spacing: Metrics.m) {
             header
             details
           }
+          .padding(.horizontal, Self.inset)
+          .padding(.vertical, Metrics.l)
         }
-        // The card's fill reaches outside the answer's text edge, so its words
-        // start exactly where the answer's do.
-        .padding(.horizontal, -Metrics.l)
+        // The card's fill reaches outside the answer's text edge, far enough for the
+        // reasons' glyphs to hang in it, so every line of words starts exactly where
+        // the answer's do.
+        .padding(.horizontal, -Self.inset)
       } else {
         // No card: an earlier selection is a note in the conversation, not a thing to act on.
         AdviceDisclosure(isExpanded: $showsEarlier) {
@@ -40,7 +45,8 @@ struct AdviceCard: View {
         }
       }
     }
-    .frame(maxWidth: 560 + (isLive ? Metrics.l * 2 : 0), alignment: .leading)
+    // As wide as the answer's column, so the card ends where the text can.
+    .frame(maxWidth: .infinity, alignment: .leading)
   }
 
   private var header: some View {
@@ -74,7 +80,7 @@ struct AdviceCard: View {
           }
           if notes.count > Self.noteLimit {
             AdviceDisclosure(isExpanded: $showsAllNotes) {
-              Text(showsAllNotes ? "Fewer reasons" : "\(notes.count - Self.noteLimit) more reasons")
+              Text(showsAllNotes ? "Fewer reasons" : moreReasons(notes.count - Self.noteLimit))
                 .font(.caption)
                 .foregroundStyle(.secondary)
             } content: {
@@ -106,6 +112,10 @@ struct AdviceCard: View {
         .foregroundStyle(.secondary)
       }
     }
+  }
+
+  private func moreReasons(_ count: Int) -> String {
+    count == 1 ? "1 more reason" : "\(count) more reasons"
   }
 
   /// Every reason, taking one of each kind in turn (to review, added, left alone) so
@@ -150,29 +160,32 @@ private struct NoteRow: View {
   @Environment(\.accentMark) private var accentMark
 
   var body: some View {
-    HStack(alignment: .firstTextBaseline, spacing: Metrics.s) {
+    // The glyph hangs in the gutter, so the reasons' words share the answer's edge.
+    HangingIcon {
       Image(systemName: note.kind.symbol)
         .foregroundStyle(note.kind.style(mark: accentMark))
         .accessibilityLabel(note.kind.title)
-        .frame(width: 16, alignment: .leading)
-      VStack(alignment: .leading, spacing: 1) {
-        Text(note.title ?? note.kind.title)
-          .font(.callout.weight(.medium))
-          .lineLimit(1)
-          .truncationMode(.middle)
-        if !note.note.why.isEmpty {
-          Text(verbatim: note.note.why)
+    } text: {
+      HStack(alignment: .firstTextBaseline, spacing: Metrics.s) {
+        VStack(alignment: .leading, spacing: 1) {
+          Text(note.title ?? note.kind.title)
+            .font(.callout.weight(.medium))
+            .lineLimit(1)
+            .truncationMode(.middle)
+          if !note.note.why.isEmpty {
+            Text(verbatim: note.note.why)
+              .font(.callout)
+              .foregroundStyle(.secondary)
+              .fixedSize(horizontal: false, vertical: true)
+          }
+        }
+        Spacer(minLength: Metrics.m)
+        if let bytes = note.bytes {
+          Text(Format.bytes(bytes))
             .font(.callout)
             .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
+            .monospacedDigit()
         }
-      }
-      Spacer(minLength: Metrics.m)
-      if let bytes = note.bytes {
-        Text(Format.bytes(bytes))
-          .font(.callout)
-          .foregroundStyle(.secondary)
-          .monospacedDigit()
       }
     }
     .accessibilityElement(children: .combine)
