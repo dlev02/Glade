@@ -30,7 +30,7 @@ struct AdviceBanner: View {
           .fixedSize(horizontal: false, vertical: true)
           .frame(maxWidth: Self.textWidth, alignment: .leading)
         HStack(alignment: .firstTextBaseline, spacing: Metrics.m) {
-          AdviceChips(advice: advice, title: title, reveal: reveal)
+          AdviceChips(advice: advice, title: title, reveal: reveal, clearBelow: advice.rejected.isEmpty || showsRejected ? 0 : 30)
           Spacer(minLength: Metrics.m)
           // Who answered, as quiet metadata at the end of the row.
           if advice.escalated {

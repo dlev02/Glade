@@ -10,6 +10,11 @@ struct AdviceChips: View {
   var title: (String) -> String? = { _ in nil }
   /// Shows a finding's row in the list. Without it the chips are plain labels.
   var reveal: ((String) -> Void)?
+  /// How far below the chips their lists open, so a list never half-covers a line
+  /// that sits directly under them.
+  var clearBelow: CGFloat = 0
+  /// A chip's height, for placing its list.
+  private static let chipHeight: CGFloat = 22
   @Environment(\.accentMark) private var accentMark
   @State private var open: AdviceNote.Kind?
 
@@ -59,6 +64,8 @@ struct AdviceChips: View {
     .accessibilityIdentifier("advice.chip.\(kind)")
     .popover(
       isPresented: Binding(get: { open == kind }, set: { if !$0, open == kind { open = nil } }),
+      // Below the chip, or below the line under it, so the list never half-covers that line.
+      attachmentAnchor: .point(UnitPoint(x: 0.5, y: 1 + clearBelow / Self.chipHeight)),
       arrowEdge: .bottom
     ) {
       ChipList(kind: kind, notes: notes, title: title) { id in
