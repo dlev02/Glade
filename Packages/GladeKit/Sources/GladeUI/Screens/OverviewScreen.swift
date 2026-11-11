@@ -108,7 +108,9 @@ private struct StorageSummary: View {
   var body: some View {
     let segments = legendSegments
     let hover = Binding(get: { pinned ?? hovered }, set: { if pinned == nil { hovered = $0 } })
-    Card(padding: Metrics.xl) {
+    // The same inner padding as the tiles and suggestions, so the large figures down
+    // the page start on one edge.
+    Card(padding: Metrics.l) {
       VStack(alignment: .leading, spacing: Metrics.l) {
         VStack(alignment: .leading, spacing: 2) {
           Text(volume.map { Format.bytes($0.availableBytes) } ?? "—")
@@ -199,39 +201,52 @@ private struct StorageSummary: View {
   }
 }
 
-/// The key under the storage bar, in the bar's order: first what Glade can clear,
-/// family by family, then everything else on the disk, set apart so the coloured part
-/// never reads as the whole disk. Pointing at an entry lights its slice.
+/// The key under the storage bar, in the bar's order: what Glade can clear, family by
+/// family, in one fixed grid of four columns, so every width and appearance lays it
+/// out the same way. Everything else on the disk sits on the heading's line, in the
+/// last column, set apart so the coloured part never reads as the whole disk.
+/// Pointing at an entry lights its slice.
 private struct Legend: View {
   var segments: [BarSegment]
   @Binding var hovered: String?
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @State private var width: CGFloat = 0
 
-  private static let columns = [GridItem(.adaptive(minimum: 188, maximum: 240), spacing: Metrics.xl, alignment: .leading)]
+  private static let count = 4
+  private static let spacing = Metrics.xl
+  private static let columns = Array(
+    repeating: GridItem(.flexible(), spacing: spacing, alignment: .leading), count: count
+  )
 
   var body: some View {
     let shown = segments.filter { $0.bytes > 0 }
     let clearable = shown.filter { $0.id != "other" }
     let other = shown.first { $0.id == "other" }
+    let column = max((width - Self.spacing * CGFloat(Self.count - 1)) / CGFloat(Self.count), 0)
     VStack(alignment: .leading, spacing: Metrics.s) {
-      if !clearable.isEmpty {
-        HStack(spacing: Metrics.xs) {
-          Text("Glade can clear")
-          Text(Format.bytes(clearable.reduce(0) { $0 + $1.bytes }))
-            .monospacedDigit()
+      HStack(alignment: .firstTextBaseline, spacing: Self.spacing) {
+        if !clearable.isEmpty {
+          HStack(spacing: Metrics.xs) {
+            Text("Glade can clear")
+            Text(Format.bytes(clearable.reduce(0) { $0 + $1.bytes }))
+              .monospacedDigit()
+          }
+          .font(.callout.weight(.medium))
+          .foregroundStyle(.secondary)
         }
-        .font(.callout.weight(.medium))
-        .foregroundStyle(.secondary)
+        Spacer(minLength: 0)
+        if let other {
+          entry(other)
+            .frame(width: column)
+        }
+      }
+      if !clearable.isEmpty {
         LazyVGrid(columns: Self.columns, alignment: .leading, spacing: Metrics.s) {
           ForEach(clearable) { entry($0) }
         }
       }
-      if let other {
-        LazyVGrid(columns: Self.columns, alignment: .leading, spacing: Metrics.s) {
-          entry(other)
-        }
-      }
     }
+    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
     .animation(reduceMotion ? nil : .snappy(duration: 0.12), value: hovered)
   }
 
@@ -246,7 +261,8 @@ private struct Legend: View {
       Spacer(minLength: Metrics.s)
       Text(Format.bytes(segment.bytes))
         .monospacedDigit()
-        .frame(minWidth: 64, alignment: .trailing)
+        .lineLimit(1)
+        .fixedSize()
     }
     .font(.callout)
     .padding(.horizontal, 4)
