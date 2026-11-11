@@ -25,6 +25,9 @@ struct ProjectRule: Sendable {
   var grouped = false
   /// The folder to report, relative to the matched one (`vendor` → `vendor/bundle`).
   var subpath: String?
+  /// How long the project must sit untouched before `level` selects it. Bolder levels
+  /// wait half as long, then not at all.
+  var idleDays = ProjectScanner.idleDays
 
   func proves(parent: String, folder: String) -> Bool {
     if !inside.isEmpty, !inside.contains(where: { FileFacts.exists(folder + "/" + $0) }) { return false }
@@ -61,6 +64,11 @@ struct ProjectRule: Sendable {
 enum ProjectRules {
   static let gradle = ["build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts"]
 
+  /// For build output the next build makes again from the project itself: Careful
+  /// waits a week, Balanced three days, Aggressive none, in line with Xcode’s build
+  /// data. Dependencies that are downloaded again keep the longer wait.
+  static let rebuildIdleDays = 7
+
   static let all: [ProjectRule] = [
     ProjectRule(
       id: "project.node_modules", names: ["node_modules"], label: "node_modules",
@@ -79,13 +87,13 @@ enum ProjectRules {
       id: "project.python-caches", names: ["__pycache__"],
       label: "Python caches", category: .buildOutputs, recovery: .automatic, level: .careful,
       detail: "Compiled Python files and test and lint caches, which Python and those tools write again as they run.",
-      grouped: true
+      grouped: true, idleDays: rebuildIdleDays
     ),
     ProjectRule(
       id: "project.python-caches", names: [".pytest_cache", ".mypy_cache", ".ruff_cache"],
       label: "Python caches", category: .buildOutputs, recovery: .automatic, level: .careful,
       detail: "Compiled Python files and test and lint caches, which Python and those tools write again as they run.",
-      inside: ["CACHEDIR.TAG"], grouped: true
+      inside: ["CACHEDIR.TAG"], grouped: true, idleDays: rebuildIdleDays
     ),
     ProjectRule(
       id: "project.tox", names: [".tox"], label: ".tox", category: .buildOutputs, recovery: .automatic, level: .balanced,
@@ -110,68 +118,68 @@ enum ProjectRules {
     ),
     ProjectRule(
       id: "project.swiftpm", names: [".build"], label: ".build", category: .buildOutputs, recovery: .automatic,
-      level: .balanced,
+      level: .careful,
       detail: "Swift Package Manager’s build products and checked-out dependencies, which the next build recreates.",
-      siblings: ["Package.swift"]
+      siblings: ["Package.swift"], idleDays: rebuildIdleDays
     ),
     ProjectRule(
       id: "project.deriveddata", names: ["DerivedData"], label: "DerivedData", category: .buildOutputs,
-      recovery: .automatic, level: .balanced,
+      recovery: .automatic, level: .careful,
       detail: "Xcode’s build products and index for this project, which the next build recreates.",
-      siblings: ["Package.swift"], siblingExtensions: ["xcodeproj", "xcworkspace"]
+      siblings: ["Package.swift"], siblingExtensions: ["xcodeproj", "xcworkspace"], idleDays: rebuildIdleDays
     ),
     ProjectRule(
       id: "project.target", names: ["target"], label: "target", category: .buildOutputs, recovery: .automatic,
-      level: .balanced, detail: "Compiled output from Cargo or Maven, which the next build recreates.",
-      siblings: ["Cargo.toml", "pom.xml"]
+      level: .careful, detail: "Compiled output from Cargo or Maven, which the next build recreates.",
+      siblings: ["Cargo.toml", "pom.xml"], idleDays: rebuildIdleDays
     ),
     ProjectRule(
       id: "project.build", names: ["build"], label: "build", category: .buildOutputs, recovery: .automatic,
-      level: .balanced, detail: "Output of this project’s build, which git ignores and the next build recreates.",
+      level: .careful, detail: "Output of this project’s build, which git ignores and the next build recreates.",
       siblings: ["package.json", "pyproject.toml", "setup.py", "CMakeLists.txt", "meson.build", "pubspec.yaml", "Podfile"] + gradle,
-      siblingExtensions: ["xcodeproj", "xcworkspace"], mustBeIgnored: true
+      siblingExtensions: ["xcodeproj", "xcworkspace"], mustBeIgnored: true, idleDays: rebuildIdleDays
     ),
     ProjectRule(
       id: "project.dist", names: ["dist"], label: "dist", category: .buildOutputs, recovery: .automatic,
-      level: .balanced, detail: "Bundled or packaged output of this project’s build, which git ignores and the next build recreates.",
-      siblings: ["package.json", "pyproject.toml", "setup.py"], mustBeIgnored: true
+      level: .careful, detail: "Bundled or packaged output of this project’s build, which git ignores and the next build recreates.",
+      siblings: ["package.json", "pyproject.toml", "setup.py"], mustBeIgnored: true, idleDays: rebuildIdleDays
     ),
     ProjectRule(
       id: "project.out", names: ["out"], label: "out", category: .buildOutputs, recovery: .automatic,
-      level: .balanced, detail: "Output of this project’s build or export, which git ignores and the next build recreates.",
-      siblings: ["package.json"], mustBeIgnored: true
+      level: .careful, detail: "Output of this project’s build or export, which git ignores and the next build recreates.",
+      siblings: ["package.json"], mustBeIgnored: true, idleDays: rebuildIdleDays
     ),
     ProjectRule(
       id: "project.next", names: [".next"], label: ".next", category: .buildOutputs, recovery: .automatic,
-      level: .balanced, detail: "Next.js build output and cache, which the next `next dev` or `next build` recreates.",
-      siblings: ["package.json"]
+      level: .careful, detail: "Next.js build output and cache, which the next `next dev` or `next build` recreates.",
+      siblings: ["package.json"], idleDays: rebuildIdleDays
     ),
     ProjectRule(
       id: "project.framework-generated", names: [".nuxt", ".svelte-kit"], label: "generated files",
-      category: .buildOutputs, recovery: .automatic, level: .balanced,
+      category: .buildOutputs, recovery: .automatic, level: .careful,
       detail: "Files the web framework generates, which it writes again the next time the dev server or a build runs.",
-      siblings: ["package.json"]
+      siblings: ["package.json"], idleDays: rebuildIdleDays
     ),
     ProjectRule(
       id: "project.js-caches", names: [".turbo", ".parcel-cache", ".vite", ".angular"], label: "build cache",
       category: .buildOutputs, recovery: .automatic, level: .careful,
       detail: "A JavaScript build tool’s cache, which fills again on the next build.",
-      siblings: ["package.json"]
+      siblings: ["package.json"], idleDays: rebuildIdleDays
     ),
     ProjectRule(
       id: "project.cache", names: [".cache"], label: ".cache", category: .buildOutputs, recovery: .automatic,
       level: .careful, detail: "A JavaScript build tool’s cache, which git ignores and the next build fills again.",
-      siblings: ["package.json"], mustBeIgnored: true
+      siblings: ["package.json"], mustBeIgnored: true, idleDays: rebuildIdleDays
     ),
     ProjectRule(
       id: "project.expo", names: [".expo"], label: ".expo", category: .buildOutputs, recovery: .automatic,
-      level: .balanced, detail: "Expo’s local dev-server state for this project, which it recreates the next time you start it.",
-      siblings: ["package.json"]
+      level: .careful, detail: "Expo’s local dev-server state for this project, which it recreates the next time you start it.",
+      siblings: ["package.json"], idleDays: rebuildIdleDays
     ),
     ProjectRule(
       id: "project.gradle", names: [".gradle"], label: ".gradle", category: .buildOutputs, recovery: .automatic,
-      level: .balanced, detail: "Gradle’s caches for this project, which the next build recreates.",
-      siblings: gradle + ["gradlew"]
+      level: .careful, detail: "Gradle’s caches for this project, which the next build recreates.",
+      siblings: gradle + ["gradlew"], idleDays: rebuildIdleDays
     ),
     ProjectRule(
       id: "project.dart", names: [".dart_tool"], label: ".dart_tool", category: .buildOutputs, recovery: .automatic,
@@ -186,14 +194,14 @@ enum ProjectRules {
     ),
     ProjectRule(
       id: "project.coverage", names: ["coverage", ".nyc_output"], label: "coverage", category: .buildOutputs,
-      recovery: .automatic, level: .balanced,
+      recovery: .automatic, level: .careful,
       detail: "Test coverage reports, which the next test run with coverage writes again.",
-      siblings: ["package.json"], mustBeIgnored: true
+      siblings: ["package.json"], mustBeIgnored: true, idleDays: rebuildIdleDays
     ),
     ProjectRule(
       id: "project.storybook", names: ["storybook-static"], label: "storybook-static", category: .buildOutputs,
-      recovery: .automatic, level: .balanced, detail: "A static Storybook build, which `build-storybook` recreates.",
-      siblings: ["package.json"]
+      recovery: .automatic, level: .careful, detail: "A static Storybook build, which `build-storybook` recreates.",
+      siblings: ["package.json"], idleDays: rebuildIdleDays
     ),
   ]
 

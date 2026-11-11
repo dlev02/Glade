@@ -5,6 +5,7 @@
 ### More space from Balanced
 
 - Each test and preview simulator Xcode makes is now its own item ("Test simulator · iPhone 17 · iOS 27.2"), with its own size and last use. One clone Xcode used today no longer holds back the ones it hasn't touched for days, and a simulator that's running is always left alone.
+- Build folders inside your projects and their worktrees (`build`, `dist`, `.build`, `DerivedData`, `target` and the like) are cleared sooner, because the next build makes them again: Balanced takes them after 3 days without work on the project, Careful after a week. Installed packages such as `node_modules`, worktrees and agent history still wait 14 days.
 
 ## 0.2.0 — 2026-11-11
 

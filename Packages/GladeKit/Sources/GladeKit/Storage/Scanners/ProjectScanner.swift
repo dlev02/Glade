@@ -269,7 +269,7 @@ public struct ProjectScanner: StorageScanner {
       ruleID: rule.id, category: rule.category, title: "\(rule.label) – \(shown)", detail: rule.detail,
       paths: paths, bytes: measure.bytes, fileCount: measure.files, lastUsed: activity.date,
       recovery: rule.recovery, risk: risk, blockers: blockers, method: method, evidence: evidence,
-      project: name, autoLevel: level, idleDaysRequired: idleDays
+      project: name, autoLevel: level, idleDaysRequired: rule.idleDays
     )
   }
 }

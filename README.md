@@ -47,8 +47,8 @@ Every finding says how it comes back:
 
 | Level | Selects |
 | --- | --- |
-| Careful | Only things that rebuild themselves and haven't been touched lately. |
-| Balanced | Adds package caches, stale agent sessions (14 days and older), idle simulators and AI models. |
+| Careful | Only things that rebuild themselves and haven't been touched lately: Xcode build data and test simulators after 3 days, a project's build folders after a week. |
+| Balanced | Waits half as long for those (a day, and 3 days for build folders), and adds package caches, stale agent sessions (14 days and older), idle simulators and AI models. |
 | Aggressive | Everything that can come back, even if it was used recently. |
 
 The level picks a starting selection. Change any item by hand before you clean. Each of Xcode's test and preview simulators is listed on its own, so the ones Xcode used today stay while older ones go.
