@@ -11,10 +11,17 @@ struct RunsInspector: View {
 
   var body: some View {
     List(selection: $selection) {
-      Label("Cloud AIs see names, sizes and dates only", systemImage: "lock.shield")
-        .font(.callout)
-        .foregroundStyle(.secondary)
-        .selectionDisabled()
+      // Wraps at any width rather than trailing off.
+      HStack(alignment: .firstTextBaseline, spacing: Metrics.s) {
+        Image(systemName: Symbols.protected)
+          .accessibilityHidden(true)
+        Text("Cloud AIs see names, sizes and dates only")
+          .fixedSize(horizontal: false, vertical: true)
+      }
+      .font(.callout)
+      .foregroundStyle(.secondary)
+      .accessibilityElement(children: .combine)
+      .selectionDisabled()
 
       Section("Sent") {
         if let runs {
