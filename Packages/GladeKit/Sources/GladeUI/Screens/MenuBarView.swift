@@ -130,15 +130,11 @@ struct MenuBarView: View {
         .accessibilityIdentifier("popover.open")
       Spacer()
       SettingsLink {
-        Label("Settings", systemImage: Symbols.settings)
-          .labelStyle(.iconOnly)
+        Text("Settings")
       }
-      .help("Settings")
       .accessibilityIdentifier("popover.settings")
-      Button("Quit") { NSApp.terminate(nil) }
-        .accessibilityLabel("Quit \(Brand.name)")
+      Button("Quit \(Brand.name)") { NSApp.terminate(nil) }
         .accessibilityIdentifier("popover.quit")
-        .help("Quit \(Brand.name)")
     }
     .buttonStyle(PopoverFooterButtonStyle())
   }
