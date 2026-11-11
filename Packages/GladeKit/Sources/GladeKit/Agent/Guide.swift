@@ -1,0 +1,64 @@
+import Foundation
+
+/// The briefing for AI agents that drive Glade from outside: Claude Code, Codex,
+/// Cursor and others calling the command line or the MCP server. Printed by
+/// `glade guide` and sent as the MCP server's instructions.
+public enum Guide {
+  public static let text = """
+    # Glade: a briefing for agents
+
+    Glade shows what is using this Mac's storage, memory, processors and graphics, and clears it safely. You drive it; it does the looking and the removing. You never need to run `rm`, `du`, `find`, `kill` or `ps` yourself, and you shouldn't: Glade knows which locations are safe and enforces rules you can't see from a shell.
+
+    Every command prints JSON with `--json`. Nothing is removed without `--confirm`.
+
+    ## The safety model (so you can explain it to the person)
+
+    - **Protected areas are invisible.** SSH/GPG/cloud credentials, Keychains, password managers, agent memory/skills/settings, Photos libraries, Messages, Mail, Notes, iCloud Drive, Dropbox/Google Drive/OneDrive, browser profiles and `.git` folders are never scanned, listed or removable. You won't see them in any output. `glade protect check <path>` explains any path.
+    - **Only findings can be removed.** `clean` takes finding identifiers from a scan, never paths. You can't make it remove something it didn't find.
+    - **Every finding says how it comes back**: `automatic` (rebuilds itself), `redownload`, `reinstall`, or `permanent`. And how much care it needs: `safe`, `caution`, or `personal`.
+    - **Personal files are never selected for the person.** Anything in Desktop, Documents, Downloads, Movies, Music or Pictures, and anything `permanent`, is only removed when the person picks it, and it goes to the Trash.
+    - **Removal is reversible where it matters.** Rebuildable things are deleted outright; everything else goes to the Trash. `glade undo` puts a clean's Trash items back.
+    - **Apps are quit politely.** `glade quit` asks an app to quit, so it can prompt about unsaved work. `--force` exists; use it only when the person explicitly asks.
+
+    ## Storage
+
+    ```
+    glade scan --json                 # what's reclaimable, by category; read-only (30–60 s)
+    glade plan --level careful --json # what that level would remove; read-only
+    glade clean --level careful       # dry run: shows exactly what would happen
+    glade clean --level careful --confirm
+    glade clean --ids <id> <id> --confirm   # specific findings
+    glade undo                        # put the last clean's Trash items back
+    glade receipts --json             # history of cleans
+    ```
+
+    Levels: `careful` = only things that rebuild themselves and haven't been touched lately. `balanced` = adds package caches, stale agent sessions (14+ days), idle simulators and models. `aggressive` = everything that can come back, even if recent. Start with `careful`. Move up only when the person asks for more space, and tell them what the next level adds.
+
+    Good practice: run `plan` first and tell the person the total and the three or four biggest items before using `--confirm`. If they named an amount ("free 30 GB"), pick the lowest level that reaches it. For `personal` findings (old downloads, large files, duplicates), list the best candidates and let them choose; pass the chosen ids to `clean --ids`.
+
+    ## Memory, processor and graphics
+
+    ```
+    glade status --json     # CPU, memory pressure, GPU, disk, thermal state
+    glade apps --json       # per app: memory, CPU, GPU, frontmost, last active, playing audio, keeping the Mac awake
+    glade processes --sort memory --json
+    glade context --json    # what the person is doing right now
+    glade suggest --json    # what Glade would quit, and why
+    glade quit "<app name>" # ask an app to quit
+    ```
+
+    Judging what to quit: never the frontmost app, anything playing or recording audio, anything holding the Mac awake (an export, a download, a call), anything using real CPU right now (it's working), or system apps. Good candidates are apps that are large, idle for 20+ minutes and not visible. Always tell the person what you'll quit and why before doing it, unless they've already told you to go ahead. There is no "purge memory" command, because clearing caches the system manages doesn't help; quitting what isn't needed does.
+
+    ## Asking Glade's own assistant
+
+    ```
+    glade advise --level balanced --goal "free 30 GB" --json   # a plan refined by the person's chosen AI
+    glade ask "why is my Mac slow right now?"
+    glade providers --json   # which AIs are connected
+    ```
+
+    ## When something looks wrong
+
+    `glade doctor` shows permissions and what Glade can't see (without Full Disk Access some folders can't be measured). `glade logs --problems` shows recent warnings and errors. If a finding looks misclassified, don't remove it; tell the person and suggest they report it with `glade report`.
+    """
+}

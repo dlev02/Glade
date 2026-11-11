@@ -163,18 +163,20 @@ public enum Cleaner {
       return .trashed(locations: locations)
     }
 
-    var removed = 0
+    // One stubborn file (often a temporary file another process owns) shouldn't stop
+    // the rest of a group from being cleared.
+    var failures: [String] = []
     for path in present {
       do {
         try delete(path)
-        removed += 1
       } catch {
-        return removed == 0
-          ? .failed(reason: reason(error))
-          : .failed(reason: "Removed \(removed) of \(present.count), then: \(reason(error))")
+        failures.append(reason(error))
+        Log.warning(.clean, "Couldn’t remove \(path): \(reason(error))")
       }
     }
-    return .deleted
+    if failures.isEmpty { return .deleted }
+    if failures.count == present.count { return .failed(reason: failures[0]) }
+    return .failed(reason: "\(failures.count) of \(present.count) items couldn’t be removed (\(failures[0])); the rest were.")
   }
 
   /// Categories whose contents rebuild from a manifest, so they're deleted outright

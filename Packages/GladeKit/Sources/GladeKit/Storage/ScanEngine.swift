@@ -25,6 +25,10 @@ public struct RunningApps: Sendable {
     return RunningApps(bundleIDs: bundleIDs, processNames: processNames, appNames: appNames)
   }
 
+  private static func normalise(_ name: String) -> String {
+    String(name.lowercased().unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) })
+  }
+
   /// The running app or process that owns something, if any.
   public func runningName(of owner: Owner) -> String? {
     for id in owner.bundleIDs {
@@ -37,8 +41,14 @@ public struct RunningApps: Sendable {
       }
     }
     for name in owner.processNames where processNames.contains(name.lowercased()) { return owner.name }
+    // Owners known only by the folder they write to ("claude-cli-nodejs", "aside-memory"):
+    // treat the folder as in use when its name starts with a running app's or tool's name.
     if owner.bundleIDs.isEmpty || owner.bundleIDs.allSatisfy({ !$0.contains(".") }) {
-      if appNames.contains(owner.name.lowercased()) { return owner.name }
+      let folder = Self.normalise(owner.bundleIDs.first ?? owner.name)
+      for name in appNames.union(processNames) {
+        let candidate = Self.normalise(name)
+        if candidate.count >= 4, folder.hasPrefix(candidate) { return name.capitalized }
+      }
     }
     return nil
   }

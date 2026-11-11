@@ -118,6 +118,7 @@ struct Clean: AsyncParsableCommand {
       FileHandle.standardError.write(Data("\r\u{1B}[K  \(done + 1)/\(total) \(title)".utf8))
     }
     if !output.json { FileHandle.standardError.write(Data("\r\u{1B}[K".utf8)) }
+    if !receipt.dryRun { ScanEngine.save(scan.removing(receipt)) }
 
     emit(receipt, json: output.json) {
       for entry in receipt.entries {

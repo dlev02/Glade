@@ -14,7 +14,7 @@ public struct GladeCommand: AsyncParsableCommand {
       cloud folders) are never read. Run `\(Brand.cli) guide` for a briefing written for AI agents.
       """,
     version: Brand.version,
-    subcommands: [Doctor.self, Scan.self, Plan.self, Clean.self, Undo.self, Receipts.self, Protect.self, Categories.self, Logs.self]
+    subcommands: [Doctor.self, Scan.self, Plan.self, Clean.self, Undo.self, Receipts.self, Protect.self, Categories.self, Logs.self, MCP.self, Guidance.self]
   )
 
   public init() {}

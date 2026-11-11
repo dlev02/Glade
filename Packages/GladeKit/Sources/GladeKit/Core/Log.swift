@@ -93,8 +93,17 @@ final class LogStore: @unchecked Sendable {
     })
   }
 
-  private var currentFile: URL { GladePaths.logs.appendingPathComponent("glade.log") }
-  private var previousFile: URL { GladePaths.logs.appendingPathComponent("glade.1.log") }
+  /// Test runs log to a scratch folder so they don't fill the real log.
+  private let folder: URL = {
+    let name = ProcessInfo.processInfo.processName.lowercased()
+    if name.contains("xctest") || name.contains("testing-helper") {
+      return FileManager.default.temporaryDirectory.appendingPathComponent("glade-test-logs", isDirectory: true)
+    }
+    return GladePaths.logs
+  }()
+
+  private var currentFile: URL { folder.appendingPathComponent("glade.log") }
+  private var previousFile: URL { folder.appendingPathComponent("glade.1.log") }
 
   func setEcho(_ level: LogLevel?) {
     queue.sync { echo = level }
@@ -155,6 +164,7 @@ final class LogStore: @unchecked Sendable {
 
   private func open() {
     let manager = FileManager.default
+    try? manager.createDirectory(at: folder, withIntermediateDirectories: true)
     if !manager.fileExists(atPath: currentFile.path) {
       manager.createFile(atPath: currentFile.path, contents: nil, attributes: [.posixPermissions: 0o600])
     }

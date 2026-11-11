@@ -328,6 +328,20 @@ public struct ScanResult: Codable, Sendable, Identifiable {
   }
 
   public func finding(_ id: String) -> Finding? { findings.first { $0.id == id } }
+
+  /// The scan without the findings a clean removed, so they aren't offered again.
+  public func removing(_ receipt: Receipt) -> ScanResult {
+    let gone = Set(receipt.entries.compactMap { entry -> String? in
+      switch entry.outcome {
+      case .deleted, .trashed: entry.id
+      default: nil
+      }
+    })
+    var copy = self
+    copy.findings.removeAll { gone.contains($0.id) }
+    copy.volume = .current()
+    return copy
+  }
 }
 
 // MARK: - Cleaning
