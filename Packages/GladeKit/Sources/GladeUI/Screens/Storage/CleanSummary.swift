@@ -1,3 +1,4 @@
+import AppKit
 import GladeKit
 import SwiftUI
 
@@ -51,6 +52,13 @@ struct CleanSummary: View {
           .accessibilityIdentifier("result.putBack")
           .secondaryAction()
           .controlSize(.large)
+        }
+        if trashed > 0, !(restored.map(isComplete) ?? false) {
+          // Only opens the Trash in Finder; emptying it is the person's own choice.
+          Button("Show Trash") { showTrash() }
+            .accessibilityIdentifier("result.showTrash")
+            .secondaryAction()
+            .controlSize(.large)
         }
         Spacer()
         Button("Done", action: done)
