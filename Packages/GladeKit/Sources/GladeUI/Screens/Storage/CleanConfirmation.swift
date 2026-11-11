@@ -95,10 +95,11 @@ struct CleanConfirmation: View {
     immediate == 0 ? "Move to Trash" : "Free Up \(Format.bytes(immediate))"
   }
 
-  /// What removing outright means for the items it applies to.
+  /// What removing outright means for the items it applies to. When only some of
+  /// them can't be recreated, the red count above the list names the exception.
   private func removedDetail(_ items: [Finding]) -> String {
     let removed = items.filter { !$0.goesToTrash(model.config) }
-    return removed.contains { $0.recovery == .permanent }
+    return !removed.isEmpty && removed.allSatisfy { $0.recovery == .permanent }
       ? "Can’t be put back"
       : "Rebuilds or downloads again when needed"
   }
