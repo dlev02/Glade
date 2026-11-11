@@ -161,6 +161,11 @@ public final class AppModel {
     customAccent = defaults.string(forKey: "customAccent") ?? "#1C9A68"
     menuBarShowsFreeSpace = defaults.object(forKey: "menuBarShowsFreeSpace") as? Bool ?? false
     showsSetup = live && !defaults.bool(forKey: "setupComplete")
+    // `-startSection storage` on the command line opens the window on that section,
+    // which is how screenshots of each screen are taken.
+    if let wanted = defaults.string(forKey: "startSection"), let start = Section(rawValue: wanted) {
+      section = start
+    }
     monitor = ThresholdMonitor(settings: loaded.automation, stateFile: live ? GladePaths.support.appendingPathComponent("alerts.json") : nil)
     isLive = live
   }
