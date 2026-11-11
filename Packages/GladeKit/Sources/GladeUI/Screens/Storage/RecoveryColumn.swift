@@ -3,7 +3,8 @@ import SwiftUI
 
 /// How a finding comes back, as a column in the storage list: a coloured symbol and
 /// one grey word. When the list is narrow the word goes, except for "Can’t be undone",
-/// which always shows, in red, because nothing brings it back.
+/// which always shows, because nothing brings it back. Its red is on the glyph: red
+/// words at this size are too faint to read.
 struct RecoveryColumn: View {
   var recovery: Recovery
   var compact: Bool
@@ -20,7 +21,7 @@ struct RecoveryColumn: View {
         .frame(width: 16)
       if showsWord {
         Text(recovery.shortTitle)
-          .foregroundStyle(recovery == .permanent ? AnyShapeStyle(recovery.color) : AnyShapeStyle(.secondary))
+          .foregroundStyle(recovery == .permanent ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
           .fixedSize()
       }
     }

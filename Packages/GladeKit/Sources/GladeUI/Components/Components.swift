@@ -323,7 +323,8 @@ public struct LevelBar: View {
   }
 }
 
-/// A small pill saying how something comes back after removal.
+/// A small pill saying how something comes back after removal: the colour on the
+/// glyph and the tint, the words in the primary colour so they stay readable.
 public struct RecoveryBadge: View {
   var recovery: Recovery
 
@@ -332,13 +333,18 @@ public struct RecoveryBadge: View {
   }
 
   public var body: some View {
-    Label(recovery.title, systemImage: recovery.symbol)
-      .font(.caption)
-      .foregroundStyle(recovery.color)
-      .padding(.horizontal, 7)
-      .padding(.vertical, 2)
-      .background(recovery.color.opacity(0.12), in: .capsule)
-      .help(recovery.explanation)
+    Label {
+      Text(recovery.title)
+    } icon: {
+      Image(systemName: recovery.symbol)
+        .foregroundStyle(recovery.color)
+    }
+    .font(.caption)
+    .foregroundStyle(.primary)
+    .padding(.horizontal, 7)
+    .padding(.vertical, 2)
+    .background(recovery.color.opacity(0.12), in: .capsule)
+    .help(recovery.explanation)
   }
 }
 

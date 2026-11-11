@@ -179,9 +179,10 @@ struct CleanSummary: View {
   private func stuckText(_ result: Cleaner.RestoreResult) -> some View {
     let stuck = result.missing.count + result.blocked.count
     if stuck > 0 {
+      // Grey, like every second line: the amber is on the glyph, where it can be seen.
       Text(stuck == 1 ? "1 couldn’t be put back: it’s no longer in the Trash or something took its place" : "\(stuck) couldn’t be put back: they’re no longer in the Trash or something took their place")
         .font(.callout)
-        .foregroundStyle(Palette.warning)
+        .foregroundStyle(.secondary)
         .fixedSize(horizontal: false, vertical: true)
     }
   }

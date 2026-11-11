@@ -70,7 +70,8 @@ private struct SidebarFooter: View {
           LevelBar(fraction: 1 - disk.freeFraction, color: low ? Palette.critical : Color.secondary)
           Text("\(Format.bytes(disk.availableBytes)) available")
             .font(.callout)
-            .foregroundStyle(low ? AnyShapeStyle(Palette.critical) : AnyShapeStyle(.secondary))
+            // The bar carries the red; red words on the sidebar are too faint.
+            .foregroundStyle(low ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
             .monospacedDigit()
         }
         .padding(.horizontal, Metrics.s)
