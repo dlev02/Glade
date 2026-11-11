@@ -255,9 +255,18 @@ public enum JSONFiles {
 }
 
 public enum Format {
-  /// "12.4 GB", using the same decimal units Finder shows.
+  /// "12.4 GB", in the decimal units Finder uses, with only as many digits as help:
+  /// "995 GB", "20.6 GB", "4.42 GB", "0 KB".
   public static func bytes(_ value: Int64) -> String {
-    ByteCountFormatter.string(fromByteCount: value, countStyle: .file)
+    let units = ["KB", "MB", "GB", "TB"]
+    var amount = Double(max(value, 0)) / 1000
+    var unit = 0
+    while amount >= 999.5, unit < units.count - 1 {
+      amount /= 1000
+      unit += 1
+    }
+    let digits = unit < 2 || amount >= 99.95 ? 0 : amount >= 9.995 ? 1 : 2
+    return "\(amount.formatted(.number.precision(.fractionLength(0...digits)))) \(units[unit])"
   }
 
   /// "3 days ago", "5 months ago", or "today".

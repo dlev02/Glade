@@ -55,7 +55,7 @@ public struct GeminiProvider: AgentProvider {
     if let selected = ((own?["security"] as? [String: Any])?["auth"] as? [String: Any])?["selectedType"] as? String {
       settings["security"] = ["auth": ["selectedType": selected]]
     }
-    return JSONValue.string(settings) ?? "{}"
+    return LooseJSON.string(settings) ?? "{}"
   }
 
   public func complete(_ request: AgentRequest) async throws -> AgentReply {
@@ -90,13 +90,13 @@ public struct GeminiProvider: AgentProvider {
   }
 
   private func parse(_ result: ShellResult, request: AgentRequest) throws -> AgentReply {
-    let json = JSONExtractor.firstObject(in: result.stdout).flatMap(JSONValue.object)
-      ?? JSONExtractor.firstObject(in: result.stderr).flatMap(JSONValue.object)
+    let json = JSONExtractor.firstObject(in: result.stdout).flatMap(LooseJSON.object)
+      ?? JSONExtractor.firstObject(in: result.stderr).flatMap(LooseJSON.object)
     let response = json?["response"] as? String
 
     guard result.status == 0, let response, !response.isEmpty else {
       ProviderRun.logFailure(provider: id, model: request.model, status: result.status, duration: result.duration, reason: "gemini error")
-      let message = JSONValue.errorMessage(json?["error"]) ?? (result.stderr.isEmpty ? result.stdout : result.stderr)
+      let message = LooseJSON.errorMessage(json?["error"]) ?? (result.stderr.isEmpty ? result.stdout : result.stderr)
       switch result.status {
       case 41: throw AgentError.notSignedIn(provider: name, hint: Self.signInHint)
       case 55: throw AgentError.unavailable(provider: name, reason: "Gemini CLI refused to run outside a trusted folder.")
@@ -109,8 +109,8 @@ public struct GeminiProvider: AgentProvider {
       model = models.keys.sorted().first ?? model
       for case let entry as [String: Any] in models.values {
         let tokens = entry["tokens"] as? [String: Any] ?? [:]
-        if let value = JSONValue.int(tokens["prompt"] ?? tokens["input"]) { input = (input ?? 0) + value }
-        if let value = JSONValue.int(tokens["candidates"]) { output = (output ?? 0) + value }
+        if let value = LooseJSON.int(tokens["prompt"] ?? tokens["input"]) { input = (input ?? 0) + value }
+        if let value = LooseJSON.int(tokens["candidates"]) { output = (output ?? 0) + value }
       }
     }
     let text = request.jsonSchema != nil ? try JSONExtractor.objectReply(response, provider: name) : response

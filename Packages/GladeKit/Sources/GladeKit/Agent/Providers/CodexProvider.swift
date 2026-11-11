@@ -37,7 +37,7 @@ public struct CodexProvider: AgentProvider {
     let version = await ProviderCache.shared.version(of: path)
     let signedIn = ProviderRun.exists(Self.realAuth.path) || ProviderRun.environmentHas(["CODEX_API_KEY"])
     let models = await ProviderCache.shared.models(id, executable: path, arguments: ["debug", "models"]) { output in
-      guard let list = JSONValue.object(output)?["models"] as? [[String: Any]] else { return [] }
+      guard let list = LooseJSON.object(output)?["models"] as? [[String: Any]] else { return [] }
       return list.filter { $0["visibility"] as? String != "hide" }.compactMap { $0["slug"] as? String }
     }
     return ProviderStatus(
@@ -93,7 +93,7 @@ public struct CodexProvider: AgentProvider {
   }
 
   private func parse(_ result: ShellResult, finalMessage: String, request: AgentRequest) throws -> AgentReply {
-    let events = JSONValue.lines(result.stdout)
+    let events = LooseJSON.lines(result.stdout)
     var lastMessage: String?
     var usage: [String: Any] = [:]
     var errors: [String] = []
@@ -106,9 +106,9 @@ public struct CodexProvider: AgentProvider {
       case "turn.completed":
         usage = event["usage"] as? [String: Any] ?? [:]
       case "error":
-        if let message = JSONValue.errorMessage(event["message"] ?? event["error"]) { errors.append(message) }
+        if let message = LooseJSON.errorMessage(event["message"] ?? event["error"]) { errors.append(message) }
       case "turn.failed":
-        if let message = JSONValue.errorMessage(event["error"]) { errors.append(message) }
+        if let message = LooseJSON.errorMessage(event["error"]) { errors.append(message) }
       default:
         break
       }
@@ -128,8 +128,8 @@ public struct CodexProvider: AgentProvider {
     let replyText = request.jsonSchema != nil ? try JSONExtractor.objectReply(text, provider: name) : text
     let reply = AgentReply(
       text: replyText, provider: id, model: request.model,
-      inputTokens: JSONValue.int(usage["input_tokens"]),
-      outputTokens: JSONValue.int(usage["output_tokens"]),
+      inputTokens: LooseJSON.int(usage["input_tokens"]),
+      outputTokens: LooseJSON.int(usage["output_tokens"]),
       duration: result.duration
     )
     ProviderRun.logSuccess(reply, status: result.status)
@@ -141,8 +141,10 @@ public struct CodexProvider: AgentProvider {
   /// signed in; its contents are never read.
   static func keepRefreshedSignIn(_ linked: URL) {
     let manager = FileManager.default
-    guard let type = try? manager.attributesOfItem(atPath: linked.path)[.type] as? FileAttributeType,
-          type == .typeRegular
+    guard let attributes = try? manager.attributesOfItem(atPath: linked.path),
+          attributes[.type] as? FileAttributeType == .typeRegular,
+          // An empty or truncated file would sign the person out, so leave the original.
+          (attributes[.size] as? Int ?? 0) > 64
     else { return }
     do {
       _ = try manager.replaceItemAt(realAuth, withItemAt: linked)

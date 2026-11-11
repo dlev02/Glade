@@ -38,7 +38,7 @@ struct Providers: AsyncParsableCommand {
   }
 }
 
-struct Ask: AsyncParsableCommand {
+struct Prompt: AsyncParsableCommand {
   static let configuration = CommandConfiguration(
     abstract: "Send one prompt straight to an assistant and print the reply. For checking connectors."
   )

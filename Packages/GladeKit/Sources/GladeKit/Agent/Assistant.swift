@@ -306,7 +306,7 @@ public enum Assistant {
   }
 
   static func decode<T: Decodable>(_ type: T.Type, from text: String, provider: String) throws -> T {
-    guard let json = firstJSONObject(in: text) else {
+    guard let json = JSONExtractor.firstObject(in: text) else {
       throw AgentError.badReply(provider: provider, detail: "There was no JSON in the answer.")
     }
     do {
@@ -314,28 +314,6 @@ public enum Assistant {
     } catch {
       throw AgentError.badReply(provider: provider, detail: "The JSON didn’t have the expected shape (\(error.localizedDescription)).")
     }
-  }
-
-  /// The first balanced `{…}` in a string, ignoring braces inside quoted text.
-  public static func firstJSONObject(in text: String) -> String? {
-    guard let start = text.firstIndex(of: "{") else { return nil }
-    var depth = 0, inString = false, escaped = false
-    var index = start
-    while index < text.endIndex {
-      let character = text[index]
-      if inString {
-        if escaped { escaped = false } else if character == "\\" { escaped = true } else if character == "\"" { inString = false }
-      } else if character == "\"" {
-        inString = true
-      } else if character == "{" {
-        depth += 1
-      } else if character == "}" {
-        depth -= 1
-        if depth == 0 { return String(text[start...index]) }
-      }
-      index = text.index(after: index)
-    }
-    return nil
   }
 
   private static func clip(_ text: String) -> String {

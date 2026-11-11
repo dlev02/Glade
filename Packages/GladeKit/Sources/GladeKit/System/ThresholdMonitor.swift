@@ -1,7 +1,7 @@
 import Foundation
 
 /// Something that crossed a limit the person set.
-public struct Alert: Codable, Sendable, Identifiable, Hashable {
+public struct ThresholdAlert: Codable, Sendable, Identifiable, Hashable {
   public enum Kind: String, Codable, Sendable, CaseIterable {
     case lowStorage, memoryPressure, sustainedCPU, sustainedGPU
   }
@@ -23,7 +23,7 @@ public actor ThresholdMonitor {
   private var cpuHighSince: Date?
   private var gpuHighSince: Date?
   private var pressureSince: Date?
-  private var lastFired: [Alert.Kind: Date]
+  private var lastFired: [ThresholdAlert.Kind: Date]
   private let stateFile: URL?
 
   /// - Parameter stateFile: Where the "last alerted" times are kept, so restarting
@@ -33,7 +33,7 @@ public actor ThresholdMonitor {
     self.stateFile = stateFile
     lastFired = stateFile.flatMap { JSONFiles.read([String: Date].self, from: $0) }?
       .reduce(into: [:]) { result, pair in
-        if let kind = Alert.Kind(rawValue: pair.key) { result[kind] = pair.value }
+        if let kind = ThresholdAlert.Kind(rawValue: pair.key) { result[kind] = pair.value }
       } ?? [:]
   }
 
@@ -42,9 +42,9 @@ public actor ThresholdMonitor {
   }
 
   /// Takes a new snapshot and returns any alerts it sets off.
-  public func ingest(_ snapshot: SystemSnapshot, now: Date = Date()) -> [Alert] {
+  public func ingest(_ snapshot: SystemSnapshot, now: Date = Date()) -> [ThresholdAlert] {
     guard settings.enabled else { return [] }
-    var alerts: [Alert] = []
+    var alerts: [ThresholdAlert] = []
 
     if settings.storageAlerts {
       let freeGB = Double(snapshot.disk.availableBytes) / 1_000_000_000
@@ -94,20 +94,20 @@ public actor ThresholdMonitor {
     if !alerts.isEmpty {
       for alert in alerts {
         lastFired[alert.kind] = now
-        Log.info(.automation, "Alert: \(alert.kind.rawValue): \(alert.body)")
+        Log.info(.automation, "ThresholdAlert: \(alert.kind.rawValue): \(alert.body)")
       }
       save()
     }
     return alerts
   }
 
-  private func mayFire(_ kind: Alert.Kind, now: Date) -> Bool {
+  private func mayFire(_ kind: ThresholdAlert.Kind, now: Date) -> Bool {
     guard let last = lastFired[kind] else { return true }
     return now.timeIntervalSince(last) >= settings.quietMinutes * 60
   }
 
-  private func make(_ kind: Alert.Kind, _ date: Date, _ title: String, _ body: String) -> Alert {
-    Alert(id: "\(kind.rawValue)-\(Int(date.timeIntervalSince1970))", kind: kind, date: date, title: title, body: body)
+  private func make(_ kind: ThresholdAlert.Kind, _ date: Date, _ title: String, _ body: String) -> ThresholdAlert {
+    ThresholdAlert(id: "\(kind.rawValue)-\(Int(date.timeIntervalSince1970))", kind: kind, date: date, title: title, body: body)
   }
 
   private func save() {

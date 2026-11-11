@@ -112,7 +112,7 @@ public struct DocumentedCLIProvider: AgentProvider {
       text = result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
     case .resultEvent:
       let trimmed = result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
-      let events = ((try? JSONSerialization.jsonObject(with: Data(trimmed.utf8))) as? [[String: Any]]) ?? JSONValue.lines(trimmed)
+      let events = ((try? JSONSerialization.jsonObject(with: Data(trimmed.utf8))) as? [[String: Any]]) ?? LooseJSON.lines(trimmed)
       if let final = events.last(where: { $0["type"] as? String == "result" }) {
         text = final["result"] as? String ?? ""
         usage = final["usage"] as? [String: Any] ?? [:]
@@ -127,8 +127,8 @@ public struct DocumentedCLIProvider: AgentProvider {
     let replyText = request.jsonSchema != nil ? try JSONExtractor.objectReply(text, provider: name) : text
     let reply = AgentReply(
       text: replyText, provider: id, model: request.model,
-      inputTokens: JSONValue.int(usage["input_tokens"]),
-      outputTokens: JSONValue.int(usage["output_tokens"]),
+      inputTokens: LooseJSON.int(usage["input_tokens"]),
+      outputTokens: LooseJSON.int(usage["output_tokens"]),
       duration: result.duration
     )
     ProviderRun.logSuccess(reply, status: result.status)

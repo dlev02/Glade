@@ -47,7 +47,7 @@ public struct CursorProvider: AgentProvider {
         directory: folder, timeout: request.timeout
       )
     }
-    let json = JSONExtractor.firstObject(in: result.stdout).flatMap(JSONValue.object)
+    let json = JSONExtractor.firstObject(in: result.stdout).flatMap(LooseJSON.object)
     let text = json?["result"] as? String ?? ""
     guard result.status == 0, json?["is_error"] as? Bool != true, !text.isEmpty else {
       ProviderRun.logFailure(provider: id, model: request.model, status: result.status, duration: result.duration, reason: "cursor error")

@@ -41,7 +41,7 @@ public struct OpenCodeProvider: AgentProvider {
       "share": "disabled",
       "autoupdate": false,
     ]
-    guard let configText = JSONValue.string(config) else {
+    guard let configText = LooseJSON.string(config) else {
       throw AgentError.failed(provider: name, detail: "The system prompt couldn’t be encoded.")
     }
     var arguments = ["run", "--standalone", "--format", "json", "--agent", "inert"]
@@ -62,7 +62,7 @@ public struct OpenCodeProvider: AgentProvider {
     var input = 0, output = 0, cost = 0.0
     var sawUsage = false
     var errors: [String] = []
-    for event in JSONValue.lines(result.stdout) {
+    for event in LooseJSON.lines(result.stdout) {
       let part = event["part"] as? [String: Any] ?? [:]
       switch event["type"] as? String {
       case "text":
@@ -71,12 +71,12 @@ public struct OpenCodeProvider: AgentProvider {
         if let tokens = part["tokens"] as? [String: Any] {
           sawUsage = true
           let cache = tokens["cache"] as? [String: Any] ?? [:]
-          input += [tokens["input"], cache["read"], cache["write"]].compactMap(JSONValue.int).reduce(0, +)
-          output += [tokens["output"], tokens["reasoning"]].compactMap(JSONValue.int).reduce(0, +)
+          input += [tokens["input"], cache["read"], cache["write"]].compactMap(LooseJSON.int).reduce(0, +)
+          output += [tokens["output"], tokens["reasoning"]].compactMap(LooseJSON.int).reduce(0, +)
         }
-        cost += JSONValue.double(part["cost"]) ?? 0
+        cost += LooseJSON.double(part["cost"]) ?? 0
       case "error":
-        errors.append(JSONValue.errorMessage(event["error"]) ?? JSONValue.string(event) ?? "error")
+        errors.append(LooseJSON.errorMessage(event["error"]) ?? LooseJSON.string(event) ?? "error")
       default:
         break
       }

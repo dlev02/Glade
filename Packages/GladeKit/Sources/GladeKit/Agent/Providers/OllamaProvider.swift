@@ -41,7 +41,7 @@ public struct OllamaProvider: AgentProvider {
       "messages": [["role": "system", "content": request.system], ["role": "user", "content": request.prompt]],
     ]
     if let schema = request.jsonSchema {
-      body["format"] = JSONValue.object(schema) ?? "json"
+      body["format"] = LooseJSON.object(schema) ?? "json"
     }
     var urlRequest = URLRequest(url: endpoint)
     urlRequest.httpMethod = "POST"
@@ -68,17 +68,17 @@ public struct OllamaProvider: AgentProvider {
     }
     let duration = Date().timeIntervalSince(started)
     let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-    let json = JSONValue.object(String(decoding: data, as: UTF8.self)) ?? [:]
+    let json = LooseJSON.object(String(decoding: data, as: UTF8.self)) ?? [:]
     guard status == 200, let text = (json["message"] as? [String: Any])?["content"] as? String else {
       ProviderRun.logFailure(provider: id, model: model, status: Int32(status), duration: duration, reason: "http \(status)")
-      let message = JSONValue.errorMessage(json["error"]) ?? "HTTP \(status)"
+      let message = LooseJSON.errorMessage(json["error"]) ?? "HTTP \(status)"
       throw ProviderRun.classify(provider: name, message: message, signInHint: "Ollama doesn’t need a sign-in.")
     }
     let replyText = request.jsonSchema != nil ? try JSONExtractor.objectReply(text, provider: name) : text
     let reply = AgentReply(
       text: replyText, provider: id, model: model,
-      inputTokens: JSONValue.int(json["prompt_eval_count"]),
-      outputTokens: JSONValue.int(json["eval_count"]),
+      inputTokens: LooseJSON.int(json["prompt_eval_count"]),
+      outputTokens: LooseJSON.int(json["eval_count"]),
       duration: duration
     )
     ProviderRun.logSuccess(reply, status: Int32(status))
@@ -95,7 +95,7 @@ public struct OllamaProvider: AgentProvider {
     defer { session.finishTasksAndInvalidate() }
     guard let (data, response) = try? await session.data(from: url),
           (response as? HTTPURLResponse)?.statusCode == 200,
-          let list = JSONValue.object(String(decoding: data, as: UTF8.self))?["models"] as? [[String: Any]]
+          let list = LooseJSON.object(String(decoding: data, as: UTF8.self))?["models"] as? [[String: Any]]
     else { return nil }
     return list.compactMap { $0["name"] as? String }
   }

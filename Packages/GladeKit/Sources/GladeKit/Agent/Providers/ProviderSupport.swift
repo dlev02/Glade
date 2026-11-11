@@ -146,7 +146,7 @@ final class ProviderCache: @unchecked Sendable {
 }
 
 /// Small readers for the loosely typed JSON the tools print.
-enum JSONValue {
+enum LooseJSON {
   static func object(_ text: String) -> [String: Any]? {
     (try? JSONSerialization.jsonObject(with: Data(text.utf8))) as? [String: Any]
   }

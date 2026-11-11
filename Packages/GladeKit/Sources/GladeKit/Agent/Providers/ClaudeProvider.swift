@@ -48,8 +48,8 @@ public struct ClaudeProvider: AgentProvider {
   }
 
   private func parse(_ result: ShellResult, request: AgentRequest) throws -> AgentReply {
-    guard let json = JSONValue.object(result.stdout.trimmingCharacters(in: .whitespacesAndNewlines))
-      ?? JSONValue.lines(result.stdout).last(where: { $0["type"] as? String == "result" })
+    guard let json = LooseJSON.object(result.stdout.trimmingCharacters(in: .whitespacesAndNewlines))
+      ?? LooseJSON.lines(result.stdout).last(where: { $0["type"] as? String == "result" })
     else {
       ProviderRun.logFailure(provider: id, model: request.model, status: result.status, duration: result.duration, reason: "no JSON")
       throw ProviderRun.classify(provider: name, message: result.stderr.isEmpty ? result.stdout : result.stderr, signInHint: Self.signInHint)
@@ -59,7 +59,7 @@ public struct ClaudeProvider: AgentProvider {
     let text = json["result"] as? String ?? ""
 
     if json["is_error"] as? Bool == true || result.status != 0 {
-      let status = JSONValue.int(json["api_error_status"])
+      let status = LooseJSON.int(json["api_error_status"])
       ProviderRun.logFailure(provider: id, model: model, status: result.status, duration: result.duration, reason: "api status \(status.map(String.init) ?? "none")")
       let message = text.isEmpty ? (result.stderr.isEmpty ? "subtype \(json["subtype"] as? String ?? "unknown")" : result.stderr) : text
       switch status {
@@ -71,19 +71,19 @@ public struct ClaudeProvider: AgentProvider {
 
     var replyText = text
     if request.jsonSchema != nil {
-      if let structured = json["structured_output"], let serialised = JSONValue.string(structured) {
+      if let structured = json["structured_output"], let serialised = LooseJSON.string(structured) {
         replyText = serialised
       } else {
         replyText = try JSONExtractor.objectReply(text, provider: name)
       }
     }
     let input = [usage["input_tokens"], usage["cache_creation_input_tokens"], usage["cache_read_input_tokens"]]
-      .compactMap(JSONValue.int).reduce(0, +)
+      .compactMap(LooseJSON.int).reduce(0, +)
     let reply = AgentReply(
       text: replyText, provider: id, model: model,
       inputTokens: usage.isEmpty ? nil : input,
-      outputTokens: JSONValue.int(usage["output_tokens"]),
-      costUSD: JSONValue.double(json["total_cost_usd"]),
+      outputTokens: LooseJSON.int(usage["output_tokens"]),
+      costUSD: LooseJSON.double(json["total_cost_usd"]),
       duration: result.duration
     )
     ProviderRun.logSuccess(reply, status: result.status)

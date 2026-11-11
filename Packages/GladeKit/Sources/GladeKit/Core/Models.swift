@@ -392,6 +392,15 @@ public struct ReceiptEntry: Codable, Sendable, Identifiable {
   public var paths: [String]
   public var bytes: Int64
   public var outcome: RemovalOutcome
+
+  public init(id: String, title: String, category: StorageCategory, paths: [String], bytes: Int64, outcome: RemovalOutcome) {
+    self.id = id
+    self.title = title
+    self.category = category
+    self.paths = paths
+    self.bytes = bytes
+    self.outcome = outcome
+  }
 }
 
 /// The record of one clean: what was removed, how, and who asked.
@@ -403,6 +412,16 @@ public struct Receipt: Codable, Sendable, Identifiable {
   public var entries: [ReceiptEntry]
   public var freeBefore: Int64
   public var freeAfter: Int64
+
+  public init(id: String, date: Date, initiator: Initiator, dryRun: Bool, entries: [ReceiptEntry], freeBefore: Int64, freeAfter: Int64) {
+    self.id = id
+    self.date = date
+    self.initiator = initiator
+    self.dryRun = dryRun
+    self.entries = entries
+    self.freeBefore = freeBefore
+    self.freeAfter = freeAfter
+  }
 
   public var removedBytes: Int64 {
     entries.reduce(0) {
