@@ -36,8 +36,8 @@ enum PerformanceFormat {
   static func load(_ percent: Double) -> String {
     switch percent {
     case ..<25: "Light"
-    case ..<70: "Busy"
-    case ..<90: "Very busy"
+    case ..<70: "Moderate"
+    case ..<90: "Busy"
     default: "Maxed out"
     }
   }

@@ -48,21 +48,23 @@ struct AppsTable: View {
       .alignment(.numeric)
 
       TableColumn("Processor", value: \.processor) { row in
-        figure(PerformanceFormat.percent(row.processor), row)
+        figure(PerformanceFormat.percent(row.processor), row, quiet: row.processor < 0.05)
           .help(Self.processorHelp)
       }
       .width(min: 72, ideal: 86)
       .alignment(.numeric)
 
       TableColumn("Graphics", value: \.graphics) { row in
-        figure(row.graphics < 0 ? "—" : PerformanceFormat.percent(row.graphics), row)
+        figure(row.graphics < 0 ? "—" : PerformanceFormat.percent(row.graphics), row, quiet: row.graphics <= 0)
       }
       .width(min: 64, ideal: 78)
       .alignment(.numeric)
 
       TableColumn("Last Used", value: \.lastUsed) { row in
-        Text(PerformanceFormat.lastUsed(row.app))
-          .foregroundStyle(row.app.isFrontmost ? .primary : .secondary)
+        let text = PerformanceFormat.lastUsed(row.app)
+        Text(text)
+          // "—" means Glade can't tell, so it recedes.
+          .foregroundStyle(row.app.isFrontmost ? AnyShapeStyle(.primary) : text == "—" ? AnyShapeStyle(.quaternary) : AnyShapeStyle(.secondary))
           .monospacedDigit()
       }
       .width(min: 76, ideal: 96)
@@ -134,10 +136,12 @@ struct AppsTable: View {
 
   // MARK: Cells
 
-  private func figure(_ text: String, _ row: UsageRow) -> some View {
+  /// - Parameter quiet: Nothing to see (0% or no reading), so it's dimmed and the
+  ///   rows that matter stand out.
+  private func figure(_ text: String, _ row: UsageRow, quiet: Bool = false) -> some View {
     Text(text)
       .monospacedDigit()
-      .foregroundStyle(row.app.isSystem ? .secondary : .primary)
+      .foregroundStyle(quiet ? AnyShapeStyle(.tertiary) : row.app.isSystem ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary))
   }
 
   // MARK: Actions

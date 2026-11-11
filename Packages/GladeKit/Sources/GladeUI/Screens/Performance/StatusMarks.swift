@@ -2,7 +2,7 @@ import GladeKit
 import SwiftUI
 
 /// Small symbols after an app's name for what Activity Monitor doesn't tell you: it's
-/// in front, playing sound, using the microphone, keeping the Mac awake, or kept
+/// playing sound, using the microphone, keeping the Mac awake, or kept
 /// running on purpose. Each explains itself on hover and to VoiceOver.
 struct StatusMarks: View {
   var app: AppUsage
@@ -10,9 +10,6 @@ struct StatusMarks: View {
 
   var body: some View {
     HStack(spacing: 3) {
-      if app.isFrontmost {
-        mark("inset.filled.rectangle.and.pointer.arrow", "In front")
-      }
       if app.isPlayingAudio {
         mark("speaker.wave.2.fill", "Playing audio")
       }
