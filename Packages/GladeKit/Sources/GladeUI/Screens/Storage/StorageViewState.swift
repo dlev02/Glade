@@ -24,7 +24,9 @@ final class StorageViewState {
   init(scope: StorageScope = .ready, highlighted: String? = nil, showsInspector: Bool? = nil) {
     self.scope = scope
     self.highlighted = highlighted.map { [$0] } ?? []
-    let saved = UserDefaults.standard.object(forKey: Self.inspectorKey) as? Bool
+    // `bool(forKey:)` also reads a launch argument ("-storageShowsInspector YES").
+    let defaults = UserDefaults.standard
+    let saved: Bool? = defaults.object(forKey: Self.inspectorKey) == nil ? nil : defaults.bool(forKey: Self.inspectorKey)
     self.showsInspector = showsInspector ?? saved ?? false
   }
 
