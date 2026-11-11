@@ -13,7 +13,8 @@ struct AdviceCard: View {
   var isLive: Bool
   @State private var showsRefused = false
   @State private var showsEarlier = false
-  @State private var showsAllNotes = false
+  /// `-demoExpandAdvice YES` opens every reason, for screenshots.
+  @State private var showsAllNotes = DemoState.value("demoExpandAdvice") != nil
 
   private static let noteLimit = 3
   /// The live card's side padding: the hanging glyphs' gutter and room around them.
