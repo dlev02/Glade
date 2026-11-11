@@ -14,30 +14,39 @@ struct AssistantPane: View {
     @Bindable var model = model
     let ordered = orderedProviders
     let ready = ordered.filter(\.isReady)
+    let unavailable = ordered.filter { !$0.isReady }
     Form {
       Section {
-        ForEach(ordered) { provider in
-          ProviderRow(provider: provider, model: modelBinding(\.models, provider.id))
+        ForEach(ready) { provider in
+          ProviderRow(provider: provider, model: modelBinding(\.models, provider.id), showsHandle: ready.count > 1)
             .contextMenu {
               Button("Move Up") { move(provider.id, by: -1) }
-                .disabled(provider.id == ordered.first?.id)
+                .disabled(provider.id == ready.first?.id)
               Button("Move Down") { move(provider.id, by: 1) }
-                .disabled(provider.id == ordered.last?.id)
+                .disabled(provider.id == ready.last?.id)
+            }
+            .accessibilityActions {
+              Button("Move Up") { move(provider.id, by: -1) }
+              Button("Move Down") { move(provider.id, by: 1) }
             }
         }
         .onMove { from, to in
-          var ids = ordered.map(\.id)
+          var ids = ready.map(\.id)
           ids.move(fromOffsets: from, toOffset: to)
-          model.config.assistant.order = ids
+          model.config.assistant.order = ids + unavailable.map(\.id)
+        }
+        if ready.isEmpty {
+          Text("None yet")
+            .foregroundStyle(.secondary)
         }
       } header: {
         HStack {
-          Text("Ask in This Order")
+          Text("Available")
           Spacer()
           if refreshing {
             ProgressView().controlSize(.small)
           } else {
-            Button("Refresh", systemImage: "arrow.clockwise") {
+            Button("Look Again", systemImage: Symbols.scan) {
               refreshing = true
               Task {
                 await model.refreshProviders()
@@ -49,47 +58,49 @@ struct AssistantPane: View {
             .help("Look for AIs again")
           }
         }
-      } footer: {
-        Text("The first one that’s ready answers.")
-          .foregroundStyle(.secondary)
+      }
+
+      if !unavailable.isEmpty {
+        Section("Unavailable") {
+          ForEach(unavailable) { provider in
+            ProviderRow(provider: provider, model: modelBinding(\.models, provider.id), showsHandle: false)
+          }
+        }
       }
 
       Section {
-        Picker("Effort", selection: $model.config.assistant.effort) {
+        menuPicker("Effort", selection: $model.config.assistant.effort, value: model.config.assistant.effort.title) {
           ForEach(Effort.allCases) { effort in
             Text(effort.title).tag(effort)
           }
         }
-        Picker("For a closer look, call in", selection: $model.config.assistant.deepProvider) {
+        menuPicker("For a closer look, call in", selection: $model.config.assistant.deepProvider, value: deepTitle) {
           Text("Same").tag(String?.none)
           if !ready.isEmpty { Divider() }
           ForEach(ready) { provider in
             Text(provider.name).tag(Optional(provider.id))
           }
         }
-        if let deep = deepProvider {
+        if let deep = deepProvider, deep.takesModel {
           LabeledContent("Model") {
             ModelField(title: "\(deep.name) closer look", suggestions: deep.models, value: modelBinding(\.deepModels, deep.id))
           }
         }
-      } footer: {
-        Text("When the everyday model is unsure, it can ask the stronger one.")
-          .foregroundStyle(.secondary)
-      }
-
-      Section {
-        Label("Cloud AIs see names, sizes and dates only. What files contain stays on this Mac.", systemImage: "lock.shield")
-          .foregroundStyle(.secondary)
       }
 
       Section {
         Toggle("Check in by itself when a limit is crossed", isOn: $model.config.assistant.proactive)
-        Picker("Runs a day", selection: $model.config.assistant.runsPerDay) {
+        menuPicker("Runs a day", selection: $model.config.assistant.runsPerDay, value: runsTitle(model.config.assistant.runsPerDay)) {
           ForEach(Self.runChoices, id: \.self) { choice in
-            Text(choice.map(String.init) ?? "No Limit").tag(choice)
+            Text(runsTitle(choice)).tag(choice)
           }
         }
         .disabled(!model.config.assistant.proactive)
+      }
+
+      Section {
+        Label("Cloud AIs see names, sizes and dates only", systemImage: "lock.shield")
+          .foregroundStyle(.secondary)
       }
     }
     .confirmationDialog("Share file excerpts with cloud AIs?", isPresented: $confirmsSharing) {
@@ -97,6 +108,36 @@ struct AssistantPane: View {
     } message: {
       Text("AIs that run online will see a few lines from inside some files. AIs on this Mac always may.")
     }
+  }
+
+  /// A setting chosen from a quiet menu: the label on the left, "Default ⌄" on the right.
+  private func menuPicker<Value: Hashable, Choices: View>(
+    _ title: String, selection: Binding<Value>, value: String, @ViewBuilder choices: () -> Choices
+  ) -> some View {
+    LabeledContent(title) {
+      Menu {
+        Picker(title, selection: selection, content: choices)
+          .pickerStyle(.inline)
+          .labelsHidden()
+      } label: {
+        Text(value)
+      }
+      .menuStyle(.borderlessButton)
+      .menuIndicator(.visible)
+      .fixedSize()
+      .tint(.secondary)
+      .accessibilityLabel(title)
+      .accessibilityValue(value)
+    }
+  }
+
+  private var deepTitle: String {
+    guard let id = model.config.assistant.deepProvider else { return "Same" }
+    return model.providerName(id)
+  }
+
+  private func runsTitle(_ choice: Int?) -> String {
+    choice.map(String.init) ?? "No Limit"
   }
 
   /// Every provider, in the person's order, with any new ones at the end.
@@ -119,10 +160,12 @@ struct AssistantPane: View {
     )
   }
 
+  /// Moves a ready provider up or down among the ready ones.
   private func move(_ id: String, by offset: Int) {
-    var ids = orderedProviders.map(\.id)
-    guard let index = ids.firstIndex(of: id), ids.indices.contains(index + offset) else { return }
-    ids.swapAt(index, index + offset)
-    model.config.assistant.order = ids
+    let ordered = orderedProviders
+    var ready = ordered.filter(\.isReady).map(\.id)
+    guard let index = ready.firstIndex(of: id), ready.indices.contains(index + offset) else { return }
+    ready.swapAt(index, index + offset)
+    model.config.assistant.order = ready + ordered.filter { !$0.isReady }.map(\.id)
   }
 }

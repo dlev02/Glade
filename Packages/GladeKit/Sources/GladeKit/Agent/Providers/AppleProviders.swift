@@ -149,7 +149,7 @@ public struct ApplePrivateCloudProvider: AgentProvider {
   public let id = "apple-cloud"
   public let name = "Apple Private Cloud Compute"
   public let isLocal = false
-  static let noAccess = "Apple hasn’t granted this app access to Private Cloud Compute yet."
+  static let noAccess = "Only for apps from the App Store"
 
   public init() {}
 

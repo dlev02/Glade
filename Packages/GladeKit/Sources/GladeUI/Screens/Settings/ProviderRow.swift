@@ -6,28 +6,26 @@ import SwiftUI
 struct ProviderRow: View {
   var provider: ProviderStatus
   @Binding var model: String
+  /// Shows the drag handle of a row that can be reordered.
+  var showsHandle: Bool
 
   var body: some View {
     HStack(spacing: Metrics.m) {
+      if showsHandle {
+        Image(systemName: "line.3.horizontal")
+          .foregroundStyle(.tertiary)
+          .help("Drag to change the order")
+          .accessibilityHidden(true)
+      }
       VStack(alignment: .leading, spacing: 2) {
-        HStack(spacing: Metrics.s) {
-          Text(provider.name)
-          if !provider.verified {
-            Text("Untested")
-              .font(.caption)
-              .foregroundStyle(.secondary)
-              .padding(.horizontal, 6)
-              .padding(.vertical, 1)
-              .background(Palette.track, in: .capsule)
-              .help("This connection follows the tool’s documentation but hasn’t been tried for real yet.")
-          }
-        }
+        Text(provider.name)
+          .help(provider.verified ? "" : "This connection follows the tool’s documentation but hasn’t been tried for real yet.")
         status
           .font(.callout)
           .lineLimit(2)
       }
       Spacer(minLength: Metrics.m)
-      if provider.isReady {
+      if provider.isReady, provider.takesModel {
         ModelField(title: provider.name, suggestions: provider.models, value: $model)
       }
     }
@@ -40,13 +38,13 @@ struct ProviderRow: View {
       Label(provider.isLocal ? "Ready · On this Mac" : "Ready", systemImage: "checkmark.circle.fill")
         .labelStyle(StatusLabelStyle(color: .green))
     case .needsSignIn(let hint):
-      Label("Sign in: \(Self.plain(hint))", systemImage: "exclamationmark.circle.fill")
+      Label(Self.plain(hint), systemImage: "exclamationmark.circle.fill")
         .labelStyle(StatusLabelStyle(color: .orange))
     case .notInstalled:
       Label("Not installed", systemImage: "circle.dashed")
         .labelStyle(StatusLabelStyle(color: .secondary))
     case .unavailable(let reason):
-      Label("Unavailable: \(reason)", systemImage: "xmark.circle")
+      Label(reason, systemImage: "xmark.circle")
         .labelStyle(StatusLabelStyle(color: .secondary))
     }
   }

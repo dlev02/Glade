@@ -44,7 +44,7 @@ struct AgentConnectionRow: View {
       }
       .padding(.horizontal, Metrics.s)
       .padding(.vertical, 6)
-      .background(Palette.track, in: .rect(cornerRadius: 6))
+      .background(Palette.track, in: .rect(cornerRadius: Metrics.innerRadius))
       if let problem {
         Text(problem)
           .font(.callout)
@@ -59,9 +59,11 @@ struct AgentConnectionRow: View {
     switch state {
     case .connected:
       Button("Disconnect") { run { try await AgentConnection.disconnect(agent) } }
+        .secondaryAction()
     case .notConnected, .connectedElsewhere:
       Button(state == .notConnected ? "Connect" : "Reconnect") { run { try await AgentConnection.connect(agent) } }
         .disabled(AgentConnection.gladeExecutable == nil && overrides.agents == nil)
+        .secondaryAction()
     case .notInstalled, .unavailable, nil:
       EmptyView()
     }
