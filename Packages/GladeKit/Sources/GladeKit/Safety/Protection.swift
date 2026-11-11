@@ -58,8 +58,11 @@ public struct Protection: Sendable {
     var isGlob: Bool
   }
 
-  public init(config: GladeConfig = GladeConfig(), home: String = NSHomeDirectory(), extraScopes: [String]? = nil) {
-    self.home = Protection.clean(home)
+  public init(config: GladeConfig = GladeConfig(), home rawHome: String = NSHomeDirectory(), extraScopes: [String]? = nil) {
+    // Every rule is expanded against the same normalised home, so a home folder
+    // reached through an alias (/var → /private/var) can't slip past the rules.
+    let home = Protection.clean(rawHome)
+    self.home = home
     var active: [ProtectedZone] = ProtectedZones.builtIn.filter { $0.locked || !config.unlockedZones.contains($0.id) }
     let custom = config.protectedPaths.map { Protection.clean(Protection.expand($0, home: home)) }
     if !custom.isEmpty {
@@ -75,7 +78,7 @@ public struct Protection: Sendable {
     var names: [NameRule] = []
     for (index, zone) in active.enumerated() {
       for pattern in zone.paths {
-        let parts = Protection.components(Protection.expand(pattern, home: home))
+        let parts = Protection.components(Protection.clean(Protection.expand(pattern, home: home)))
         prefixes.append(PrefixRule(components: parts, zone: index, hasGlob: pattern.contains("*")))
       }
       for name in zone.names {
@@ -85,7 +88,7 @@ public struct Protection: Sendable {
     prefixRules = prefixes
     nameRules = names
 
-    var roots = [self.home]
+    var roots = [home]
     for root in extraScopes ?? Protection.temporaryRoots() {
       roots.append(Protection.clean(root))
     }
@@ -150,6 +153,7 @@ public struct Protection: Sendable {
     let path = Protection.clean(rawPath)
     guard path.hasPrefix("/"), !path.contains("/../"), !path.hasSuffix("/..") else { return .outOfScope }
 
+    if scopes.contains(path) { return .structural }
     guard let scope = scopes.first(where: { path.hasPrefix($0 + "/") }) else { return .outOfScope }
     if let zone = zone(for: path) { return .protected(zone: zone.id, title: zone.title) }
 
@@ -201,6 +205,7 @@ public struct Protection: Sendable {
   static let structural: Set<String> = [
     "Library/Application Support", "Library/Caches", "Library/Containers", "Library/Group Containers",
     "Library/Developer", "Library/Developer/Xcode", "Library/Developer/CoreSimulator",
+    "Library/Developer/Xcode/DerivedData", "Library/Developer/Xcode/Archives",
     "Library/Developer/CoreSimulator/Devices", "Library/Developer/Xcode/UserData",
     "Library/Logs", "Library/Saved Application State", "Library/WebKit", "Library/HTTPStorages",
     "Library/Application Support/Code", "Library/Application Support/Cursor",

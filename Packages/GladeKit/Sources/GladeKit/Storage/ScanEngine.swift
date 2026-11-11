@@ -181,6 +181,8 @@ public enum ScanEngine {
   public static var standard: [any StorageScanner] {
     [
       CatalogScanner(),
+      AgentHistoryScanner(),
+      SimulatorScanner(),
     ]
   }
 

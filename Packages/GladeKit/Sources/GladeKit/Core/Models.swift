@@ -153,6 +153,8 @@ public enum RemovalMethod: Codable, Sendable, Hashable {
   case trash
   /// `xcrun simctl delete <udid>`
   case simulatorDevice(udid: String)
+  /// `xcrun simctl erase <udid>`: wipes a simulator's apps and data but keeps the device.
+  case simulatorErase(udid: String)
   /// `xcrun simctl delete unavailable`
   case unavailableSimulators
   /// `git worktree remove <path>`, run in the owning repository.
@@ -193,13 +195,16 @@ public struct Finding: Codable, Sendable, Identifiable, Hashable {
   public var autoLevel: CleanLevel?
   /// How long it must have sat untouched before a clean level selects it.
   public var idleDaysRequired: Int
+  /// The owning app must be closed before this is removed.
+  public var needsOwnerClosed: Bool
 
   public init(
     id: String, ruleID: String, category: StorageCategory, title: String, detail: String,
     paths: [String], contentsOnly: Bool = false, bytes: Int64, fileCount: Int = 0,
     lastUsed: Date? = nil, recovery: Recovery, risk: Risk, owner: Owner? = nil,
     blockers: [Blocker] = [], method: RemovalMethod, evidence: [String] = [],
-    project: String? = nil, keeps: String? = nil, autoLevel: CleanLevel? = nil, idleDaysRequired: Int = 0
+    project: String? = nil, keeps: String? = nil, autoLevel: CleanLevel? = nil, idleDaysRequired: Int = 0,
+    needsOwnerClosed: Bool = false
   ) {
     self.id = id
     self.ruleID = ruleID
@@ -221,6 +226,7 @@ public struct Finding: Codable, Sendable, Identifiable, Hashable {
     self.keeps = keeps
     self.autoLevel = autoLevel
     self.idleDaysRequired = idleDaysRequired
+    self.needsOwnerClosed = needsOwnerClosed
   }
 
   public var isBlocked: Bool { !blockers.isEmpty }

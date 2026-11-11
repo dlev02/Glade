@@ -295,7 +295,7 @@ public enum Catalog {
       id: "emu.android", category: .emulators, title: "Android emulator",
       detail: "A virtual Android device with its apps and data. You'd have to create and set it up again.",
       paths: ["~/.android/avd/*.avd"], split: .each, titleStyle: .child, recovery: .reinstall,
-      risk: .caution, method: .trash, idleDays: 60
+      risk: .caution, method: .trash, used: .accessed, idleDays: 60
     ),
     LocationRule(
       id: "emu.android-cache", category: .emulators, title: "Android emulator caches",
@@ -310,19 +310,19 @@ public enum Catalog {
     LocationRule(
       id: "ai.ollama", category: .aiModels, title: "Ollama models",
       detail: "Language models pulled with Ollama. `ollama pull` downloads them again.",
-      paths: ["~/.ollama/models"], recovery: .redownload, risk: .caution, owner: ollama, idleDays: 30
+      paths: ["~/.ollama/models"], recovery: .redownload, risk: .caution, owner: ollama, used: .accessed, idleDays: 30
     ),
     LocationRule(
       id: "ai.huggingface", category: .aiModels, title: "Hugging Face model",
       detail: "A model or dataset downloaded from Hugging Face. Tools that use it download it again.",
       paths: ["~/.cache/huggingface/hub/models--*", "~/.cache/huggingface/hub/datasets--*", "~/.cache/huggingface/xet"],
-      split: .each, titleStyle: .huggingFace, recovery: .redownload, risk: .caution, idleDays: 30
+      split: .each, titleStyle: .huggingFace, recovery: .redownload, risk: .caution, used: .accessed, idleDays: 30
     ),
     LocationRule(
       id: "ai.lmstudio", category: .aiModels, title: "LM Studio model",
       detail: "A model downloaded in LM Studio. You can download it again from the app.",
       paths: ["~/.lmstudio/models/*/*", "~/.cache/lm-studio/models/*/*"], split: .each, titleStyle: .child,
-      recovery: .redownload, risk: .caution, idleDays: 30
+      recovery: .redownload, risk: .caution, used: .accessed, idleDays: 30
     ),
     LocationRule(
       id: "ai.whisper", category: .aiModels, title: "Speech models",
@@ -334,7 +334,7 @@ public enum Catalog {
         "~/Library/Application Support/com.prakashjoshipax.VoiceInk/WhisperModels/*", "~/Library/Application Support/whisperkit",
         "~/Documents/huggingface/models/argmaxinc",
       ],
-      split: .each, titleStyle: .child, recovery: .redownload, risk: .caution, idleDays: 30
+      split: .each, titleStyle: .child, recovery: .redownload, risk: .caution, used: .accessed, idleDays: 30
     ),
     LocationRule(
       id: "ai.other", category: .aiModels, title: "Other local models",
@@ -346,7 +346,7 @@ public enum Catalog {
         "~/Library/Containers/com.liuliu.draw-things/Data/Documents/Models", "~/.cache/whisper.cpp",
         "~/Library/Application Support/Msty/models", "~/.aitk/models", "~/.foundry/cache/models",
       ],
-      split: .each, titleStyle: .child, recovery: .redownload, risk: .caution, idleDays: 30
+      split: .each, titleStyle: .child, recovery: .redownload, risk: .caution, used: .accessed, idleDays: 30
     ),
   ]
 
@@ -432,7 +432,7 @@ public enum Catalog {
       id: "games.steam", category: .games, title: "Steam game",
       detail: "An installed Steam game. Steam downloads it again from your library; cloud saves depend on the game.",
       paths: ["~/Library/Application Support/Steam/steamapps/common/*"], split: .each, titleStyle: .child,
-      recovery: .redownload, risk: .caution, owner: steam, method: .trash, auto: .never, minimumBytes: 50_000_000
+      recovery: .redownload, risk: .caution, owner: steam, method: .trash, used: .accessed, auto: .never, minimumBytes: 50_000_000
     ),
     LocationRule(
       id: "games.steam-cache", category: .games, title: "Steam caches",
@@ -479,7 +479,7 @@ public enum Catalog {
       id: "sdk.\(id)", category: .sdks, title: title,
       detail: "An installed version of a developer toolkit. Reinstall it with the version manager that put it there.",
       paths: paths, split: .each, titleStyle: .child, recovery: .reinstall, risk: .caution,
-      auto: .at(.aggressive), idleDays: 90, minimumBytes: 50_000_000
+      used: .accessed, auto: .at(.aggressive), idleDays: 90, minimumBytes: 50_000_000
     )
   }
 }

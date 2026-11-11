@@ -24,6 +24,16 @@ public struct LocationRule: Sendable {
     case huggingFace
   }
 
+  /// Which timestamp says a location was "used".
+  public enum UsedSignal: Sendable {
+    /// When something inside last changed. Right for caches, logs and build data, and
+    /// immune to indexers and backups that merely read files.
+    case modified
+    /// When something inside was last read or changed. For things that are read but
+    /// never rewritten: models, toolkits, games.
+    case accessed
+  }
+
   /// When a clean level may select the finding by itself.
   public enum Auto: Sendable {
     /// Worked out from how it's recovered and how risky it is.
@@ -50,6 +60,7 @@ public struct LocationRule: Sendable {
   public var contentsOnly = false
   /// Only count matches untouched for at least this many days.
   public var olderThanDays: Int?
+  public var used: UsedSignal = .modified
   public var auto: Auto = .derived
   public var idleDays = 0
   /// Match names (shell patterns) to leave alone.
@@ -111,7 +122,7 @@ public struct CatalogScanner: StorageScanner {
       if let days = rule.olderThanDays {
         // Measure each match, keep the stale ones, report them together.
         let measured = await measureEach(matches, context)
-        let stale = measured.filter { (context.days(since: $0.1.lastUsed) ?? 0) >= days && !$0.1.containsStrict }
+        let stale = measured.filter { (context.days(since: Self.lastUsed($0.1, rule)) ?? 0) >= days && !$0.1.containsStrict }
         guard !stale.isEmpty else { return [] }
         let total = stale.map(\.1).reduce(Measure(), +)
         return make(rule, paths: stale.map(\.0), measure: total, name: nil, context: context).map { [$0] } ?? []
@@ -121,7 +132,7 @@ public struct CatalogScanner: StorageScanner {
     case .each:
       let measured = await measureEach(matches, context)
       return measured.compactMap { path, measure in
-        if let days = rule.olderThanDays, (context.days(since: measure.lastUsed) ?? 0) < days { return nil }
+        if let days = rule.olderThanDays, (context.days(since: Self.lastUsed(measure, rule)) ?? 0) < days { return nil }
         return make(rule, paths: [path], measure: measure, name: (path as NSString).lastPathComponent, context: context)
       }
     }
@@ -211,8 +222,10 @@ public struct CatalogScanner: StorageScanner {
     if measure.unreadable > 0 {
       evidence.append("\(measure.unreadable) items couldn’t be read, so the real size may be larger.")
     }
-    if let days = context.days(since: measure.lastUsed) {
-      evidence.append(days == 0 ? "Used today." : "Last touched \(Format.age(measure.lastUsed, now: context.now)).")
+    let lastUsed = Self.lastUsed(measure, rule)
+    if let days = context.days(since: lastUsed) {
+      let verb = rule.used == .modified ? "changed" : "used"
+      evidence.append(days == 0 ? "Last \(verb) today." : "Last \(verb) \(Format.age(lastUsed, now: context.now)).")
     }
 
     let (level, idle) = LocationRule.automation(recovery: rule.recovery, risk: rule.risk, auto: rule.auto, idleDays: rule.idleDays)
@@ -220,10 +233,15 @@ public struct CatalogScanner: StorageScanner {
       id: Finding.makeID(rule: rule.id, path: paths.count == 1 ? paths[0] : rule.id),
       ruleID: rule.id, category: rule.category, title: title, detail: rule.detail,
       paths: paths, contentsOnly: rule.contentsOnly, bytes: measure.bytes, fileCount: measure.files,
-      lastUsed: measure.lastUsed, recovery: rule.recovery, risk: rule.risk, owner: owner,
+      lastUsed: lastUsed, recovery: rule.recovery, risk: rule.risk, owner: owner,
       blockers: blockers, method: rule.method, evidence: evidence,
-      autoLevel: blockers.contains { $0.kind == .reportOnly } ? nil : level, idleDaysRequired: idle
+      autoLevel: blockers.contains { $0.kind == .reportOnly } ? nil : level, idleDaysRequired: idle,
+      needsOwnerClosed: rule.blockWhileRunning
     )
+  }
+
+  static func lastUsed(_ measure: Measure, _ rule: LocationRule) -> Date? {
+    rule.used == .modified ? measure.newestModification : measure.lastUsed
   }
 
   static func stripHash(_ name: String) -> String {

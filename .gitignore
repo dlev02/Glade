@@ -44,3 +44,6 @@ build-*/
 
 # Local scratch
 /dist/
+
+# Agent working folders
+/.claude/
