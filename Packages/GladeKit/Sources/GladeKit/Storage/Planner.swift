@@ -65,7 +65,7 @@ public enum Planner {
     var bytes: Int64 = 0, immediate: Int64 = 0
     for finding in selected {
       // A folder inside another selected folder is already counted by its parent.
-      let nested = finding.paths.allSatisfy { path in
+      let nested = !finding.paths.isEmpty && finding.paths.allSatisfy { path in
         paths.contains { other, owner in owner != finding.id && path.hasPrefix(other + "/") }
       }
       if nested { continue }

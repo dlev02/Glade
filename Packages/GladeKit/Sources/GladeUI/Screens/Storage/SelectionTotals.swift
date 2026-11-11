@@ -60,7 +60,7 @@ struct SelectionTotals: View {
     var totals: [StorageCategory: Int64] = [:]
     for finding in findings {
       if let container = finding.within, ids.contains(container) { continue }
-      let nested = finding.paths.allSatisfy { path in
+      let nested = !finding.paths.isEmpty && finding.paths.allSatisfy { path in
         paths.contains { other, owner in owner != finding.id && path.hasPrefix(other + "/") }
       }
       if nested { continue }

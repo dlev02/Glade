@@ -263,7 +263,7 @@ public enum ScanEngine {
     for index in findings.indices where !findings[index].paths.isEmpty {
       let finding = findings[index]
       let container = roots.first { root, owner in
-        owner != finding.id && finding.paths.allSatisfy { $0.hasPrefix(root) }
+        owner != finding.id && !finding.paths.isEmpty && finding.paths.allSatisfy { $0.hasPrefix(root) }
       }
       findings[index].within = container?.1
     }
