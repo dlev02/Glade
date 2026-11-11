@@ -42,7 +42,7 @@ build-*/
 !*.xcodeproj/
 !*.xcworkspace/
 
-# Local scratch
+# Release output (script/make_release.sh) and local scratch
 /dist/
 
 # Agent working folders
