@@ -3,6 +3,7 @@ import SwiftUI
 
 /// The standard surface for a group of related content.
 public struct Card<Content: View>: View {
+  @Environment(\.colorScheme) private var colorScheme
   var padding: CGFloat
   @ViewBuilder var content: Content
 
@@ -17,8 +18,11 @@ public struct Card<Content: View>: View {
       .frame(maxWidth: .infinity, alignment: .leading)
       .background(Palette.card, in: .rect(cornerRadius: Metrics.cardRadius))
       .overlay {
-        RoundedRectangle(cornerRadius: Metrics.cardRadius)
-          .strokeBorder(Palette.hairline.opacity(0.6), lineWidth: Metrics.hairline)
+        // In dark the fill separates a card from the window; in light it needs a line.
+        if colorScheme == .light {
+          RoundedRectangle(cornerRadius: Metrics.cardRadius)
+            .strokeBorder(Palette.hairline.opacity(0.6), lineWidth: Metrics.hairline)
+        }
       }
   }
 }
