@@ -20,6 +20,7 @@ struct StorageScreen: View {
   @Bindable var state: StorageViewState
   @State private var showsCleanSheet = false
   @State private var protectedPath: String?
+  @State private var searchFocus = 0
   /// The list is too narrow for words in the recovery column.
   @State private var isCompact = false
   /// Advice to show instead of the model's, for drawing the screen in snapshots.
@@ -39,14 +40,15 @@ struct StorageScreen: View {
     content
       .navigationTitle("Storage")
       .toolbar { toolbar }
-      .searchable(text: $state.query, placement: .toolbar, prompt: "Titles, projects, paths")
+      .background {
+        // ⌘F puts the cursor in the toolbar's search field.
+        Button("Find") { searchFocus += 1 }
+          .keyboardShortcut("f")
+          .hidden()
+      }
       .inspector(isPresented: $state.showsInspector) {
         FindingInspector(finding: state.highlightedFinding, highlightedFindings: highlightedFindings)
           .inspectorColumnWidth(min: 260, ideal: 300, max: 420)
-          .toolbar {
-            // Declared here so it sits above the inspector, at the far trailing edge.
-            ToolbarItem(placement: .primaryAction) { inspectorButton }
-          }
       }
       .sheet(isPresented: $showsCleanSheet) {
         CleanSheet { showsCleanSheet = false }
@@ -90,17 +92,28 @@ struct StorageScreen: View {
               CleanBar { showsCleanSheet = true }
             }
         } else {
-          // A bar rather than an inset, so rows fade under the glass instead of
-          // showing through it, and the last row can scroll clear of it.
+          // The bar sits below the list rather than over it, and the rows fade out
+          // just above it, so nothing shows through or under the glass. The bottom
+          // margin lets the last row scroll clear of the fade.
           findings
-            .safeAreaBar(edge: .bottom) {
-              CleanBar { showsCleanSheet = true }
+            .scrollContentBackground(.hidden)
+            .contentMargins(.bottom, Self.fadeHeight, for: .scrollContent)
+            .mask {
+              VStack(spacing: 0) {
+                Rectangle()
+                LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom)
+                  .frame(height: Self.fadeHeight)
+              }
             }
-            .scrollEdgeEffectStyle(.soft, for: .bottom)
+          CleanBar { showsCleanSheet = true }
         }
       }
+      .background(Palette.card)
     }
   }
+
+  /// How far above the clean bar the rows fade out.
+  private static let fadeHeight: CGFloat = 24
 
   /// The Full Disk Access line and the assistant's advice, only when there's
   /// something to say.
@@ -197,16 +210,19 @@ struct StorageScreen: View {
       .pickerStyle(.segmented)
       .labelsHidden()
       .disabled(model.scan == nil)
+      .accessibilityIdentifier("storage.scope")
     }
     ToolbarItemGroup(placement: .primaryAction) {
       ScanButton()
       AskButton()
     }
-    DefaultToolbarItem(kind: .search, placement: .primaryAction)
-    if !state.showsInspector {
-      // While the inspector is open its own toolbar carries this button.
-      ToolbarItem(placement: .primaryAction) { inspectorButton }
+    ToolbarSpacer(.fixed, placement: .primaryAction)
+    ToolbarItem(placement: .primaryAction) {
+      ToolbarSearchField(text: $state.query, prompt: "Titles, projects, paths", focusRequest: searchFocus)
     }
+    // After search, so it is always the last item at the trailing edge.
+    ToolbarSpacer(.fixed, placement: .primaryAction)
+    ToolbarItem(placement: .primaryAction) { inspectorButton }
   }
 
   /// A plain button rather than a toggle, so it never shows a tinted "on" state.
@@ -217,6 +233,7 @@ struct StorageScreen: View {
     .keyboardShortcut("i", modifiers: [.command, .option])
     .help(state.showsInspector ? "Hide the inspector (⌥⌘I)" : "Show the inspector (⌥⌘I)")
     .accessibilityValue(state.showsInspector ? "Shown" : "Hidden")
+    .accessibilityIdentifier("toolbar.inspector")
   }
 
   // MARK: Actions
