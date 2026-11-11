@@ -49,12 +49,15 @@ struct ReportSheet: View {
         }
         Spacer(minLength: Metrics.s)
         Button("Cancel", role: .cancel) { dismiss() }
+          .secondaryAction()
           .keyboardShortcut(.cancelAction)
         Button("Save to Desktop", action: save)
+          .secondaryAction()
           .disabled(text == nil)
         Button("Open GitHub Issue") {
           if let url = DiagnosticReport.issueURL() { NSWorkspace.shared.open(url) }
         }
+        .principalAction()
         .keyboardShortcut(.defaultAction)
       }
     }

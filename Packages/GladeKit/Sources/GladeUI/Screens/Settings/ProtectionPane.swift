@@ -7,6 +7,7 @@ struct ProtectionPane: View {
   @Environment(AppModel.self) private var model
   @State private var zones: [ProtectedZone] = ProtectedZones.builtIn
   @State private var pendingUnlock: ProtectedZone?
+  @State private var showsAlwaysProtected = false
 
   var body: some View {
     @Bindable var model = model
@@ -26,19 +27,24 @@ struct ProtectionPane: View {
       }
 
       Section {
-        ForEach(locked) { zone in
-          HStack(alignment: .firstTextBaseline, spacing: Metrics.s) {
-            Image(systemName: "lock.fill")
-              .foregroundStyle(.secondary)
-              .frame(width: 16)
-              .accessibilityHidden(true)
-            zoneText(zone)
+        DisclosureGroup(isExpanded: $showsAlwaysProtected) {
+          ForEach(locked) { zone in
+            HStack(alignment: .firstTextBaseline, spacing: Metrics.s) {
+              Image(systemName: "lock.fill")
+                .foregroundStyle(.secondary)
+                .frame(width: 16)
+                .accessibilityHidden(true)
+              zoneText(zone)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityValue("Always protected")
           }
-          .accessibilityElement(children: .combine)
-          .accessibilityValue("Always protected")
+        } label: {
+          LabeledContent("Always Protected") {
+            Text(locked.count == 1 ? "1 area" : "\(locked.count) areas")
+              .monospacedDigit()
+          }
         }
-      } header: {
-        Text("Always Protected")
       } footer: {
         Text("Protected areas are never scanned, listed, or shown to an AI.")
           .foregroundStyle(.secondary)

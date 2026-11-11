@@ -20,9 +20,9 @@ enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
 
   var symbol: String {
     switch self {
-    case .general: "gearshape"
+    case .general: Symbols.settings
     case .protection: "lock.shield"
-    case .assistant: "sparkles"
+    case .assistant: Symbols.assistant
     case .alerts: "bell.badge"
     case .search: "text.magnifyingglass"
     case .advanced: "wrench.and.screwdriver"
@@ -33,10 +33,10 @@ enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
 
   var height: CGFloat {
     switch self {
-    case .general: 350
-    case .protection: 640
+    case .general: 400
+    case .protection: 520
     case .assistant: 660
-    case .alerts: 640
+    case .alerts: 540
     case .search: 360
     case .advanced: 600
     }

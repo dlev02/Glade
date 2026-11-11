@@ -38,6 +38,7 @@ struct FolderRows: View {
         for path in chosen where !paths.contains(path) { paths.append(path) }
       }
     }
+    .buttonStyle(.borderless)
     .confirmationDialog(
       "Stop protecting \(pendingRemoval.map { ($0 as NSString).lastPathComponent } ?? "this folder")?",
       isPresented: Binding(get: { pendingRemoval != nil }, set: { if !$0 { pendingRemoval = nil } }),

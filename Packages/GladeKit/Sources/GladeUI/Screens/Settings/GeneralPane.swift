@@ -12,12 +12,9 @@ struct GeneralPane: View {
     @Bindable var model = model
     Form {
       Section {
-        Picker("Appearance", selection: $model.appearance) {
-          ForEach(Appearance.allCases) { appearance in
-            Text(appearance.title).tag(appearance)
-          }
+        LabeledContent("Appearance") {
+          AppearanceTiles(selection: $model.appearance)
         }
-        .pickerStyle(.segmented)
         LabeledContent("Accent") {
           AccentSwatches()
         }
@@ -36,15 +33,11 @@ struct GeneralPane: View {
       }
 
       Section {
-        Picker("Clean level", selection: $model.config.level) {
-          ForEach(CleanLevel.allCases) { level in
-            Text(level.title).tag(level)
-          }
+        LabeledContent("Clean level") {
+          LevelMenu(offersReset: false)
+            .tint(.secondary)
         }
-        Toggle("Move Everything to the Trash First", isOn: $model.config.trashEverything)
-      } footer: {
-        Text("Otherwise, things that rebuild themselves are removed straight away.")
-          .foregroundStyle(.secondary)
+        Toggle("Move everything to Trash", isOn: $model.config.trashEverything)
       }
     }
     .onAppear {

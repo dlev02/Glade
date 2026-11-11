@@ -42,30 +42,21 @@ struct AlertsPane: View {
       }
 
       Group {
-        Section("Low Storage") {
-          Toggle("Alert when free space is low", isOn: $model.config.automation.storageAlerts)
-          LabeledContent("Below") {
-            HStack(spacing: Metrics.s) {
-              Slider(value: Binding(
-                get: { automation.storageFreeGB },
-                set: { model.config.automation.storageFreeGB = ($0 / 5).rounded() * 5 }
-              ), in: 5...200)
-                .labelsHidden()
-                .frame(width: 180)
-                .accessibilityLabel("Free space threshold")
-                .accessibilityValue("\(Int(automation.storageFreeGB)) gigabytes")
-              Text("\(Int(automation.storageFreeGB)) GB")
-                .monospacedDigit()
-                .frame(width: 56, alignment: .trailing)
-            }
+        Section("Storage") {
+          alertRow("Free space below", isOn: $model.config.automation.storageAlerts) {
+            MenuPicker("Free space threshold", value: $model.config.automation.storageFreeGB,
+                       options: [5, 10, 15, 20, 30, 50, 75, 100, 150, 200]) { "\(Int($0)) GB" }
           }
-          .disabled(!automation.storageAlerts)
-          Toggle(isOn: Binding(
-            get: { automation.autoCleanOnLowStorage },
-            set: { on in
-              if on { confirmsAutoClean = true } else { model.config.automation.autoCleanOnLowStorage = false }
-            }
-          )) {
+          LabeledContent {
+            Toggle("Clear caches automatically", isOn: Binding(
+              get: { automation.autoCleanOnLowStorage },
+              set: { on in
+                if on { confirmsAutoClean = true } else { model.config.automation.autoCleanOnLowStorage = false }
+              }
+            ))
+            .toggleStyle(.switch)
+            .labelsHidden()
+          } label: {
             HStack(spacing: Metrics.s) {
               Text("Clear caches automatically")
               LevelTag(title: CleanLevel.careful.title)
@@ -74,26 +65,23 @@ struct AlertsPane: View {
           .disabled(!automation.storageAlerts)
         }
 
-        Section("Memory") {
-          Toggle("Alert when memory is under pressure", isOn: $model.config.automation.memoryAlerts)
-        }
-
-        Section("Processor") {
-          Toggle("Alert when the processor stays busy", isOn: $model.config.automation.cpuAlerts)
-          threshold(percent: $model.config.automation.cpuPercent, minutes: $model.config.automation.cpuMinutes)
-            .disabled(!automation.cpuAlerts)
-        }
-
-        Section("Graphics") {
-          Toggle("Alert when graphics stay busy", isOn: $model.config.automation.gpuAlerts)
-          threshold(percent: $model.config.automation.gpuPercent, minutes: $model.config.automation.gpuMinutes)
-            .disabled(!automation.gpuAlerts)
+        Section("Performance") {
+          alertRow("Memory pressure", isOn: $model.config.automation.memoryAlerts) { EmptyView() }
+          alertRow("Processor above", isOn: $model.config.automation.cpuAlerts) {
+            threshold("Processor", percent: $model.config.automation.cpuPercent, minutes: $model.config.automation.cpuMinutes)
+              .disabled(!automation.cpuAlerts)
+          }
+          alertRow("Graphics above", isOn: $model.config.automation.gpuAlerts) {
+            threshold("Graphics", percent: $model.config.automation.gpuPercent, minutes: $model.config.automation.gpuMinutes)
+              .disabled(!automation.gpuAlerts)
+          }
         }
 
         Section {
-          Picker("Don’t repeat an alert for", selection: $model.config.automation.quietMinutes) {
-            ForEach(Self.quietChoices, id: \.minutes) { choice in
-              Text(choice.title).tag(choice.minutes)
+          LabeledContent("Don’t repeat an alert for") {
+            MenuPicker("Don’t repeat an alert for", value: $model.config.automation.quietMinutes,
+                       options: Self.quietChoices.map(\.minutes)) { minutes in
+              Self.quietChoices.first { $0.minutes == minutes }?.title ?? "\(Int(minutes)) minutes"
             }
           }
         }
@@ -108,18 +96,25 @@ struct AlertsPane: View {
     }
   }
 
-  private func threshold(percent: Binding<Double>, minutes: Binding<Double>) -> some View {
-    Group {
-      LabeledContent("Above") {
-        Stepper(value: percent, in: 50...100, step: 5) {
-          Text("\(Int(percent.wrappedValue))%").monospacedDigit()
-        }
+  /// One alert: its name, then its threshold and its switch, aligned at the trailing edge.
+  private func alertRow(_ title: String, isOn: Binding<Bool>, @ViewBuilder threshold: () -> some View) -> some View {
+    LabeledContent(title) {
+      HStack(spacing: Metrics.m) {
+        threshold()
+        Toggle(title, isOn: isOn)
+          .toggleStyle(.switch)
+          .labelsHidden()
       }
-      LabeledContent("For") {
-        Stepper(value: minutes, in: 1...60, step: 1) {
-          Text("\(Int(minutes.wrappedValue)) min").monospacedDigit()
-        }
-      }
+    }
+  }
+
+  /// "80% ⌄ for 5 min ⌄"
+  private func threshold(_ title: String, percent: Binding<Double>, minutes: Binding<Double>) -> some View {
+    HStack(spacing: Metrics.xs) {
+      MenuPicker("\(title) threshold", value: percent, options: [50, 60, 70, 80, 90, 95, 100]) { "\(Int($0))%" }
+      Text("for")
+        .foregroundStyle(.secondary)
+      MenuPicker("\(title) duration", value: minutes, options: [1, 2, 5, 10, 15, 30, 60]) { "\(Int($0)) min" }
     }
   }
 }
