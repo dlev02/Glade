@@ -10,6 +10,18 @@
       "Base",
     ],
   },
+  "packages": [
+    {
+      "kind": "local",
+      "path": "Packages/GladeKit",
+    }, {
+      "kind": "remote",
+      "repository": "https://github.com/sparkle-project/Sparkle",
+      "version": {
+        "up-to-next-major-version": "2.8.0",
+      },
+    },
+  ],
   "files": [
     {
       "kind": "folder",
@@ -43,6 +55,22 @@
       "build-phases": [
         "compile-sources",
         "resources",
+        "frameworks",
+      ],
+      "package-product-members": [
+        {
+          "package": "GladeKit",
+          "product-name": "GladeCLI",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "GladeKit",
+          "product-name": "GladeKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "Sparkle",
+          "product-name": "Sparkle",
+          "build-phase": { "build-phase": "frameworks" },
+        },
       ],
       "build-settings": {
         "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
@@ -50,6 +78,7 @@
         "CODE_SIGN_IDENTITY[sdk=macosx*]": "-",
         "COMBINE_HIDPI_IMAGES": "YES",
         "CURRENT_PROJECT_VERSION": "1",
+        "DEAD_CODE_STRIPPING": "YES",
         "ENABLE_APP_SANDBOX": "NO",
         "ENABLE_HARDENED_RUNTIME": "YES",
         "INFOPLIST_FILE": "App/Info.plist",
@@ -59,9 +88,10 @@
         ],
         "MACOSX_DEPLOYMENT_TARGET": "26.0",
         "MARKETING_VERSION": "0.1.0",
-        "PRODUCT_BUNDLE_IDENTIFIER": "app.bitrig.new.ede0d532-8049-4bb3-b4c1-2bb23e4d1b44",
+        "PRODUCT_BUNDLE_IDENTIFIER": "io.github.dlev02.glade",
         "PRODUCT_NAME": "$(TARGET_NAME)",
         "SDKROOT": "macosx",
+        "SUPPORTED_PLATFORMS": "macosx",
         "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
         "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor",
         "SWIFT_VERSION": "6.0",
