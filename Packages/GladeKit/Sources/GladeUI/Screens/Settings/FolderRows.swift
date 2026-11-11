@@ -8,6 +8,7 @@ struct FolderRows: View {
   /// Ask before removing, for lists where removing one lowers protection.
   var confirmsRemoval = false
   @State private var pendingRemoval: String?
+  @Environment(\.accentMark) private var accentMark
 
   var body: some View {
     if paths.isEmpty {
@@ -39,6 +40,8 @@ struct FolderRows: View {
       }
     }
     .buttonStyle(.borderless)
+    // The bright accent: the darker fill tint is hard to read as text on a dark form.
+    .foregroundStyle(accentMark)
     .confirmationDialog(
       "Stop protecting \(pendingRemoval.map { ($0 as NSString).lastPathComponent } ?? "this folder")?",
       isPresented: Binding(get: { pendingRemoval != nil }, set: { if !$0 { pendingRemoval = nil } }),
