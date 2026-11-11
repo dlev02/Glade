@@ -10,7 +10,6 @@ struct AgentConnectionRow: View {
   @State private var state: AgentConnection.State?
   @State private var working = false
   @State private var problem: String?
-  @State private var copied = false
 
   var body: some View {
     VStack(alignment: .leading, spacing: Metrics.s) {
@@ -33,11 +32,7 @@ struct AgentConnectionRow: View {
           .textSelection(.enabled)
           .help(AgentConnection.commandLine(agent))
         Spacer(minLength: 0)
-        Button(copied ? "Copied" : "Copy", systemImage: copied ? "checkmark" : "document.on.document") {
-          NSPasteboard.general.clearContents()
-          NSPasteboard.general.setString(AgentConnection.commandLine(agent), forType: .string)
-          copied = true
-        }
+        CopyButton { AgentConnection.commandLine(agent) }
         .labelStyle(.iconOnly)
         .buttonStyle(.borderless)
         .help("Copy the command")

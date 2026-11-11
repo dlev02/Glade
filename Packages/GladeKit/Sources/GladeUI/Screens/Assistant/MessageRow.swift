@@ -75,7 +75,7 @@ struct MessageRow: View {
   /// actions on the answer.
   private var actions: some View {
     HStack(spacing: Metrics.m) {
-      Button("Copy", systemImage: "document.on.document", action: copy)
+      CopyButton { message.text }
         .focused($focusedAction, equals: .copy)
         .help("Copy")
       Button("Show What Was Sent", systemImage: Symbols.whatWasSent, action: showWhatWasSent)
@@ -91,21 +91,20 @@ struct MessageRow: View {
   }
 
   private var problem: some View {
-    Label {
+    HangingIcon {
+      Image(systemName: "exclamationmark.triangle")
+        .foregroundStyle(Palette.warning)
+        .accessibilityLabel("Problem")
+    } text: {
       Text(verbatim: message.text)
         .textSelection(.enabled)
         .foregroundStyle(.secondary)
         .frame(maxWidth: .infinity, alignment: .leading)
-    } icon: {
-      Image(systemName: "exclamationmark.triangle")
-        .foregroundStyle(Palette.warning)
-        .accessibilityLabel("Problem")
     }
     .font(.callout)
   }
 
   private func copy() {
-    NSPasteboard.general.clearContents()
-    NSPasteboard.general.setString(message.text, forType: .string)
+    Copying.copy(message.text)
   }
 }

@@ -62,7 +62,7 @@ struct RunSheet: View {
       .background(Palette.card, in: .rect(cornerRadius: Metrics.innerRadius))
 
       HStack {
-        Button("Copy", systemImage: "document.on.document") { copy() }
+        CopyButton { text }
           .disabled(text.isEmpty)
           .secondaryAction()
         Spacer()
@@ -108,10 +108,6 @@ struct RunSheet: View {
     }
   }
 
-  private func copy() {
-    NSPasteboard.general.clearContents()
-    NSPasteboard.general.setString(text, forType: .string)
-  }
 }
 
 /// The three texts a run holds.

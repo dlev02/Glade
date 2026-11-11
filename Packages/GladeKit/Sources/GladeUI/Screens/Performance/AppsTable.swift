@@ -195,10 +195,7 @@ struct AppsTable: View {
         NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
       }
     }
-    Button("Copy Name") {
-      NSPasteboard.general.clearContents()
-      NSPasteboard.general.setString(row.name, forType: .string)
-    }
+    Button("Copy Name") { Copying.copy(row.name) }
   }
 
   private func keepBinding(_ row: UsageRow?) -> Binding<Bool> {

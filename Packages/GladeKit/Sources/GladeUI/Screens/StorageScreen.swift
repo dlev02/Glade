@@ -55,6 +55,7 @@ struct StorageScreen: View {
             FindingInspector(finding: state.highlightedFinding, highlightedFindings: highlightedFindings)
           }
         }
+        .inspectorBackground()
         .inspectorColumnWidth(min: 260, ideal: 300, max: 420)
       }
       .sheet(isPresented: $showsCleanSheet) {
@@ -218,10 +219,10 @@ struct StorageScreen: View {
       .disabled(model.scan == nil)
       .accessibilityIdentifier("storage.scope")
     }
-    ToolbarItemGroup(placement: .primaryAction) {
-      ScanButton()
-      AskButton()
-    }
+    // Scan is a utility and Ask is an AI verb: two capsules, not one.
+    ToolbarItem(placement: .primaryAction) { ScanButton() }
+    ToolbarSpacer(.fixed, placement: .primaryAction)
+    ToolbarItem(placement: .primaryAction) { AskButton() }
     ToolbarSpacer(.fixed, placement: .primaryAction)
     ToolbarItem(placement: .primaryAction) {
       ToolbarSearchField(text: $state.query, prompt: "Titles, projects, paths", focusRequest: searchFocus)
@@ -261,8 +262,7 @@ struct StorageScreen: View {
         NSWorkspace.shared.activateFileViewerSelecting(paths.map { URL(fileURLWithPath: $0) })
       }
       Button("Copy Path", systemImage: "document.on.document") {
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(paths.joined(separator: "\n"), forType: .string)
+        Copying.copy(paths.joined(separator: "\n"))
       }
       if chosen.count == 1, let path = paths.first {
         Divider()
