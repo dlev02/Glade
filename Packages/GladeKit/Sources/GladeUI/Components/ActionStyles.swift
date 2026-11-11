@@ -11,8 +11,8 @@ extension View {
 
   /// A standalone secondary action.
   public func secondaryAction() -> some View {
-    // Clear tint, so the window's accent doesn't turn it into a second principal button.
-    buttonStyle(.glass).buttonBorderShape(.capsule).tint(.clear)
+    // Untinted glass, so the window's accent doesn't turn it into a second principal button.
+    buttonStyle(SecondaryGlassStyle())
   }
 
   /// The main action when it sits on glass already (the clean bar, the menu bar
@@ -39,5 +39,49 @@ public struct FilledActionStyle: ButtonStyle {
       .opacity(isEnabled ? (configuration.isPressed ? 0.8 : 1) : 0.4)
       .contentShape(.capsule)
       .animation(.snappy(duration: 0.12), value: configuration.isPressed)
+  }
+}
+
+/// A neutral glass capsule with a primary label. The system's glass button takes the
+/// window's tint, which made every secondary button look like the principal one.
+public struct SecondaryGlassStyle: ButtonStyle {
+  @Environment(\.isEnabled) private var isEnabled
+  @Environment(\.controlSize) private var controlSize
+
+  public init() {}
+
+  public func makeBody(configuration: Configuration) -> some View {
+    configuration.label
+      .foregroundStyle(.primary)
+      .padding(.horizontal, horizontalPadding)
+      .padding(.vertical, verticalPadding)
+      .frame(minHeight: minHeight)
+      .contentShape(.capsule)
+      .glassEffect(.regular.interactive(), in: .capsule)
+      .opacity(isEnabled ? (configuration.isPressed ? 0.75 : 1) : 0.45)
+  }
+
+  private var horizontalPadding: CGFloat {
+    switch controlSize {
+    case .mini, .small: 10
+    case .large, .extraLarge: 16
+    default: 12
+    }
+  }
+
+  private var verticalPadding: CGFloat {
+    switch controlSize {
+    case .mini, .small: 2
+    case .large, .extraLarge: 7
+    default: 4
+    }
+  }
+
+  private var minHeight: CGFloat {
+    switch controlSize {
+    case .mini, .small: 22
+    case .large, .extraLarge: 34
+    default: 28
+    }
   }
 }
