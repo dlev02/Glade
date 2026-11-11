@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// One compact live reading in the menu bar popover: a name, a figure, a word on how
-/// it's doing, and a tiny line of its recent history.
+/// it's doing, and a tiny line of its recent history. Three sit side by side in one
+/// tile, which draws the background.
 struct MenuReading: View {
   var title: String
   var figure: String
@@ -16,6 +17,7 @@ struct MenuReading: View {
         .foregroundStyle(.secondary)
       Text(figure)
         .font(.figure(17))
+        .foregroundStyle(figure == "—" ? .tertiary : .primary)
         .contentTransition(.numericText())
         .lineLimit(1)
       Text(caption)
@@ -24,11 +26,10 @@ struct MenuReading: View {
         .lineLimit(1)
       Sparkline(values: history, ceiling: 100, color: color)
         .frame(height: 18)
-        .padding(.top, 2)
+        .padding(.top, Metrics.xs)
     }
-    .padding(Metrics.s)
+    .padding(Metrics.m)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .background(Palette.track, in: .rect(cornerRadius: Metrics.innerRadius))
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(title)
     .accessibilityValue("\(figure), \(caption)")

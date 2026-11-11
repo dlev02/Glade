@@ -6,7 +6,7 @@ public struct MetricTile: View {
   var symbol: String
   var figure: String
   var caption: String
-  /// A second line, such as the app using the most.
+  /// A detail for the tooltip, such as the app using the most.
   var footnote: String?
   var history: [Double]
   var ceiling: Double?
@@ -35,28 +35,26 @@ public struct MetricTile: View {
             .foregroundStyle(.secondary)
           Text(figure)
             .font(.figure(28))
+            .foregroundStyle(figure == "—" ? .tertiary : .primary)
             .contentTransition(.numericText())
           Text(caption)
             .font(.callout)
             .foregroundStyle(.secondary)
             .lineLimit(1)
-          if let footnote {
-            Text(footnote)
-              .font(.caption)
-              .foregroundStyle(.tertiary)
-              .lineLimit(1)
-          }
         }
-        .padding(Metrics.l)
-        Spacer(minLength: 0)
+        .padding([.horizontal, .top], Metrics.l)
+        Spacer(minLength: Metrics.s)
+        // Lifted off the bottom edge so the rounded corners don't cut into the line.
         Sparkline(values: history, ceiling: ceiling, color: color)
-          .frame(height: 44)
+          .frame(height: 40)
+          .padding(.bottom, Metrics.s)
       }
-      .frame(maxWidth: .infinity, minHeight: 168, alignment: .leading)
+      .frame(maxWidth: .infinity, minHeight: 148, alignment: .leading)
       .clipShape(.rect(cornerRadius: Metrics.cardRadius))
     }
+    .help(footnote ?? "")
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(title)
-    .accessibilityValue("\(figure), \(caption)")
+    .accessibilityValue([figure, caption, footnote].compactMap { $0 }.joined(separator: ", "))
   }
 }

@@ -29,4 +29,12 @@ extension AppModel {
   public func symbol(for suggestion: PerformanceSuggestion) -> String? {
     suggestion.kind == .shutDownIdleSimulator ? "iphone" : nil
   }
+
+  /// Something to look at rather than tidy up: a process pinning the processor or the
+  /// graphics chip, or anything while memory is under pressure. Its icon uses the
+  /// warning colour instead of the accent.
+  public func isWarning(_ suggestion: PerformanceSuggestion) -> Bool {
+    suggestion.kind == .runawayProcess || suggestion.kind == .gpuHog
+      || (snapshot?.memory.pressure ?? .normal) > .normal
+  }
 }
