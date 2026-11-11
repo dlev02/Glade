@@ -54,7 +54,7 @@ public enum Snapshotter {
 
     let root = content
       .environment(model)
-      .tint(model.tint)
+      .accent(model.tint)
       .frame(width: size.width, height: size.height)
       .background(Color(nsColor: .windowBackgroundColor))
     let host = NSHostingView(rootView: root)

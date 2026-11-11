@@ -41,7 +41,7 @@ public struct GladeScenes: Scene {
     MenuBarExtra {
       MenuBarView()
         .environment(model)
-        .tint(model.tint)
+        .accent(model.tint)
         .preferredColorScheme(model.appearance.colorScheme)
     } label: {
       MenuBarLabel(model: model)
@@ -52,7 +52,7 @@ public struct GladeScenes: Scene {
       SettingsView()
         .environment(model)
         .environment(\.updater, updater)
-        .tint(model.tint)
+        .accent(model.tint)
         .preferredColorScheme(model.appearance.colorScheme)
     }
   }

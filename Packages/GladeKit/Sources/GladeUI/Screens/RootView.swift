@@ -31,11 +31,11 @@ public struct RootView: View {
       }
     }
     .frame(minWidth: 940, minHeight: 600)
-    .tint(model.tint)
+    .accent(model.tint)
     .preferredColorScheme(model.appearance.colorScheme)
     .sheet(isPresented: $model.showsSetup) {
       SetupView()
-        .tint(model.tint)
+        .accent(model.tint)
     }
   }
 }

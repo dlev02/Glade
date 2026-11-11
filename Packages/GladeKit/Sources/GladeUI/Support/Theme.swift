@@ -13,8 +13,8 @@ public enum Metrics {
   public static let xl: CGFloat = 24
   public static let xxl: CGFloat = 32
   /// Corner radius of a card. Things inside a card use `innerRadius`.
-  public static let cardRadius: CGFloat = 14
-  public static let innerRadius: CGFloat = 8
+  public static let cardRadius: CGFloat = 18
+  public static let innerRadius: CGFloat = 10
   /// The widest a column of reading content gets before it stops growing.
   public static let contentWidth: CGFloat = 920
 }
@@ -219,7 +219,52 @@ extension Color {
   }
 }
 
+extension Color {
+  /// This colour, darkened just enough for white text on it to be readable (4.5:1).
+  /// The accent as people choose it is for marks: figures, chart lines, ticks. This is
+  /// the version for fills: the sidebar selection, prominent buttons, switches.
+  public var readableFill: Color {
+    let source = NSColor(self)
+    return Color(nsColor: NSColor(name: nil) { appearance in
+      var resolved = NSColor.systemGreen
+      appearance.performAsCurrentDrawingAppearance {
+        resolved = source.usingColorSpace(.sRGB) ?? .systemGreen
+      }
+      var steps = 0
+      while resolved.contrastWithWhite < 4.5, steps < 24 {
+        resolved = resolved.blended(withFraction: 0.06, of: .black) ?? resolved
+        steps += 1
+      }
+      return resolved
+    })
+  }
+}
+
+extension EnvironmentValues {
+  /// The accent at full brightness, for figures, chart lines and ticks. Fills use
+  /// `.tint`, which is the darker `readableFill`.
+  @Entry public var accentMark: Color = Palette.glade
+}
+
+extension View {
+  /// Applies the person's accent: the readable fill as the tint, and the bright
+  /// mark in the environment.
+  public func accent(_ accent: Color) -> some View {
+    tint(accent.readableFill).environment(\.accentMark, accent)
+  }
+}
+
 extension NSColor {
+  /// The WCAG contrast ratio between this colour and white.
+  var contrastWithWhite: CGFloat {
+    func linear(_ value: CGFloat) -> CGFloat {
+      value <= 0.03928 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
+    }
+    let color = usingColorSpace(.sRGB) ?? self
+    let luminance = 0.2126 * linear(color.redComponent) + 0.7152 * linear(color.greenComponent) + 0.0722 * linear(color.blueComponent)
+    return 1.05 / (luminance + 0.05)
+  }
+
   convenience init(hex: UInt32) {
     self.init(
       srgbRed: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255,

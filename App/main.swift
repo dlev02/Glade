@@ -15,7 +15,9 @@ if isCommandLine {
     await CLI.run(Array(arguments.dropFirst()))
     exit(0)
   }
-  dispatchMain()
+  // A run loop rather than dispatchMain(), which gives up the main thread: commands
+  // that draw (`snapshot`) need main-actor work to run on the real main thread.
+  CFRunLoopRun()
 } else {
   GladeApp.main()
 }
