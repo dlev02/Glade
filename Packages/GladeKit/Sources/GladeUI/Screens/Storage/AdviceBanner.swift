@@ -2,8 +2,11 @@ import GladeKit
 import SwiftUI
 
 /// What the assistant said about the selection, how it changed it, and, plainly,
-/// any suggestions Glade refused because they broke a safety rule.
+/// any suggestions Glade refused because they broke a safety rule. Drawn like the
+/// Assistant's advice card, so the two read as the same thing.
 struct AdviceBanner: View {
+  @Environment(AppModel.self) private var model
+  @Environment(\.accentMark) private var accentMark
   var advice: StorageAdvice
   /// Looks up a finding's title for the refused suggestions.
   var title: (String) -> String?
@@ -11,51 +14,47 @@ struct AdviceBanner: View {
 
   var body: some View {
     HStack(alignment: .top, spacing: Metrics.m) {
-      Image(systemName: "sparkles")
-        .foregroundStyle(.tint)
+      Image(systemName: Symbols.assistant)
+        .foregroundStyle(accentMark)
         .accessibilityHidden(true)
-      VStack(alignment: .leading, spacing: Metrics.xs) {
+      VStack(alignment: .leading, spacing: Metrics.s) {
         Text(advice.summary)
           .lineLimit(4)
-        Text(counts)
-          .font(.callout)
-          .foregroundStyle(.secondary)
-          .monospacedDigit()
+        HStack(spacing: Metrics.m) {
+          AdviceChips(advice: advice)
+          Text(model.responderName(advice.provider))
+            .font(.caption)
+            .foregroundStyle(.secondary)
+          if advice.escalated {
+            Label("Stronger model", systemImage: "brain")
+              .font(.caption)
+              .foregroundStyle(.secondary)
+              .help("A stronger model took a closer look")
+          }
+        }
         if !advice.rejected.isEmpty {
-          DisclosureGroup(isExpanded: $showsRejected) {
+          AdviceDisclosure(isExpanded: $showsRejected) {
+            Text(advice.rejected.count == 1 ? "Glade refused 1" : "Glade refused \(advice.rejected.count)")
+              .font(.caption)
+              .foregroundStyle(.secondary)
+          } content: {
             VStack(alignment: .leading, spacing: Metrics.xs) {
               ForEach(advice.rejected) { note in
-                HStack(alignment: .firstTextBaseline, spacing: Metrics.s) {
-                  Image(systemName: "hand.raised")
+                VStack(alignment: .leading, spacing: 1) {
+                  Text(title(note.id) ?? note.id)
+                  Text(verbatim: note.why)
                     .foregroundStyle(.secondary)
-                    .accessibilityHidden(true)
-                  Text("\(Text(title(note.id) ?? "An item").fontWeight(.medium)): \(note.why)")
                 }
-                .font(.callout)
+                .font(.caption)
+                .accessibilityElement(children: .combine)
               }
             }
-            .padding(.top, Metrics.xs)
-          } label: {
-            Text(advice.rejected.count == 1 ? "Glade refused 1 suggestion" : "Glade refused \(advice.rejected.count) suggestions")
-              .font(.callout)
           }
         }
       }
       Spacer(minLength: 0)
     }
-    .padding(Metrics.m)
-    .background(.tint.opacity(0.08), in: .rect(cornerRadius: Metrics.innerRadius))
-  }
-
-  /// "+4 added · 2 left alone · 3 to review", leaving out what didn't happen, and
-  /// who answered.
-  private var counts: String {
-    var parts: [String] = []
-    if !advice.select.isEmpty { parts.append("+\(advice.select.count) added") }
-    if !advice.deselect.isEmpty { parts.append("\(advice.deselect.count) left alone") }
-    if !advice.review.isEmpty { parts.append("\(advice.review.count) to review") }
-    if parts.isEmpty { parts.append("No changes") }
-    parts.append(advice.escalated ? "\(advice.provider), with a closer look" : advice.provider)
-    return parts.joined(separator: " · ")
+    .padding(Metrics.l)
+    .background(Palette.card, in: .rect(cornerRadius: Metrics.cardRadius))
   }
 }

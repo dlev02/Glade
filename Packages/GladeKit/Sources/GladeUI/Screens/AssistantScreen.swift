@@ -7,7 +7,17 @@ struct AssistantScreen: View {
   @Environment(AppModel.self) private var model
   /// Only set when drawing snapshots.
   var preview: AssistantPreview?
-  @State private var showsRuns = false
+  @State private var showsDetails: Bool
+  /// Every recorded run, newest first; `nil` until read.
+  @State private var runs: [AssistantRun]?
+  /// The run shown in full in a sheet.
+  @State private var shownRun: AssistantRun?
+
+  init(preview: AssistantPreview? = nil, showsDetails: Bool = false) {
+    self.preview = preview
+    _showsDetails = State(initialValue: showsDetails)
+    _runs = State(initialValue: preview?.runs)
+  }
 
   var body: some View {
     let messages = preview?.messages ?? model.messages
@@ -18,16 +28,30 @@ struct AssistantScreen: View {
     content(messages: messages, state: state, providers: providers, active: active)
       .navigationTitle("Assistant")
       .toolbar {
-        ToolbarItemGroup {
-          Button("New Conversation", systemImage: "square.and.pencil") { model.clearConversation() }
+        ToolbarItem(placement: .primaryAction) {
+          Button("New Conversation", systemImage: Symbols.newConversation) { model.clearConversation() }
             .help("New Conversation")
+            .keyboardShortcut("n")
             .disabled(messages.isEmpty)
-          Button("Show What Was Sent", systemImage: "text.page.badge.magnifyingglass") { showsRuns = true }
-            .help("Show What Was Sent")
         }
       }
-      .sheet(isPresented: $showsRuns) {
-        RunsSheet()
+      .inspector(isPresented: $showsDetails) {
+        RunsInspector(runs: runs) { shownRun = $0 }
+          .inspectorColumnWidth(min: 260, ideal: 300, max: 400)
+          .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+              Button("Details", systemImage: Symbols.inspector) { showsDetails.toggle() }
+                .help("Show What Was Sent")
+                .keyboardShortcut("i", modifiers: [.command, .option])
+            }
+          }
+      }
+      .sheet(item: $shownRun) { run in
+        RunSheet(run: run)
+      }
+      .task(id: messages.count) {
+        guard preview?.runs == nil else { return }
+        await loadRuns()
       }
   }
 
@@ -43,16 +67,40 @@ struct AssistantScreen: View {
       let isThinking = if case .thinking = state { true } else { false }
       Group {
         if messages.isEmpty && !isThinking {
-          ConversationStart(provider: active)
+          ConversationStart()
         } else {
-          ConversationView(messages: messages, state: state)
+          ConversationView(
+            messages: messages, state: state, chosen: active,
+            isLive: { advice in preview?.adviceIsLive ?? model.isLive(advice) }
+          ) { message in
+            Task { await showRun(for: message) }
+          }
         }
       }
       .safeAreaInset(edge: .bottom, spacing: 0) {
         Composer(active: active, ready: providers.filter(\.isReady), isBusy: isThinking)
       }
     } else {
-      NoAssistantState(providers: providers)
+      NoAssistantState()
+    }
+  }
+
+  private func loadRuns() async {
+    // Reading the records touches files, so keep it off the main thread.
+    runs = await Task.detached { Assistant.runs() }.value
+  }
+
+  /// Opens the run behind an answer: the one its advice names, or else the newest run
+  /// that started before the answer arrived.
+  private func showRun(for message: AppModel.Message) async {
+    await loadRuns()
+    let runs = runs ?? []
+    let run = message.advice.flatMap { advice in runs.first { $0.id == advice.runID } }
+      ?? runs.first { $0.date <= message.date }
+    if let run {
+      shownRun = run
+    } else {
+      showsDetails = true
     }
   }
 }
