@@ -295,12 +295,25 @@ public struct Protection: Sendable {
 /// Whether this process may read the parts of the disk macOS guards behind Full Disk
 /// Access. Checked by opening a file every Mac has, without reading it.
 public enum FullDiskAccess {
+  /// Whether this process may read places macOS keeps from apps without Full Disk
+  /// Access. No one file is a reliable test: the per-user privacy database that was
+  /// the usual probe is gone on newer systems, and a Mac may have no Safari or Mail
+  /// data. So try several protected places; being let into any of them proves access.
   public static var isGranted: Bool {
-    let probe = NSHomeDirectory() + "/Library/Application Support/com.apple.TCC/TCC.db"
-    let descriptor = open(probe, O_RDONLY)
-    if descriptor >= 0 {
-      close(descriptor)
-      return true
+    let home = NSHomeDirectory()
+    let probes = [
+      "/Library/Application Support/com.apple.TCC/TCC.db",
+      home + "/Library/Application Support/com.apple.TCC/TCC.db",
+      home + "/Library/Safari",
+      home + "/Library/Mail",
+      home + "/.Trash",
+    ]
+    for probe in probes {
+      let descriptor = open(probe, O_RDONLY)
+      if descriptor >= 0 {
+        close(descriptor)
+        return true
+      }
     }
     return false
   }
