@@ -31,10 +31,11 @@ struct MenuBarView: View {
         Button {
           showStorage()
         } label: {
-          Label("Review \(Format.bytes(model.selectedBytes))…", systemImage: Symbols.review)
+          Text("Review \(Format.bytes(model.selectedBytes))…")
             .frame(maxWidth: .infinity)
         }
         .filledAction()
+        .accessibilityIdentifier("popover.review")
         .keyboardShortcut(.defaultAction)
       }
       footer
