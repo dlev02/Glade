@@ -463,6 +463,12 @@ public final class AppModel {
     let ids = selectedIDs
     guard !ids.isEmpty else { return }
     cleanState = .cleaning(done: 0, total: ids.count, title: "")
+    // Sample findings point at real places in the home folder, so a demo clean only
+    // pretends: nothing is removed and the real last scan is left alone.
+    if isDemo {
+      await simulateClean(ids: ids, scan: scan)
+      return
+    }
     do {
       let receipt = try await Cleaner.clean(
         ids: ids, from: scan, config: config, options: CleanOptions(dryRun: false, initiator: .user)
@@ -484,6 +490,34 @@ public final class AppModel {
     }
   }
 
+  /// Demo mode only: walks through the selection as a clean would and records what
+  /// it would have done, without touching the disk.
+  private func simulateClean(ids: [String], scan: ScanResult) async {
+    var entries: [ReceiptEntry] = []
+    for (index, id) in ids.enumerated() {
+      guard let finding = scan.finding(id) else { continue }
+      cleanState = .cleaning(done: index, total: ids.count, title: finding.title)
+      try? await Task.sleep(for: .milliseconds(120))
+      let trashed = finding.method == .trash || finding.recovery == .permanent
+      let outcome: RemovalOutcome = trashed
+        ? .trashed(locations: Dictionary(uniqueKeysWithValues: finding.paths.map { ($0, "~/.Trash/" + ($0 as NSString).lastPathComponent) }))
+        : .deleted
+      entries.append(ReceiptEntry(
+        id: finding.id, title: finding.title, category: finding.category, paths: finding.paths,
+        bytes: finding.bytes, outcome: outcome
+      ))
+    }
+    let freed = entries.reduce(Int64(0)) { $0 + $1.bytes }
+    let receipt = Receipt(
+      id: UUID().uuidString, date: Date(), initiator: .user, dryRun: false, entries: entries,
+      freeBefore: scan.volume.availableBytes, freeAfter: scan.volume.availableBytes + freed
+    )
+    self.scan = scan.removing(receipt)
+    receipts.insert(receipt, at: 0)
+    resetSelection()
+    cleanState = .finished(receiptID: receipt.id)
+  }
+
   public func dismissCleanResult() {
     cleanState = .idle
   }
@@ -495,7 +529,8 @@ public final class AppModel {
   /// Moves a clean's Trash items back where they were.
   @discardableResult
   public func putBack(_ receipt: Receipt) -> Cleaner.RestoreResult {
-    Cleaner.restore(receipt)
+    if isDemo { return Self.pretendRestore(receipt) }
+    return Cleaner.restore(receipt)
   }
 
   // MARK: Assistant
