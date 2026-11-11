@@ -39,12 +39,16 @@ public struct LevelMenu: View {
 }
 
 extension CleanLevel {
-  /// What the level adds, in a few words, for the menu.
+  /// What the level selects, in a few words, for the menu. It follows `Planner` and
+  /// the levels the catalog and scanners give: Careful takes what rebuilds itself once
+  /// it has sat idle; Balanced adds package and installer downloads, idle simulators,
+  /// worktrees and stale agent history (which can't be recreated, so its row and the
+  /// confirm sheet say so); Aggressive adds installed toolkits and stops waiting.
   public var consequence: String {
     switch self {
-    case .careful: "Only things that rebuild themselves"
-    case .balanced: "Plus things that download again"
-    case .aggressive: "Plus things you reinstall"
+    case .careful: "Things that rebuild themselves and haven’t been used lately"
+    case .balanced: "Adds old downloads, idle simulators and stale agent history"
+    case .aggressive: "Adds tools you’d reinstall and things used recently"
     }
   }
 }
