@@ -158,15 +158,18 @@ struct SetupView: View {
   }
 
   private func loginStep(_ status: SetupStatus) -> some View {
-    SetupStepRow(
-      title: "Open at Login",
-      detail: "Keeps \(Brand.name) in the menu bar.",
-      note: LoginItem.isAvailable || overrides.setup != nil ? nil : "Available in the installed app."
+    // Outside an Applications folder macOS won't register a login item; the switch
+    // says so in its tooltip rather than in a line of its own.
+    let available = LoginItem.isAvailable || overrides.setup != nil
+    return SetupStepRow(
+      title: "Open at login",
+      detail: "Keeps \(Brand.name) in the menu bar."
     ) {
-      Toggle("Open at Login", isOn: Binding(get: { status.opensAtLogin }, set: setOpensAtLogin))
+      Toggle("Open at login", isOn: Binding(get: { status.opensAtLogin }, set: setOpensAtLogin))
         .toggleStyle(.switch)
         .labelsHidden()
-        .disabled(!LoginItem.isAvailable && overrides.setup == nil)
+        .disabled(!available)
+        .help(available ? "" : "Available in the installed app")
     }
   }
 
@@ -176,7 +179,7 @@ struct SetupView: View {
     case .unavailable: "Available after installing the app."
     default: "Use \(Brand.cli) in Terminal and connect coding agents."
     }
-    return SetupStepRow(title: "Command Line", detail: detail) {
+    return SetupStepRow(title: "Command line tool", detail: detail) {
       if installing {
         ProgressView().controlSize(.small)
       } else if case .notInstalled = status.commandLine {

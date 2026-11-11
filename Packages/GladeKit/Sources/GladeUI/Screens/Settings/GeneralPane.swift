@@ -21,14 +21,15 @@ struct GeneralPane: View {
       }
 
       Section {
+        // Outside an Applications folder macOS won't register a login item; the
+        // tooltip says so.
         Toggle("Open at login", isOn: Binding(get: { opensAtLogin }, set: setOpensAtLogin))
           .disabled(!LoginItem.isAvailable && overrides.opensAtLogin == nil)
+          .help(!LoginItem.isAvailable && overrides.opensAtLogin == nil ? "Available in the installed app" : "")
         Toggle("Show free space in the menu bar", isOn: $model.menuBarShowsFreeSpace)
       } footer: {
         if let loginProblem {
           Text(loginProblem).foregroundStyle(.secondary)
-        } else if !LoginItem.isAvailable, overrides.opensAtLogin == nil {
-          Text("Open at login is available in the installed app.").foregroundStyle(.secondary)
         }
       }
 
