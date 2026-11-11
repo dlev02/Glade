@@ -20,14 +20,14 @@ public enum AgentProviders {
 
   /// Every provider's status, checked at once. A provider that takes longer than
   /// `limit` seconds is reported unavailable rather than holding up the rest.
-  public static func statuses(limit: TimeInterval = 3) async -> [ProviderStatus] {
+  public static func statuses(limit: TimeInterval = 8) async -> [ProviderStatus] {
     await statuses(of: all, limit: limit)
   }
 
   /// The first provider in `order` that's ready, or `nil` when none is.
   public static func firstReady(order: [String]) async -> (any AgentProvider)? {
     let wanted = order.compactMap(provider(id:))
-    let found = await statuses(of: wanted, limit: 3)
+    let found = await statuses(of: wanted, limit: 8)
     guard let ready = found.first(where: \.isReady) else { return nil }
     return provider(id: ready.id)
   }
