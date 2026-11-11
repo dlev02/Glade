@@ -43,9 +43,12 @@ struct Plan: AsyncParsableCommand {
       var freedImmediately: Int64
       var movedToTrash: Int64
       var freeNow: Int64
+      /// What a bolder level would add, when it would add a lot.
+      var hint: String?
       var items: [Row]
       var review: [String]
     }
+    let hint = Planner.bolderLevelHint(scan: scan, plan: plan, config: config)
     let rows = plan.items.compactMap { item -> Row? in
       guard let finding = scan.finding(item.id), all || item.selected else { return nil }
       return Row(
@@ -57,12 +60,14 @@ struct Plan: AsyncParsableCommand {
     let report = Report(
       level: plan.level.rawValue, selectedBytes: plan.selectedBytes, freedImmediately: plan.immediateBytes,
       movedToTrash: plan.selectedBytes - plan.immediateBytes, freeNow: scan.volume.availableBytes,
-      items: rows, review: plan.review
+      hint: hint, items: rows, review: plan.review
     )
     emit(report, json: output.json) {
       print("\(plan.level.title) plan: \(Format.bytes(plan.selectedBytes)) across \(plan.selectedIDs.count) items")
       let trash = plan.selectedBytes - plan.immediateBytes
-      print("  \(Format.bytes(plan.immediateBytes)) freed now" + (trash > 0 ? ", \(Format.bytes(trash)) to the Trash (freed when the Trash is emptied)" : "") + "\n")
+      print("  \(Format.bytes(plan.immediateBytes)) freed now" + (trash > 0 ? ", \(Format.bytes(trash)) to the Trash (freed when the Trash is emptied)" : ""))
+      if let hint { print("  \(hint)") }
+      print("")
       for row in rows where row.selected {
         print("  ✓ \(row.id.padding(toLength: 13, withPad: " ", startingAt: 0)) \(Format.bytes(row.bytes).leftPadded(10))  \(row.title)  — \(row.reason)")
       }

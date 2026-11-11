@@ -194,11 +194,14 @@ enum MCPTools {
         var totalBytes: Int64
         var freedImmediately: String
         var movedToTrash: String
+        /// What a bolder level would add, when it would add a lot.
+        var hint: String?
         var selected: [FindingSummary]
       }
       return JSONFiles.string(Report(
         level: level.rawValue, total: Format.bytes(plan.selectedBytes), totalBytes: plan.selectedBytes,
         freedImmediately: Format.bytes(plan.immediateBytes), movedToTrash: Format.bytes(plan.selectedBytes - plan.immediateBytes),
+        hint: Planner.bolderLevelHint(scan: scan, plan: plan),
         selected: plan.selectedIDs.compactMap { scan.finding($0) }.map(FindingSummary.init)
       ))
     },

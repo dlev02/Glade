@@ -71,23 +71,41 @@ struct Doctor: AsyncParsableCommand {
     var volume: VolumeInfo
     var protectedZones: [String]
     var logFile: String
+    /// When space is below the alert threshold: what the last scan says a clean would free.
+    var lowSpace: String?
   }
 
   func run() async throws {
+    let volume = VolumeInfo.current()
     let report = Report(
       version: Brand.version,
       fullDiskAccess: FullDiskAccess.isGranted,
       home: GladePaths.home,
-      volume: VolumeInfo.current(),
+      volume: volume,
       protectedZones: Protection().zones.map(\.title),
-      logFile: GladePaths.logs.appendingPathComponent("glade.log").path
+      logFile: GladePaths.logs.appendingPathComponent("glade.log").path,
+      lowSpace: Self.lowSpace(volume)
     )
     emit(report, json: output.json) {
       print("\(Brand.name) \(report.version)")
       print("Full Disk Access: \(report.fullDiskAccess ? "granted" : "not granted (some folders can’t be measured)")")
       print("Disk: \(Format.bytes(report.volume.availableBytes)) available of \(Format.bytes(report.volume.totalBytes))")
+      if let lowSpace = report.lowSpace { print("Space is low. \(lowSpace)") }
       print("Protected: \(report.protectedZones.joined(separator: ", "))")
       print("Log: \(report.logFile)")
     }
+  }
+
+  /// What a clean would free when space is below the alert threshold, from the last
+  /// scan if it’s recent. Doctor never scans by itself.
+  static func lowSpace(_ volume: VolumeInfo) -> String? {
+    let config = ConfigStore.load()
+    guard Double(volume.availableBytes) / 1_000_000_000 < config.automation.storageFreeGB else { return nil }
+    guard let scan = ScanEngine.loadLast(), Date().timeIntervalSince(scan.finished) < Cleaner.maximumScanAge else {
+      return "Run `\(Brand.cli) plan` to see what a clean would free."
+    }
+    let plan = Planner.plan(scan: scan, level: config.level, config: config)
+    return Planner.bolderLevelHint(scan: scan, plan: plan, config: config)
+      ?? "A \(config.level.title) clean would free \(Format.bytes(plan.selectedBytes))."
   }
 }

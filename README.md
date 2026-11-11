@@ -51,7 +51,7 @@ Every finding says how it comes back:
 | Balanced | Waits half as long for those (a day, and 3 days for build folders), and adds package caches, stale agent sessions (14 days and older), idle simulators and AI models. |
 | Aggressive | Everything that can come back, even if it was used recently. |
 
-The level picks a starting selection. Change any item by hand before you clean. Each of Xcode's test and preview simulators is listed on its own, so the ones Xcode used today stay while older ones go.
+The level picks a starting selection. Change any item by hand before you clean. Each of Xcode's test and preview simulators is listed on its own, so the ones Xcode used today stay while older ones go. When a bolder level would free a lot more, `glade plan` says how much and what it would add.
 
 ### What Glade never touches
 
@@ -110,7 +110,7 @@ Every command accepts `--json`, and nothing is removed without `--confirm`.
 | `glade status`, `glade apps`, `glade suggest` | Processor, memory, graphics and disk; what each app is doing; what to quit. |
 | `glade quit "<app>"` | Ask an app to quit. |
 | `glade protect check <path>` | Why a path is or isn't off limits. |
-| `glade doctor` | Permissions and what Glade can't see. |
+| `glade doctor` | Permissions and what Glade can't see; when space is low, what a clean would free. |
 | `glade show storage` | Open the window on overview, storage, performance, assistant or history. |
 
 Run `glade --help` for the rest.

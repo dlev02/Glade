@@ -117,6 +117,44 @@ public enum Planner {
     }
   }
 
+  /// A bolder level is worth mentioning when it frees at least this much more, and at
+  /// least twice as much in all.
+  static let hintMinimumBytes: Int64 = 5_000_000_000
+
+  /// One or two plain sentences for when this plan frees little and a bolder level
+  /// would free a lot more: what this level frees, what the gentlest such level would,
+  /// and the biggest kinds of thing it adds. `nil` when no bolder level would add much.
+  /// Shown by `glade plan`, by `glade doctor` when space is low, and meant for the
+  /// low-storage alert.
+  public static func bolderLevelHint(
+    scan: ScanResult, plan: CleanPlan, config: GladeConfig = ConfigStore.load(), now: Date = Date()
+  ) -> String? {
+    let order: [CleanLevel] = [.careful, .balanced, .aggressive]
+    guard let index = order.firstIndex(of: plan.level) else { return nil }
+    let chosen = Set(plan.selectedIDs)
+    for bolder in order.dropFirst(index + 1) {
+      let other = Self.plan(scan: scan, level: bolder, config: config, now: now)
+      guard other.selectedBytes - plan.selectedBytes >= hintMinimumBytes,
+            other.selectedBytes >= 2 * plan.selectedBytes else { continue }
+      let added = topLevel(other.selectedIDs, in: scan).filter { !chosen.contains($0.id) }
+      var byCategory: [StorageCategory: Int64] = [:]
+      for finding in added { byCategory[finding.category, default: 0] += finding.bytes }
+      let biggest = byCategory.sorted { $0.value > $1.value }.prefix(2)
+        .map { "\(Self.prose($0.key)) (\(Format.bytes($0.value)))" }
+      var text = "\(plan.level.title) frees \(Format.bytes(plan.selectedBytes)). \(bolder.title) would free \(Format.bytes(other.selectedBytes))"
+      if !biggest.isEmpty { text += ", including \(biggest.joined(separator: " and "))" }
+      return text + "."
+    }
+    return nil
+  }
+
+  /// A category’s name for the middle of a sentence: "Xcode build data", "AI models".
+  static func prose(_ category: StorageCategory) -> String {
+    category.title.split(separator: " ").map { word in
+      word != "Xcode" && word.dropFirst().allSatisfy(\.isLowercase) ? word.lowercased() : String(word)
+    }.joined(separator: " ")
+  }
+
   /// Bolder levels wait less: half as long one level up, not at all two levels up.
   static func requiredIdleDays(_ finding: Finding, level: CleanLevel) -> Int {
     guard let autoLevel = finding.autoLevel else { return finding.idleDaysRequired }
