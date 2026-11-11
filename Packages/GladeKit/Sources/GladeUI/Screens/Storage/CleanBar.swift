@@ -15,7 +15,12 @@ struct CleanBar: View {
     let trash = model.trashBytes
     HStack(spacing: Metrics.l) {
       VStack(alignment: .leading, spacing: 0) {
-        Text(summary(count: count, free: free, trash: trash))
+        // In a narrow window the shorter wording keeps it on one line.
+        ViewThatFits(in: .horizontal) {
+          Text(summary(count: count, free: free, trash: trash))
+          Text(summary(count: count, free: free, trash: trash, short: true))
+        }
+          .lineLimit(1)
           .font(.headline)
           .monospacedDigit()
           .contentTransition(.numericText())
@@ -44,9 +49,13 @@ struct CleanBar: View {
 
   /// "19 items · 102 GB to free · 12 GB to the Trash": what is freed now comes first,
   /// and the Trash is named separately because it frees nothing until it's emptied.
-  private func summary(count: Int, free: Int64, trash: Int64) -> String {
+  private func summary(count: Int, free: Int64, trash: Int64, short: Bool = false) -> String {
     guard count > 0 else { return "Nothing selected" }
-    var parts = [count == 1 ? "1 item" : "\(count) items"]
+    let items = count == 1 ? "1 item" : "\(count) items"
+    if short, free > 0, trash > 0 {
+      return "\(items) · \(Format.bytes(free)) + \(Format.bytes(trash)) to Trash"
+    }
+    var parts = [items]
     if free > 0 { parts.append("\(Format.bytes(free)) to free") }
     if trash > 0 { parts.append("\(Format.bytes(trash)) to the Trash") }
     return parts.joined(separator: " · ")
