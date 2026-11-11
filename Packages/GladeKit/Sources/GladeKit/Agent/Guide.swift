@@ -59,6 +59,14 @@ public enum Guide {
     glade providers --json   # which AIs are connected
     ```
 
+    ## Showing the person
+
+    ```
+    glade show storage      # open Glade's window on overview, storage, performance, assistant or history
+    ```
+
+    When you've found something worth a look, open the matching section so the person sees it in the app.
+
     ## When something looks wrong
 
     `glade doctor` shows permissions and what Glade can't see (without Full Disk Access some folders can't be measured). `glade logs --problems` shows recent warnings and errors. If a finding looks misclassified, don't remove it; tell the person and suggest they report it with `glade report`.

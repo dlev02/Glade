@@ -111,6 +111,7 @@ Every command accepts `--json`, and nothing is removed without `--confirm`.
 | `glade quit "<app>"` | Ask an app to quit. |
 | `glade protect check <path>` | Why a path is or isn't off limits. |
 | `glade doctor` | Permissions and what Glade can't see. |
+| `glade show storage` | Open the window on overview, storage, performance, assistant or history. |
 
 Run `glade --help` for the rest.
 

@@ -32,8 +32,11 @@ public struct GladeScenes: Scene {
       RootView()
         .environment(model)
         .environment(\.updater, updater)
+        .onOpenURL { model.open($0) }
     }
     .defaultSize(width: 1100, height: 740)
+    // `glade://show/<section>` opens this window, even when it's closed.
+    .handlesExternalEvents(matching: ["\(AppModel.Section.linkScheme)://show"])
     .commands {
       GladeCommands(model: model, updater: updater)
       // Show and Hide Inspector in the View menu.
