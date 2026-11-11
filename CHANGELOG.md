@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 — unreleased
+## 0.1.0 — 2026-11-11
 
 The first version of Glade. It shows what is using your Mac's storage, memory, processors and graphics, and clears it safely.
 
