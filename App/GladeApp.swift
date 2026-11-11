@@ -7,7 +7,7 @@ import SwiftUI
 /// software updates.
 struct GladeApp: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
-  @State private var updates = UpdateController()
+  private let updates = AppDelegate.updates
 
   var body: some Scene {
     GladeScenes(model: AppDelegate.model, updater: updaterHooks)
@@ -22,6 +22,8 @@ struct GladeApp: App {
   }
 
   init() {
-    AppDelegate.updates = updates
+    // Started before the scenes are built, so the menu has Check for Updates… from
+    // the first frame. Started later, the menu was built without it and never caught up.
+    updates.start()
   }
 }
