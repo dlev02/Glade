@@ -604,7 +604,8 @@ public final class AppModel {
   // MARK: Permissions
 
   public func refreshPermissions() async {
-    hasFullDiskAccess = FullDiskAccess.isGranted
+    // Sample data stands for a Mac with access on, so every screen agrees.
+    if !isDemo { hasFullDiskAccess = FullDiskAccess.isGranted }
     notificationsAllowed = await Notifier.isAllowed()
   }
 

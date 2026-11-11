@@ -24,6 +24,7 @@ struct CleanBar: View {
           .foregroundStyle(.secondary)
       }
       Spacer(minLength: Metrics.m)
+      FullDiskAccessGlyph()
       Button(total > 0 ? "Free Up \(Format.bytes(total))" : "Free Up", action: freeUp)
         .filledAction()
         .monospacedDigit()

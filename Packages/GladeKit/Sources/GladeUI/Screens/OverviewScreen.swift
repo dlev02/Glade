@@ -11,7 +11,7 @@ struct OverviewScreen: View {
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: Metrics.l) {
-        if !model.hasFullDiskAccess { FullDiskAccessBanner() }
+        FullDiskAccessBanner()
         StorageSummary()
         HStack(alignment: .top, spacing: Metrics.l) {
           memoryTile

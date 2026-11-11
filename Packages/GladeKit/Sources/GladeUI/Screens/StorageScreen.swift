@@ -121,9 +121,8 @@ struct StorageScreen: View {
   private var header: some View {
     let advice = adviceOverride ?? model.advice
     let failure: String? = if case .failed(let message) = model.assistantState { message } else { nil }
-    if !model.hasFullDiskAccess || advice != nil || failure != nil {
+    if advice != nil || failure != nil {
       VStack(alignment: .leading, spacing: Metrics.m) {
-        if !model.hasFullDiskAccess { FullDiskAccessBanner() }
         if let advice {
           AdviceBanner(advice: advice) { state.list.finding($0)?.title }
         } else if let failure {
