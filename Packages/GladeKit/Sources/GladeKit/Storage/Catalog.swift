@@ -257,6 +257,7 @@ public enum Catalog {
       paths: ["~/.m2/repository"], recovery: .redownload, risk: .caution
     ),
     pkg("composer", "Composer cache", ["~/Library/Caches/composer", "~/.composer/cache"], "PHP packages already downloaded. Composer fetches them again when needed."),
+    pkg("ruby", "Ruby gem caches", ["~/.bundle/cache", "~/.gem/specs"], "Gem indexes Bundler and RubyGems have downloaded. They fetch them again on the next install."),
     pkg("pub", "Dart & Flutter packages", ["~/.pub-cache"], "Dart packages already downloaded. `pub get` fetches them again."),
     // Not a cache: the browsers testing and agent tools launch. Most tools stop with
     // an error until you install them again rather than downloading them by themselves.
@@ -284,7 +285,7 @@ public enum Catalog {
       paths: ["~/.cache/codex-runtimes"], recovery: .redownload,
       owner: Owner("Codex", bundleIDs: ["com.openai.codex"], processNames: ["codex"]), blockWhileRunning: true
     ),
-    pkg("nvm", "Node version manager cache", ["~/.nvm/.cache", "~/.fnm/node-versions/.downloads", "~/.volta/cache", "~/.cache/node/corepack", "~/.rustup/downloads", "~/.rustup/tmp"], "Installer downloads kept by version managers. Fetched again if you reinstall."),
+    pkg("nvm", "Version manager downloads", ["~/.nvm/.cache", "~/.fnm/node-versions/.downloads", "~/.volta/cache", "~/.cache/node/corepack", "~/.rustup/downloads", "~/.rustup/tmp", "~/.pyenv/cache", "~/.rbenv/cache"], "Installer downloads kept by version managers. Fetched again if you reinstall."),
   ]
 
   // MARK: Developer tool caches
@@ -333,6 +334,7 @@ public enum Catalog {
     sdk("rust", "Rust toolchain", ["~/.rustup/toolchains/*"]),
     sdk("python", "Python", ["~/.pyenv/versions/*", "~/.local/share/uv/python/*"]),
     sdk("ruby", "Ruby", ["~/.rbenv/versions/*", "~/.rvm/rubies/*"]),
+    sdk("mise", "mise tool", ["~/.local/share/mise/installs/*/*"]),
     sdk("swift", "Swift toolchain", ["~/Library/Developer/Toolchains/*", "~/.swiftly/toolchains/*"]),
     sdk("android-images", "Android system image", ["~/Library/Android/sdk/system-images/*/*"]),
     sdk("android-ndk", "Android NDK", ["~/Library/Android/sdk/ndk/*"]),

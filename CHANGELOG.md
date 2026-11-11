@@ -6,6 +6,7 @@
 
 - Some things that live in cache folders aren't caches, and Glade now treats them that way: Poetry's project environments, the local storage of Deno programs and R's renv packages are left alone; models downloaded with llama.cpp or Buzz count as AI models; Yarn's Plug'n'Play packages and the browsers Playwright, Puppeteer and Cypress run say they need reinstalling and wait for a bolder level; and the Maven repository is flagged because it can hold your own `mvn install` builds.
 - JetBrains caches wait for Balanced, since reindexing a project takes a while.
+- Finds tool versions installed with mise, Bundler's and RubyGems' download caches, and the installer downloads pyenv and rbenv keep.
 - Finds old Claude Code and Cursor Agent versions those tools keep after updating themselves, often hundreds of megabytes each. The version the command runs, a newer one waiting to switch over and the one before it always stay, and nothing is offered while an older version is still running.
 
 ### Safety
