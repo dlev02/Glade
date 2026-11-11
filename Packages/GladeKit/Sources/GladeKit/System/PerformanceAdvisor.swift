@@ -59,6 +59,11 @@ public struct PerformanceSuggestion: Codable, Sendable, Identifiable, Hashable {
   public var simulatorUDID: String? = nil
   /// Its device set's folder, passed to `SimulatorControl.shutdown(udid:set:)`.
   public var simulatorSetPath: String? = nil
+  /// The numbers in a few words, for a row under the name: "Idle 31 h · 10.3 GB".
+  /// `reason` stays the full sentence for the command line and the assistant.
+  public var facts: String? = nil
+  /// A short doubt worth seeing before acting, such as "May be in use by Bitrig".
+  public var caveat: String? = nil
 }
 
 /// Rule-based suggestions. No model involved, so it can run on every refresh.
@@ -100,12 +105,13 @@ public enum PerformanceAdvisor {
       .init(memoryBytes: app.memoryBytes, cpuPercent: app.cpuPercent, gpuPercent: app.gpuPercent)
     }
     func make(
-      _ kind: PerformanceSuggestion.Kind, _ app: AppUsage, title: String, reason: String,
+      _ kind: PerformanceSuggestion.Kind, _ app: AppUsage, title: String, reason: String, facts: String,
       confidence: PerformanceSuggestion.Confidence, pid: Int32? = nil, actionable: Bool
     ) -> PerformanceSuggestion {
       PerformanceSuggestion(
         id: "\(kind.rawValue):\(app.id)", kind: kind, appID: app.id, appName: app.name, pid: pid,
-        title: title, reason: reason, frees: frees(app), confidence: confidence, actionable: actionable
+        title: title, reason: reason, frees: frees(app), confidence: confidence, actionable: actionable,
+        facts: facts
       )
     }
 
@@ -136,12 +142,16 @@ public enum PerformanceAdvisor {
       var confidence = PerformanceSuggestion.Confidence.medium
       if !sinceBootOnly && (idleFor ?? 0) >= 2 * 3600 && (simulator.memoryBytes >= 1_000_000_000 || pressured) { confidence = .high }
       if simulator.note != nil { confidence = .low }
+      let idleFacts = idleFor.map { "Idle \(shortDuration($0))" } ?? "Not in use"
+      // Every caveat so far is about Bitrig, which can show a simulator Glade can't see.
+      let caveat = simulator.note.map { $0.contains("Bitrig") ? "May be in use by Bitrig" : "May be in use" }
       let id = "simulator:\(simulator.udid)"
       result.append(PerformanceSuggestion(
         id: "\(PerformanceSuggestion.Kind.shutDownIdleSimulator.rawValue):\(id)", kind: .shutDownIdleSimulator,
         appID: id, appName: simulator.name, pid: nil, title: "Shut down \(simulator.name)", reason: reason,
         frees: .init(memoryBytes: simulator.memoryBytes, cpuPercent: simulator.cpuPercent, gpuPercent: simulator.gpuPercent),
-        confidence: confidence, actionable: true, simulatorUDID: simulator.udid, simulatorSetPath: simulator.setPath
+        confidence: confidence, actionable: true, simulatorUDID: simulator.udid, simulatorSetPath: simulator.setPath,
+        facts: "\(idleFacts) · \(memory(simulator.memoryBytes))", caveat: caveat
       ))
     }
     let simulatorRowIDs: Set<String> = ["process:\(AppGrouper.simulatorRowName)", IDEContext.simulatorBundleID]
@@ -171,6 +181,7 @@ public enum PerformanceAdvisor {
           result.append(make(
             .quitIdleApp, app, title: "Quit \(app.name)",
             reason: "\(app.name) is using \(memory(app.memoryBytes)) and \(when).",
+            facts: "\(app.lastActive == nil ? "Hidden" : "Idle \(shortDuration(idleFor))") · \(memory(app.memoryBytes))",
             confidence: confidence, actionable: true
           ))
           continue
@@ -185,6 +196,7 @@ public enum PerformanceAdvisor {
         result.append(make(
           .runawayProcess, app, title: "Check \(app.name)",
           reason: "\(process) is using \(Int(app.busiestCPUPercent.rounded()))% CPU (\(load)) while in the background.",
+          facts: "\(Int(app.busiestCPUPercent.rounded()))% CPU in the background",
           confidence: app.kind == .app ? .medium : .low, pid: app.busiestPID, actionable: false
         ))
         continue
@@ -195,6 +207,7 @@ public enum PerformanceAdvisor {
         result.append(make(
           .gpuHog, app, title: "\(app.name) is using the GPU",
           reason: "\(app.name) is using \(Int(gpu.rounded()))% of the GPU while in the background.",
+          facts: "\(Int(gpu.rounded()))% GPU in the background",
           confidence: .medium, actionable: false
         ))
         continue
@@ -208,6 +221,7 @@ public enum PerformanceAdvisor {
         result.append(make(
           .relaunchHeavyApp, app, title: "Relaunch \(app.name)",
           reason: "\(app.name) has grown to \(memory(app.memoryBytes)) over \(Durations.phrase(launchedAgo)) open; reopening it usually gives most of that back.",
+          facts: "\(memory(app.memoryBytes)) after \(shortDuration(launchedAgo)) open",
           confidence: pressured ? .high : .medium, actionable: true
         ))
         continue
@@ -220,6 +234,7 @@ public enum PerformanceAdvisor {
         result.append(make(
           .memoryHog, app, title: "\(app.name) is using a lot of memory",
           reason: "\(app.name) is using \(memory(app.memoryBytes)), \(share)% of this Mac’s memory\(pressured ? ", while memory is under pressure" : "").",
+          facts: "\(memory(app.memoryBytes)) · \(share)% of memory",
           confidence: pressured ? .medium : .low, actionable: isApp
         ))
       }
@@ -230,5 +245,14 @@ public enum PerformanceAdvisor {
       return $0.frees.cpuPercent > $1.frees.cpuPercent
     }
     return result
+  }
+
+  /// "45 min", "31 h", "3 days": a duration short enough for a facts line.
+  static func shortDuration(_ seconds: TimeInterval) -> String {
+    let minutes = Int(seconds / 60)
+    if minutes < 90 { return "\(max(minutes, 1)) min" }
+    let hours = Int((Double(minutes) / 60).rounded())
+    if hours < 48 { return "\(hours) h" }
+    return "\(Int((Double(hours) / 24).rounded())) days"
   }
 }
