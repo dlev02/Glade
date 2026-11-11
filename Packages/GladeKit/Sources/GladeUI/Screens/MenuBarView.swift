@@ -122,13 +122,17 @@ struct MenuBarView: View {
   private var footer: some View {
     HStack(spacing: Metrics.xs) {
       Button("Open \(Brand.name)") { showWindow() }
+        .accessibilityIdentifier("popover.open")
       Spacer()
       SettingsLink {
         Label("Settings", systemImage: Symbols.settings)
           .labelStyle(.iconOnly)
       }
       .help("Settings")
+      .accessibilityIdentifier("popover.settings")
       Button("Quit") { NSApp.terminate(nil) }
+        .accessibilityLabel("Quit \(Brand.name)")
+        .accessibilityIdentifier("popover.quit")
         .help("Quit \(Brand.name)")
     }
     .buttonStyle(PopoverFooterButtonStyle())

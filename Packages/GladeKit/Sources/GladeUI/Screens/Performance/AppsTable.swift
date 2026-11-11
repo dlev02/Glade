@@ -113,6 +113,7 @@ struct AppsTable: View {
         }
         .pickerStyle(.segmented)
         .labelsHidden()
+        .accessibilityIdentifier("performance.filter")
       }
       ToolbarItem(placement: .primaryAction) {
         actionsMenu
@@ -174,6 +175,7 @@ struct AppsTable: View {
     .disabled(row == nil)
     .help(row.map { $0.quitRefusal ?? "Quit, relaunch or keep \($0.name) running" } ?? "Select an app to act on it")
     .accessibilityLabel(row.map { "Actions for \($0.name)" } ?? "Actions")
+    .accessibilityIdentifier("toolbar.actions")
   }
 
   @ViewBuilder private func menu(for row: UsageRow) -> some View {

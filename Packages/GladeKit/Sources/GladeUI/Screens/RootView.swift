@@ -24,6 +24,7 @@ public struct RootView: View {
         ForEach(AppModel.Section.allCases) { section in
           Label(section.title, systemImage: section.symbol)
             .tag(section)
+            .accessibilityIdentifier("sidebar.\(section.rawValue)")
         }
       }
       .navigationSplitViewColumnWidth(min: 180, ideal: 200, max: 260)
@@ -80,6 +81,7 @@ private struct SidebarFooter: View {
       .padding(.horizontal, Metrics.s)
       .padding(.bottom, Metrics.s)
       .help("Show Storage")
+      .accessibilityIdentifier("sidebar.freeSpace")
       .accessibilityElement(children: .combine)
       .accessibilityLabel("\(Format.bytes(disk.availableBytes)) available")
       .accessibilityHint("Shows Storage")
@@ -93,3 +95,4 @@ private struct SidebarFooter: View {
     return disk.availableBytes < threshold || disk.freeFraction < 0.1
   }
 }
+

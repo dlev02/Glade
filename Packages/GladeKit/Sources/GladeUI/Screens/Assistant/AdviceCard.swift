@@ -55,6 +55,7 @@ struct AdviceCard: View {
       Spacer(minLength: Metrics.m)
       Button("Review Selection", systemImage: Symbols.review) { model.section = .storage }
         .principalAction()
+        .accessibilityIdentifier("advice.review")
     }
   }
 

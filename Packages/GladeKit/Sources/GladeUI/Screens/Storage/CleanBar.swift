@@ -30,6 +30,7 @@ struct CleanBar: View {
         .keyboardShortcut(.return, modifiers: .command)
         .disabled(count == 0 || model.isScanning || model.isCleaning)
         .help("Free up the selected items (⌘Return)")
+        .accessibilityIdentifier("cleanBar.freeUp")
     }
     .padding(.leading, Metrics.l + Metrics.xs)
     .padding(.trailing, Metrics.s)

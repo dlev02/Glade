@@ -18,6 +18,7 @@ struct AskButton: View {
       .labelStyle(.titleAndIcon)
       .help(activity)
       .accessibilityLabel(activity)
+      .accessibilityIdentifier("toolbar.ask")
     } else {
       let provider = model.activeProvider
       Button("Ask \(provider.map(Self.shortName) ?? "Assistant")", systemImage: Symbols.assistant) {
@@ -26,6 +27,7 @@ struct AskButton: View {
       .labelStyle(.titleAndIcon)
       .disabled(provider == nil || model.scan == nil || model.isScanning || model.isCleaning)
       .help(provider == nil ? "Set up an assistant in Settings to ask for advice" : "Ask \(provider?.name ?? "") to refine the selection")
+      .accessibilityIdentifier("toolbar.ask")
     }
   }
 

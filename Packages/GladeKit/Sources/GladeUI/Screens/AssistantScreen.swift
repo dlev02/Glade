@@ -30,6 +30,7 @@ struct AssistantScreen: View {
       .toolbar {
         ToolbarItem(placement: .primaryAction) {
           Button("New Conversation", systemImage: Symbols.newConversation) { model.clearConversation() }
+            .accessibilityIdentifier("toolbar.newConversation")
             .help("New Conversation")
             .keyboardShortcut("n")
             .disabled(messages.isEmpty)
@@ -41,6 +42,7 @@ struct AssistantScreen: View {
           .toolbar {
             ToolbarItem(placement: .primaryAction) {
               Button("Details", systemImage: Symbols.inspector) { showsDetails.toggle() }
+                .accessibilityIdentifier("toolbar.details")
                 .help("Show What Was Sent")
                 .keyboardShortcut("i", modifiers: [.command, .option])
             }
