@@ -18,8 +18,9 @@ struct AppsTable: View {
   /// Shows the sentence describing what an action did.
   var report: (String) -> Void
 
-  @State private var rows: [UsageRow] = []
-  @State private var sortOrder = [KeyPathComparator(\UsageRow.memory, order: .reverse)]
+  // Start from what was on screen last time, so the first frame isn't empty.
+  @State private var rows: [UsageRow] = AppsTableMemory.rows
+  @State private var sortOrder = AppsTableMemory.sortOrder
   @State private var isHovering = false
   @State private var forceQuitTarget: UsageRow?
   @State private var working: Set<String> = []
@@ -90,20 +91,31 @@ struct AppsTable: View {
     }
     .onChange(of: apps, initial: true) { rebuild(resort: false) }
     .onChange(of: logicalCores) { rebuild(resort: false) }
-    .onChange(of: sortOrder) { rebuild(resort: true) }
+    .onChange(of: sortOrder) {
+      AppsTableMemory.sortOrder = sortOrder
+      rebuild(resort: true)
+    }
     .onChange(of: filter) { rebuild(resort: true) }
     .onChange(of: search) { rebuild(resort: true) }
+    // Live re-sorts jump straight to the new order; rows sliding every second is noise.
+    .transaction { $0.animation = nil }
+    // The table sits on the card colour, which softens the alternate-row stripes.
+    .scrollContentBackground(.hidden)
+    .background(Palette.card)
     .toolbar {
       ToolbarItem(placement: .principal) {
         Picker("Show", selection: $filter) {
-          ForEach(AppFilter.allCases) { Text($0.title).tag($0) }
+          ForEach(AppFilter.allCases) { filter in
+            Text(filter.title)
+              .help(filter.help)
+              .tag(filter)
+          }
         }
         .pickerStyle(.segmented)
         .labelsHidden()
-        .help("Which processes to list")
       }
-      ToolbarItemGroup(placement: .primaryAction) {
-        toolbarActions
+      ToolbarItem(placement: .primaryAction) {
+        actionsMenu
       }
     }
     .confirmationDialog(
@@ -134,28 +146,34 @@ struct AppsTable: View {
     return rows.first { $0.id == selection }
   }
 
-  @ViewBuilder private var toolbarActions: some View {
+  /// One menu for the selected row, always in the same place, so the toolbar never
+  /// reflows as the selection changes. Quitting comes first, apart from the gentler
+  /// actions.
+  private var actionsMenu: some View {
     let row = selectedRow
-    let canQuit = row.map { $0.canQuit && !working.contains($0.id) } ?? false
-    Menu {
-      Button("Force Quit…") { forceQuitTarget = row }
+    let busy = row.map { working.contains($0.id) } ?? true
+    let canQuit = !busy && (row?.canQuit ?? false)
+    return Menu {
+      Button("Quit", systemImage: "xmark.octagon") {
+        if let row { run(row) { await model.quit(row.app) } }
+      }
+      .disabled(!canQuit)
+      Button("Force Quit…", systemImage: "xmark.octagon.fill") { forceQuitTarget = row }
+        .disabled(!canQuit)
+      Divider()
+      Button("Relaunch", systemImage: "arrow.clockwise") {
+        if let row { run(row) { await model.relaunch(row.app) } }
+      }
+      .disabled(busy || !(row?.canRelaunch ?? false))
+      Toggle("Keep Running", systemImage: "pin", isOn: keepBinding(row))
+        .disabled(row.map { $0.app.isSystem || $0.app.isGlade } ?? true)
     } label: {
-      Label("Quit", systemImage: "xmark.octagon")
-    } primaryAction: {
-      if let row { run(row) { await model.quit(row.app) } }
+      Label("Actions", systemImage: Symbols.more)
     }
-    .disabled(!canQuit)
-    .help(row?.quitRefusal ?? (row.map { "Quit \($0.name)" } ?? "Quit the selected app"))
-
-    Button("Relaunch", systemImage: "arrow.clockwise") {
-      if let row { run(row) { await model.relaunch(row.app) } }
-    }
-    .disabled(!(row.map { $0.canRelaunch && !working.contains($0.id) } ?? false))
-    .help("Quit and reopen, which often frees memory an app has built up")
-
-    Toggle("Keep Running", systemImage: "pin", isOn: keepBinding(row))
-      .disabled(row.map { $0.app.isSystem || $0.app.isGlade } ?? true)
-      .help("Never suggest quitting this app")
+    .menuIndicator(.hidden)
+    .disabled(row == nil)
+    .help(row.map { $0.quitRefusal ?? "Quit, relaunch or keep \($0.name) running" } ?? "Select an app to act on it")
+    .accessibilityLabel(row.map { "Actions for \($0.name)" } ?? "Actions")
   }
 
   @ViewBuilder private func menu(for row: UsageRow) -> some View {
@@ -164,9 +182,9 @@ struct AppsTable: View {
       .disabled(!row.canQuit || busy)
     Button("Force Quit…") { forceQuitTarget = row }
       .disabled(!row.canQuit || busy)
+    Divider()
     Button("Relaunch") { run(row) { await model.relaunch(row.app) } }
       .disabled(!row.canRelaunch || busy)
-    Divider()
     Toggle("Keep Running", isOn: keepBinding(row))
       .disabled(row.app.isSystem || row.app.isGlade)
     Divider()
@@ -212,6 +230,7 @@ struct AppsTable: View {
     } else {
       rows = fresh.sorted(using: sortOrder + [KeyPathComparator(\UsageRow.id)])
     }
+    AppsTableMemory.rows = rows
     if let selection, !rows.contains(where: { $0.id == selection }) {
       self.selection = nil
     }

@@ -14,8 +14,17 @@ enum AppFilter: String, CaseIterable, Identifiable {
   var title: String {
     switch self {
     case .apps: "Apps"
-    case .everything: "Everything"
+    case .everything: "Processes"
     case .all: "All"
+    }
+  }
+
+  /// What the choice adds, for its tooltip.
+  var help: String {
+    switch self {
+    case .apps: "Apps you opened"
+    case .everything: "Plus background tools like node"
+    case .all: "Including macOS"
     }
   }
 
