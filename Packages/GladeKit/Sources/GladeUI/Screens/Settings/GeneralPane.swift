@@ -37,7 +37,7 @@ struct GeneralPane: View {
           LevelMenu(offersReset: false)
             .tint(.secondary)
         }
-        Toggle("Move everything to the Trash", isOn: $model.config.trashEverything)
+        Toggle("Use the Trash where possible", isOn: $model.config.trashEverything)
       }
     }
     .onAppear {

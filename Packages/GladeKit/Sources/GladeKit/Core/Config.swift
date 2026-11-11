@@ -164,7 +164,8 @@ public struct GladeConfig: Codable, Sendable, Equatable {
   public var projectRoots: [String]
   /// Categories left out of scans.
   public var ignoredCategories: [StorageCategory]
-  /// Send everything to the Trash, even things that rebuild themselves.
+  /// Send everything the Trash can take to it, even things that rebuild themselves.
+  /// Simulators and worktrees are always removed by their own tools.
   public var trashEverything: Bool
   public var level: CleanLevel
   /// Apps the assistant must never suggest quitting, by bundle identifier or name.
