@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.3 — 2026-11-12
+
+### Fixed
+
+- In Storage, the group headings (Simulators, Agent Worktrees and so on) scroll along with their items. Before, the top one stuck to the window on a lighter strip with a gap beneath it, which stood out in dark mode.
+- Searching Storage for something that isn't there shows "No Results" across the whole list, with the Free Up bar at the bottom where it belongs, instead of a lighter band and the bar floating halfway up.
+
 ## 0.2.2 — 2026-11-12
 
 ### See what "Other" is
