@@ -197,6 +197,16 @@ public final class SystemSampler: Sendable {
     await simulatorBreakdown(activity: activity).devices
   }
 
+  /// The apps and, when Simulator is running, its devices, from one process listing:
+  /// for the live screens, which refresh both every few seconds.
+  public func appsAndSimulators(activity: ActivityLog = .shared) async -> (apps: [AppUsage], simulators: [SimulatorUsage]) {
+    let list = await processes()
+    let apps = AppGrouper.group(list, activity: activity)
+    // Only worth working out when simulators are actually running.
+    guard apps.contains(where: { $0.name.localizedCaseInsensitiveContains("simulator") }) else { return (apps, []) }
+    return (apps, await simulatorBreakdown(processes: list, activity: activity).devices)
+  }
+
   /// The devices plus the CoreSimulator services they share.
   ///
   /// Not for periodic loops: the first call per device set runs `simctl list` (a few

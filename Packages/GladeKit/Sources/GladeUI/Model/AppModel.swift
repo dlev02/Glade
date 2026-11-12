@@ -330,12 +330,12 @@ public final class AppModel {
   }
 
   public func refreshApps() async {
-    var listing = await sampler.apps()
+    // One process listing serves both the apps and the simulators.
+    let reading = await sampler.appsAndSimulators()
+    var listing = reading.apps
+    let devices = reading.simulators
     if isDemo { listing = Self.demoApps(listing) }
     let current = ActivityContext.current(apps: listing, power: snapshot?.power)
-    // Only worth working out when simulators are actually running.
-    let running = listing.contains { $0.name.localizedCaseInsensitiveContains("simulator") }
-    let devices = running ? await sampler.simulators() : []
     apps = listing
     context = current
     simulators = devices
