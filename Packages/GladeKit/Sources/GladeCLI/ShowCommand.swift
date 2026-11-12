@@ -16,12 +16,17 @@ struct Show: AsyncParsableCommand {
   @Argument(help: "overview, storage, performance, assistant or history.")
   var section = "overview"
 
+  @Flag(name: .long, help: "Leave whatever is in front where it is.")
+  var background = false
+
   func run() async throws {
-    print(try await Self.open(section))
+    print(try await Self.open(section, inFront: !background))
   }
 
   /// Opens the window on a section and says what happened. Shared with the MCP server.
-  static func open(_ section: String) async throws -> String {
+  /// - Parameter inFront: Bring the window forward. Off, the window changes section
+  ///   behind whatever the person is doing.
+  static func open(_ section: String, inFront: Bool = true) async throws -> String {
     let name = section.lowercased()
     let link: URL? = await MainActor.run { AppModel.Section(rawValue: name)?.link }
     guard let link else {
@@ -31,7 +36,7 @@ struct Show: AsyncParsableCommand {
       throw ValidationError("\(Brand.name) isn’t installed. Install the app first.")
     }
     let configuration = NSWorkspace.OpenConfiguration()
-    configuration.activates = true
+    configuration.activates = inFront
     do {
       _ = try await NSWorkspace.shared.open([link], withApplicationAt: app, configuration: configuration)
     } catch {

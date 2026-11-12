@@ -71,7 +71,7 @@ public enum Guide {
     glade show storage      # open Glade’s window on overview, storage, performance, assistant or history
     ```
 
-    When you’ve found something worth a look, open the matching section so the person sees it in the app.
+    When you’ve found something worth a look, open the matching section so the person sees it in the app. This brings Glade in front of what they’re doing, so do it once, when there’s something to see; `--background` changes the section without coming forward.
 
     ## When something looks wrong
 

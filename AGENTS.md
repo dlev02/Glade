@@ -24,6 +24,7 @@ Sparkle's update check is the only network use of Glade's own, and asking an AI 
 
 - A screen: `glade snapshot <screen> --out /tmp/x.png` (`glade snapshot list` for names; `--dark`, `--live` for this Mac's last scan, `window --section storage`). Read the PNG; check light and dark.
 - The engine: `glade doctor`, `glade scan --category <c>`, `glade plan --level careful --all`, `glade clean --level careful` (a dry run), `glade logs --problems`.
+- Never pull Glade in front of what the person is doing. Check screens with `glade snapshot`, not `glade show` (use `glade show <section> --background` if the running app must change section), and start a build with `open -g`.
 - Only one copy of the app runs at a time; quit the installed one first. A copy outside an Applications folder never starts the updater.
 
 ## Rules that aren't negotiable
