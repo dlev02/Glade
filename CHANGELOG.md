@@ -9,6 +9,10 @@
 - Each downloaded version of a test browser (Playwright, Puppeteer, Cypress) is its own item, so versions you stopped using months ago go even when you ran a newer one today.
 - When a bolder level would free a lot more, the low-space alert says so, as do `glade plan` and `glade doctor`: "Balanced frees 33.3 GB. Aggressive would free 143 GB, including Xcode build data (54.7 GB) and simulators (28.1 GB)."
 
+### Storage
+
+- Bitrig's own simulators are listed with their size under Everything, marked as managed by Bitrig. Glade never selects or removes them.
+
 ### Quicker
 
 - Storage and Performance open straight away when you switch to them, even with hundreds of items found and dozens of apps running. Overview, the clean bar and the menu bar also add up your selection once instead of every time they're drawn.

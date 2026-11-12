@@ -15,6 +15,7 @@ public enum Catalog {
 
   static let xcode_ = Owner("Xcode", bundleIDs: ["com.apple.dt.Xcode"])
   static let simulator = Owner("Simulator", bundleIDs: ["com.apple.iphonesimulator"])
+  static let bitrig = Owner("Bitrig", bundleIDs: ["app.bitrig.Bitrig"], processNames: ["Bitrig"])
   static let safari = Owner("Safari", bundleIDs: ["com.apple.Safari"])
   static let chrome = Owner("Chrome", bundleIDs: ["com.google.Chrome", "com.google.Chrome.*"])
   static let cursor = Owner("Cursor", bundleIDs: ["com.todesktop.230313mzl4w4u92"], processNames: ["Cursor"])
@@ -167,7 +168,7 @@ public enum Catalog {
       id: "xcode.bitrig", category: .xcode, title: "Bitrig build data",
       detail: "Build products Bitrig made for one project. Rebuilt the next time that project is built or previewed.",
       paths: ["~/Library/Bitrig/Users/*/Builds/*/DerivedData"], split: .each, titleStyle: .parent,
-      owner: Owner("Bitrig", bundleIDs: ["app.bitrig.Bitrig"], processNames: ["Bitrig"]), idleDays: 3
+      owner: bitrig, idleDays: 3
     ),
     // Test and preview simulators are found one by one by SimulatorCloneScanner.
     LocationRule(
@@ -212,6 +213,16 @@ public enum Catalog {
       detail: "Shared system caches for simulators. Rebuilt when a simulator next boots, which makes that boot slower.",
       paths: ["~/Library/Developer/CoreSimulator/Caches"], owner: simulator, blockWhileRunning: true,
       allowsLibrariesInside: true
+    ),
+    // Bitrig keeps its own simulator devices and creates and removes them itself, so
+    // they’re shown for their size and never offered.
+    LocationRule(
+      id: "sim.bitrig", category: .simulators, title: "Bitrig simulators",
+      detail: "Managed by Bitrig",
+      paths: ["~/Library/Bitrig/Simulators"], recovery: .permanent, risk: .caution,
+      owner: bitrig,
+      auto: .never, minimumBytes: 1_000_000, allowsLibrariesInside: true,
+      reportOnly: "Bitrig creates and removes these devices itself."
     ),
   ]
 

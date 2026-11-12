@@ -295,6 +295,7 @@ struct SafetyTests {
       "Library/Caches/deno/location_data/abc/local_storage", "Library/Caches/deno/npm/registry.npmjs.org/pkg/a.tgz",
       "Library/Caches/org.R-project.R/R/renv/cache/v5/pkg/DESCRIPTION", "Library/Caches/llama.cpp/model-Q4_K_M.gguf",
       "Library/Caches/Buzz/models/whisper/ggml-base.bin", ".yarn/berry/cache/left-pad-npm-1.3.0.zip",
+      "Library/Bitrig/Simulators/F079E336-669D-43AA-B657-D8CD2E05CDC3/data/a.bin",
     ]
     for file in files {
       let path = home + "/" + file
@@ -319,6 +320,14 @@ struct SafetyTests {
     }
     for finding in covering(".yarn/berry/cache") {
       #expect(finding.risk == .caution && finding.recovery == .reinstall, "Yarn's Plug'n'Play packages offered as \(finding.ruleID)")
+    }
+    // Bitrig manages its own simulators: listed with their size, never selected or removed.
+    let bitrig = covering("Library/Bitrig/Simulators")
+    #expect(!bitrig.isEmpty, "Bitrig's simulators should be listed")
+    for finding in bitrig {
+      #expect(finding.isBlocked && finding.autoLevel == nil, "Bitrig's simulators offered as \(finding.ruleID)")
+      let plan = Planner.plan(scan: scan([finding]), level: .aggressive, config: GladeConfig())
+      #expect(plan.selectedIDs.isEmpty, "Bitrig's simulators selected at Aggressive")
     }
   }
 
