@@ -157,9 +157,10 @@ public enum RemovalMethod: Codable, Sendable, Hashable {
   case simulatorErase(udid: String)
   /// `xcrun simctl delete unavailable`
   case unavailableSimulators
-  /// `xcrun simctl --set <previews|testing> delete all`: the throwaway simulators Xcode
-  /// makes for SwiftUI previews and for running tests in parallel.
-  case simulatorSet(name: String)
+  /// `xcrun simctl --set <previews|testing> delete <udid>`: one of the throwaway
+  /// simulators Xcode makes for SwiftUI previews and for running tests in parallel.
+  /// Without a `udid`, `delete all` clears the whole set.
+  case simulatorSet(name: String, udid: String? = nil)
   /// `xcrun simctl runtime delete <identifier>`: removes a downloaded simulator system version.
   case simulatorRuntime(identifier: String)
   /// `git worktree remove <path>`, run in the owning repository.

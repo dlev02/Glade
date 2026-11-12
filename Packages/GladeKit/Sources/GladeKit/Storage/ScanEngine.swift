@@ -202,6 +202,7 @@ public enum ScanEngine {
       CatalogScanner(),
       AgentHistoryScanner(),
       SimulatorScanner(),
+      SimulatorCloneScanner(),
       WorktreeScanner(),
       ProjectScanner(),
       EditorExtensionScanner(),

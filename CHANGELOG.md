@@ -2,6 +2,13 @@
 
 ## 0.2.1 — unreleased
 
+### More space from Balanced
+
+- Each test and preview simulator Xcode makes is now its own item ("Test simulator · iPhone 17 · iOS 27.2"), with its own size and last use. One clone Xcode used today no longer holds back the ones it hasn't touched for days, and a simulator that's running is always left alone.
+- Build folders inside your projects and their worktrees (`build`, `dist`, `.build`, `DerivedData`, `target` and the like) are cleared sooner, because the next build makes them again: Balanced takes them after 3 days without work on the project, Careful after a week. Installed packages such as `node_modules`, worktrees and agent history still wait 14 days.
+- Each downloaded version of a test browser (Playwright, Puppeteer, Cypress) is its own item, so versions you stopped using months ago go even when you ran a newer one today.
+- When a bolder level would free a lot more, `glade plan` says so, and `glade doctor` too when space is low: "Balanced frees 33.3 GB. Aggressive would free 143 GB, including Xcode build data (54.7 GB) and simulators (28.1 GB)."
+
 ### Quicker
 
 - Storage and Performance open straight away when you switch to them, even with hundreds of items found and dozens of apps running. Overview, the clean bar and the menu bar also add up your selection once instead of every time they're drawn.
