@@ -6,6 +6,44 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Glade</title>
         <item>
+            <title>0.2.1</title>
+            <pubDate>Wed, 11 Nov 2026 22:02:47 -0600</pubDate>
+            <link>https://github.com/dlev02/Glade/releases/tag/v0.2.1</link>
+            <sparkle:version>3</sparkle:version>
+            <sparkle:shortVersionString>0.2.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <description sparkle:format="markdown"><![CDATA[
+### Fixed
+
+- Glade now notices Full Disk Access on newer versions of macOS. Before, it could go on saying access was off after you had switched it on.
+
+### More space from Balanced
+
+- Each test and preview simulator Xcode makes is now its own item ("Test simulator · iPhone 17 · iOS 27.2"), with its own size and last use. One clone Xcode used today no longer holds back the ones it hasn't touched for days, and a simulator that's running is always left alone.
+- Build folders inside your projects and their worktrees (`build`, `dist`, `.build`, `DerivedData`, `target` and the like) are cleared sooner, because the next build makes them again: Balanced takes them after 3 days without work on the project, Careful after a week. Installed packages such as `node_modules`, worktrees and agent history still wait 14 days.
+- Each downloaded version of a test browser (Playwright, Puppeteer, Cypress) is its own item, so versions you stopped using months ago go even when you ran a newer one today.
+- When a bolder level would free a lot more, the low-space alert says so, as do `glade plan` and `glade doctor`: "Balanced frees 33.3 GB. Aggressive would free 143 GB, including Xcode build data (54.7 GB) and simulators (28.1 GB)."
+
+### Free Up Memory
+
+- One button to lighten the load, the way Free Up does for storage. On Performance (⌘Return), on Overview and from the menu bar, Free Up Memory shows every app it would quit and simulator it would shut down, with how long each has sat idle and the memory it holds, and asks "Quit 2 apps and shut down 2 simulators?". It ticks only the ones it's sure nobody is using; anything with a doubt ("May be in use by Bitrig"), anything you used in the last few minutes and anything that goes with a game or full-screen video in front starts unticked. What's in front, playing or recording sound, keeping the Mac awake or on your keep-running list is never on it, and it says what it's leaving alone ("Leaving Safari, Xcode and Music: in use").
+- Apps are asked to quit, never forced, so one with unsaved work can ask you first; the result says so ("Still open: it may be asking about unsaved changes") and shows memory in use before and after, as measured.
+- The memory pressure alert says how much Free Up Memory would give back, and clicking it opens the list.
+- Big apps left unused for half an hour or more are suggested even when they do a little in the background, as a browser with open tabs does, and menu bar apps or moving wallpapers keeping the graphics chip busy are named as such, with Quit offered when nobody has used them for a while.
+- `glade relieve` does the same from the command line and for AI agents: a dry run by default, `--confirm` to do it.
+
+### Storage
+
+- Bitrig's own simulators are listed with their size under Everything, marked as managed by Bitrig. Glade never selects or removes them.
+
+### Quicker
+
+- Storage and Performance open straight away when you switch to them, even with hundreds of items found and dozens of apps running. Overview, the clean bar and the menu bar also add up your selection once instead of every time they're drawn.
+- Click Memory, Processor or Graphics on Overview to open Performance with its apps sorted by that reading.
+]]></description>
+            <enclosure url="https://github.com/dlev02/Glade/releases/download/v0.2.1/Glade-0.2.1.zip" length="10900315" type="application/octet-stream" sparkle:edSignature="mXMZ6JOC3KOfreFT2+Tni1RIp4NMcsTeInERtQTjeKbGcKuvuxqajPKlxe7aJmQjpS9rMMS/lEyljzMghdBDCg=="/>
+        </item>
+        <item>
             <title>0.2.0</title>
             <pubDate>Wed, 11 Nov 2026 15:20:48 -0600</pubDate>
             <link>https://github.com/dlev02/Glade/releases/tag/v0.2.0</link>
@@ -119,6 +157,6 @@ The first version of Glade. It shows what is using your Mac's storage, memory, p
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: PTr1WkzyY8VxOF3BPQ4WnXiwSi7NAN07Zp0+/fElI/qenQ1HKmpDOKG/WNF/d1ChRdDEvMqYh8F8Iyg/H9pNCA==
-length: 11697
+edSignature: YbqqZVZXs1Eo7Go8tK+Lh7Ba4AkDn7nScaEQeGfNtXSJhL8UCGu5MfkHJa5XTZT40qjrlr9HwdyHCe1BjSKxBw==
+length: 15673
 -->
