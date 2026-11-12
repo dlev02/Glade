@@ -23,8 +23,10 @@ extension AppModel {
   /// How often the battery is read while its section shows, and otherwise.
   static let batteryWatchedSeconds: TimeInterval = 4
   static let batteryIdleSeconds: TimeInterval = 60
-  /// How often the awake report is refreshed on screen.
+  /// How often the awake report is refreshed on screen, and in the background on
+  /// battery when its alert is on.
   static let awakeWatchedSeconds: TimeInterval = 8
+  static let awakeIdleSeconds: TimeInterval = 300
 
   /// The Battery section appeared. Pair with `batteryDisappeared`.
   public func batteryAppeared() {
@@ -64,7 +66,8 @@ extension AppModel {
     battery.status = status
 
     let awakeEvery: TimeInterval? =
-      watching ? Self.awakeWatchedSeconds : nil
+      watching ? Self.awakeWatchedSeconds
+      : reading.state == .onBattery && config.automation.awakeOnBatteryAlerts ? Self.awakeIdleSeconds : nil
     if let awakeEvery, work.lastAwake.map({ now.timeIntervalSince($0) >= awakeEvery }) ?? true {
       work.lastAwake = now
       battery.awake = await AwakeReport.current(
@@ -78,6 +81,12 @@ extension AppModel {
       battery.suggestions = PerformanceAdvisor.batterySuggestions(
         apps: apps, energy: hour, context: context ?? ActivityContext.current(apps: apps, power: snapshot?.power), config: config, now: now
       )
+    }
+
+    for alert in await monitor.ingest(battery: status, awake: battery.awake, sleeps: battery.sleeps, now: now) {
+      alerts.insert(alert, at: 0)
+      if alerts.count > 20 { alerts.removeLast() }
+      await Notifier.post(title: alert.title, body: alert.body, kind: alert.kind.rawValue)
     }
   }
 
@@ -102,7 +111,7 @@ extension AppModel {
       MainActor.assumeIsolated {
         guard let self else { return }
         Log.info(.system, "Woke from sleep")
-        guard self.batteryWork.watchers > 0 else {
+        guard self.batteryWork.watchers > 0 || self.config.automation.sleepDrainAlerts else {
           self.battery.sleepsLoaded = false
           return
         }

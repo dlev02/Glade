@@ -116,6 +116,7 @@ extension AppModel {
     case .memoryPressure: Section.performance.reliefLink
     case .sustainedCPU, .sustainedGPU: Section.performance.link
     case .lowStorage: Section.storage.link
+    case .chargedPastLimit, .chargeLimitOff, .batteryHot, .batteryHealth, .awakeOnBattery, .sleepDrain: Section.battery.link
     case nil: kind == "assistant" ? Section.assistant.link : Section.overview.link
     }
   }

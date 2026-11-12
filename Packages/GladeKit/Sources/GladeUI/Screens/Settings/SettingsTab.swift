@@ -37,7 +37,7 @@ enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
     case .general: 452
     case .protection: 520
     case .assistant: 720
-    case .alerts: 540
+    case .alerts: BatteryReader.hasBattery ? 790 : 540
     case .search: 360
     case .advanced: 600
     }

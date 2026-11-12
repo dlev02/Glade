@@ -4,6 +4,15 @@ import Foundation
 public struct ThresholdAlert: Codable, Sendable, Identifiable, Hashable {
   public enum Kind: String, Codable, Sendable, CaseIterable {
     case lowStorage, memoryPressure, sustainedCPU, sustainedGPU
+    case chargedPastLimit, chargeLimitOff, batteryHot, batteryHealth, awakeOnBattery, sleepDrain
+
+    /// About the battery, so clicking it opens the Battery section.
+    public var isBattery: Bool {
+      switch self {
+      case .chargedPastLimit, .chargeLimitOff, .batteryHot, .batteryHealth, .awakeOnBattery, .sleepDrain: true
+      default: false
+      }
+    }
   }
 
   public var id: String
@@ -19,11 +28,13 @@ public struct ThresholdAlert: Codable, Sendable, Identifiable, Hashable {
 /// snapshots, costs nothing between them, and decides only whether to raise an alert.
 /// What happens next (a notification, a clean, an assistant check-in) is the caller’s.
 public actor ThresholdMonitor {
-  private var settings: AutomationSettings
+  var settings: AutomationSettings
+  /// What the battery alerts remember between readings.
+  var battery = BatteryAlertState()
   private var cpuHighSince: Date?
   private var gpuHighSince: Date?
   private var pressureSince: Date?
-  private var lastFired: [ThresholdAlert.Kind: Date]
+  var lastFired: [ThresholdAlert.Kind: Date]
   private let stateFile: URL?
 
   /// - Parameter stateFile: Where the "last alerted" times are kept, so restarting
@@ -101,16 +112,16 @@ public actor ThresholdMonitor {
     return alerts
   }
 
-  private func mayFire(_ kind: ThresholdAlert.Kind, now: Date) -> Bool {
+  func mayFire(_ kind: ThresholdAlert.Kind, now: Date) -> Bool {
     guard let last = lastFired[kind] else { return true }
     return now.timeIntervalSince(last) >= settings.quietMinutes * 60
   }
 
-  private func make(_ kind: ThresholdAlert.Kind, _ date: Date, _ title: String, _ body: String) -> ThresholdAlert {
+  func make(_ kind: ThresholdAlert.Kind, _ date: Date, _ title: String, _ body: String) -> ThresholdAlert {
     ThresholdAlert(id: "\(kind.rawValue)-\(Int(date.timeIntervalSince1970))", kind: kind, date: date, title: title, body: body)
   }
 
-  private func save() {
+  func save() {
     guard let stateFile else { return }
     let table = Dictionary(uniqueKeysWithValues: lastFired.map { ($0.key.rawValue, $0.value) })
     try? JSONFiles.write(table, to: stateFile)
