@@ -9,6 +9,10 @@
 - Each downloaded version of a test browser (Playwright, Puppeteer, Cypress) is its own item, so versions you stopped using months ago go even when you ran a newer one today.
 - When a bolder level would free a lot more, the low-space alert says so, as do `glade plan` and `glade doctor`: "Balanced frees 33.3 GB. Aggressive would free 143 GB, including Xcode build data (54.7 GB) and simulators (28.1 GB)."
 
+### Free Up Memory
+
+- Big apps left unused for half an hour or more are suggested even when they do a little in the background, as a browser with open tabs does, and menu bar apps or moving wallpapers keeping the graphics chip busy are named as such, with Quit offered when nobody has used them for a while.
+
 ### Storage
 
 - Bitrig's own simulators are listed with their size under Everything, marked as managed by Bitrig. Glade never selects or removes them.

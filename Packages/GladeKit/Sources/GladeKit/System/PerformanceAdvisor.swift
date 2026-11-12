@@ -64,6 +64,9 @@ public struct PerformanceSuggestion: Codable, Sendable, Identifiable, Hashable {
   public var facts: String? = nil
   /// A short doubt worth seeing before acting, such as "May be in use by Bitrig".
   public var caveat: String? = nil
+  /// Seconds since it was last used, when that’s known: since the app was last in
+  /// front, or since anything last happened in the simulator.
+  public var idleSeconds: Double? = nil
 }
 
 /// Rule-based suggestions. No model involved, so it can run on every refresh.
@@ -78,6 +81,15 @@ public enum PerformanceAdvisor {
   public static let runawayCPUPercent = 90.0
   /// Idle apps using less than this aren’t worth mentioning.
   public static let minimumIdleBytes: Int64 = 100_000_000
+  /// An app this large that has sat unused for `longIdleMinutes` is offered even while
+  /// it does a little in the background, as a browser’s open tabs do.
+  public static let largeIdleBytes: Int64 = 1_000_000_000
+  public static let longIdleMinutes = 30.0
+  /// A share of the GPU worth mentioning for an app with no Dock icon (a menu bar
+  /// utility or a moving wallpaper), whose work is easy to forget; other background
+  /// apps are mentioned from `gpuShareForApps`.
+  public static let gpuShareForBackgroundApps = 25.0
+  public static let gpuShareForApps = 50.0
 
   /// Idle simulators using less than this aren’t worth mentioning.
   public static let minimumIdleSimulatorBytes: Int64 = 300_000_000
@@ -151,7 +163,7 @@ public enum PerformanceAdvisor {
         appID: id, appName: simulator.name, pid: nil, title: "Shut down \(simulator.name)", reason: reason,
         frees: .init(memoryBytes: simulator.memoryBytes, cpuPercent: simulator.cpuPercent, gpuPercent: simulator.gpuPercent),
         confidence: confidence, actionable: true, simulatorUDID: simulator.udid, simulatorSetPath: simulator.setPath,
-        facts: "\(idleFacts) · \(memory(simulator.memoryBytes))", caveat: caveat
+        facts: "\(idleFacts) · \(memory(simulator.memoryBytes))", caveat: caveat, idleSeconds: idleFor
       ))
     }
     let simulatorRowIDs: Set<String> = ["process:\(AppGrouper.simulatorRowName)", IDEContext.simulatorBundleID]
@@ -162,15 +174,22 @@ public enum PerformanceAdvisor {
       let isApp = app.kind == .app
       let launchedAgo = app.launchDate.map { now.timeIntervalSince($0) } ?? 0
 
-      // Quit an idle app.
-      if isApp, app.activationPolicy == .regular, app.cpuPercent < quietCPUPercent, app.memoryBytes >= minimumIdleBytes, launchedAgo > 120 {
+      // Quit an idle app. A large one left unused for a long while counts even when it
+      // does a little in the background, as a browser’s open tabs do; it’s never
+      // ticked for the person on that evidence alone (medium at most).
+      let unusedFor = app.lastActive.map { now.timeIntervalSince($0) }
+      let largeAndLongIdle = app.memoryBytes >= largeIdleBytes && (unusedFor ?? 0) >= longIdleMinutes * 60
+        && app.cpuPercent < workingCPUPercent
+      if isApp, app.activationPolicy == .regular, app.cpuPercent < quietCPUPercent || largeAndLongIdle,
+        app.memoryBytes >= minimumIdleBytes, launchedAgo > 120
+      {
+        let quiet = app.cpuPercent < quietCPUPercent
         var idleFor: TimeInterval?
         var confidence = PerformanceSuggestion.Confidence.medium
-        if let last = app.lastActive {
-          let gap = now.timeIntervalSince(last)
+        if let gap = unusedFor {
           if gap >= idleMinutes * 60 {
             idleFor = gap
-            if gap >= 2 * 3600 && (app.memoryBytes >= 500_000_000 || pressured) { confidence = .high }
+            if quiet && gap >= 2 * 3600 && (app.memoryBytes >= 500_000_000 || pressured) { confidence = .high }
           }
         } else if app.isHidden && app.windowCount == 0 {
           idleFor = launchedAgo
@@ -178,12 +197,15 @@ public enum PerformanceAdvisor {
         }
         if let idleFor {
           let when = app.lastActive == nil ? "is hidden with no windows open" : "hasn’t been used for \(Durations.phrase(idleFor))"
-          result.append(make(
+          let busy = quiet ? "" : " It’s still doing a little in the background (\(Int(app.cpuPercent.rounded()))% CPU)."
+          var suggestion = make(
             .quitIdleApp, app, title: "Quit \(app.name)",
-            reason: "\(app.name) is using \(memory(app.memoryBytes)) and \(when).",
+            reason: "\(app.name) is using \(memory(app.memoryBytes)) and \(when).\(busy)",
             facts: "\(app.lastActive == nil ? "Hidden" : "Idle \(shortDuration(idleFor))") · \(memory(app.memoryBytes))",
             confidence: confidence, actionable: true
-          ))
+          )
+          suggestion.idleSeconds = unusedFor
+          result.append(suggestion)
           continue
         }
       }
@@ -202,14 +224,23 @@ public enum PerformanceAdvisor {
         continue
       }
 
-      // A background app keeping the GPU busy.
-      if let gpu = app.gpuPercent, gpu >= 50 {
-        result.append(make(
+      // A background app keeping the GPU busy. Apps with no Dock icon (menu bar
+      // utilities, moving wallpapers) are easy to forget, so they’re named sooner. Quit
+      // is offered only for an app nobody has used for a while; otherwise it’s for
+      // looking at.
+      let backgroundOnly = isApp && app.activationPolicy != .regular
+      if let gpu = app.gpuPercent, gpu >= (backgroundOnly ? gpuShareForBackgroundApps : gpuShareForApps) {
+        let what = backgroundOnly ? (app.activationPolicy == .accessory ? "menu bar app" : "background app") : nil
+        let unused = backgroundOnly ? (unusedFor.map { $0 >= idleMinutes * 60 } ?? true) : (unusedFor.map { $0 >= idleMinutes * 60 } ?? false)
+        var suggestion = make(
           .gpuHog, app, title: "\(app.name) is using the GPU",
-          reason: "\(app.name) is using \(Int(gpu.rounded()))% of the GPU while in the background.",
-          facts: "\(Int(gpu.rounded()))% GPU in the background",
-          confidence: .medium, actionable: false
-        ))
+          reason: "\(app.name)\(what.map { ", a \($0)," } ?? "") is using \(Int(gpu.rounded()))% of the GPU while in the background.",
+          facts: what.map { "\(Int(gpu.rounded()))% GPU · \($0.prefix(1).uppercased() + $0.dropFirst())" }
+            ?? "\(Int(gpu.rounded()))% GPU in the background",
+          confidence: .medium, actionable: isApp && unused
+        )
+        suggestion.idleSeconds = unusedFor
+        result.append(suggestion)
         continue
       }
 
