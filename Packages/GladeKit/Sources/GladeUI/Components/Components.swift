@@ -75,6 +75,8 @@ public struct StorageBar: View {
   @Binding var hovered: String?
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @State private var bubbleSize = CGSize(width: 120, height: 28)
+  /// The slice this bar last lit, so leaving the bar clears only that.
+  @State private var pointed: String?
 
   /// How much room the bubble needs above the bar.
   public static var bubbleRoom: CGFloat { Metrics.xxl }
@@ -100,13 +102,26 @@ public struct StorageBar: View {
             .opacity(hovered == nil || hovered == item.segment.id ? 1 : 0.55)
             .frame(width: item.width, height: height)
             .offset(x: item.x)
-            .contentShape(.rect)
-            .onHover { inside in
-              if inside { hovered = item.segment.id } else if hovered == item.segment.id { hovered = nil }
-            }
             .accessibilityElement()
             .accessibilityLabel(item.segment.title)
             .accessibilityValue(Format.bytes(item.segment.bytes))
+        }
+      }
+      // One pointer handler for the whole bar, worked out from where the pointer is:
+      // a slice moved into place with an offset keeps its hover area where it was
+      // laid out, so slices tracking the pointer themselves all answered at the
+      // bar's leading end and the last one drawn won.
+      .contentShape(.rect)
+      .onContinuousHover(coordinateSpace: .local) { phase in
+        switch phase {
+        case .active(let point):
+          let id = Self.slice(at: point.x, in: frames)
+          if id != nil || hovered == pointed { hovered = id }
+          pointed = id
+        case .ended:
+          // Only clears its own slice, so a legend entry lit a moment earlier stays.
+          if hovered == pointed { hovered = nil }
+          pointed = nil
         }
       }
       .clipShape(.capsule)
@@ -131,6 +146,19 @@ public struct StorageBar: View {
     .frame(height: height)
     .accessibilityElement(children: .contain)
     .accessibilityLabel("Storage")
+  }
+
+  /// The slice under a point along the bar. The gaps between slices belong to a
+  /// neighbour, and a sliver a few points wide answers a little either side of
+  /// itself, so the pointer can find it; the narrowest slice in reach wins.
+  static func slice(at x: CGFloat, in frames: [(segment: BarSegment, x: CGFloat, width: CGFloat)]) -> String? {
+    frames
+      .filter { frame in
+        let reach = max(1, (10 - frame.width) / 2)
+        return x >= frame.x - reach && x <= frame.x + frame.width + reach
+      }
+      .min { $0.width < $1.width }?
+      .segment.id
   }
 
   /// Where each visible slice sits, with a 2-point gap between slices.

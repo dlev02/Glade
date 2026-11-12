@@ -11,6 +11,10 @@ public enum Snapshotter {
     var all: [String: (AppModel) -> AnyView] = [
       "window": { _ in AnyView(RootView()) },
       "overview": { _ in AnyView(NavigationStack { OverviewScreen() }) },
+      "overview-usage": { model in
+        model.usage = AppModel.sampleUsage(volume: model.snapshot?.disk ?? .current())
+        return AnyView(DiskUsageSheet(close: {}).background(Color(nsColor: .windowBackgroundColor)))
+      },
     ]
     for group in [StorageSnapshots.all, PerformanceSnapshots.all, AssistantSnapshots.all, SettingsSnapshots.all, HistorySnapshots.all] {
       all.merge(group) { _, new in new }

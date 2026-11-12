@@ -138,6 +138,8 @@ private struct StorageSummary: View {
   /// for screenshots.
   @State private var hovered: String?
   private let pinned = UserDefaults.standard.string(forKey: "demoHoverSegment")
+  /// The sheet that says what everything else on the disk is.
+  @State private var showsUsage = false
 
   var body: some View {
     let segments = legendSegments
@@ -159,7 +161,7 @@ private struct StorageSummary: View {
           // Room for the bar’s hover bubble, so it never covers the line above.
           StorageBar(segments: segments, total: total, hovered: hover)
             .padding(.top, StorageBar.bubbleRoom - Metrics.l)
-          Legend(segments: segments, hovered: hover)
+          Legend(segments: segments, hovered: hover) { showsUsage = true }
         }
 
         Divider()
@@ -221,6 +223,13 @@ private struct StorageSummary: View {
         }
       }
     }
+    .sheet(isPresented: $showsUsage) {
+      DiskUsageSheet { showsUsage = false }
+    }
+    .task {
+      // `-demoUsage YES` opens the sheet, for screenshots.
+      if DemoState.value("demoUsage") != nil { showsUsage = true }
+    }
   }
 
   private var volume: VolumeInfo? { model.snapshot?.disk ?? model.scan?.volume }
@@ -236,55 +245,52 @@ private struct StorageSummary: View {
 }
 
 /// The key under the storage bar, in the bar’s order: what Glade can clear, family by
-/// family, in one fixed grid of four columns, so every width and appearance lays it
-/// out the same way. Everything else on the disk sits on the heading’s line, in the
-/// last column, set apart so the coloured part never reads as the whole disk.
-/// Pointing at an entry lights its slice.
+/// family, then everything else on the disk, in one fixed grid of four columns, so
+/// every width and appearance lays it out the same way. Pointing at an entry lights
+/// its slice; the entries' pointer areas meet, so moving from one to the next never
+/// passes over nothing. Everything else is a button that opens what it's made of.
 private struct Legend: View {
   var segments: [BarSegment]
   @Binding var hovered: String?
+  var openOther: () -> Void
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @State private var width: CGFloat = 0
 
-  private static let count = 4
   private static let spacing = Metrics.xl
+  private static let lineSpacing = Metrics.s
   private static let columns = Array(
-    repeating: GridItem(.flexible(), spacing: spacing, alignment: .leading), count: count
+    repeating: GridItem(.flexible(), spacing: spacing, alignment: .leading), count: 4
   )
 
   var body: some View {
     let shown = segments.filter { $0.bytes > 0 }
     let clearable = shown.filter { $0.id != "other" }
-    let other = shown.first { $0.id == "other" }
-    let column = max((width - Self.spacing * CGFloat(Self.count - 1)) / CGFloat(Self.count), 0)
-    VStack(alignment: .leading, spacing: Metrics.s) {
-      HStack(alignment: .firstTextBaseline, spacing: Self.spacing) {
-        if !clearable.isEmpty {
-          HStack(spacing: Metrics.xs) {
-            Text("Glade can clear")
-            Text(Format.bytes(clearable.reduce(0) { $0 + $1.bytes }))
-              .monospacedDigit()
-          }
-          .font(.callout.weight(.medium))
-          .foregroundStyle(.secondary)
-        }
-        Spacer(minLength: 0)
-        if let other {
-          entry(other)
-            .frame(width: column)
-        }
-      }
+    VStack(alignment: .leading, spacing: Self.lineSpacing) {
       if !clearable.isEmpty {
-        LazyVGrid(columns: Self.columns, alignment: .leading, spacing: Metrics.s) {
-          ForEach(clearable) { entry($0) }
+        HStack(spacing: Metrics.xs) {
+          Text("Glade can clear")
+          Text(Format.bytes(clearable.reduce(0) { $0 + $1.bytes }))
+            .monospacedDigit()
+        }
+        .font(.callout.weight(.medium))
+        .foregroundStyle(.secondary)
+      }
+      LazyVGrid(columns: Self.columns, alignment: .leading, spacing: Self.lineSpacing) {
+        ForEach(shown) { segment in
+          if segment.id == "other" {
+            Button(action: openOther) { entry(segment, opens: true) }
+              .buttonStyle(.plain)
+              .help("See what else is on this disk")
+              .accessibilityIdentifier("overview.other")
+          } else {
+            entry(segment)
+          }
         }
       }
     }
-    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
     .animation(reduceMotion ? nil : .snappy(duration: 0.12), value: hovered)
   }
 
-  private func entry(_ segment: BarSegment) -> some View {
+  private func entry(_ segment: BarSegment, opens: Bool = false) -> some View {
     HStack(spacing: 6) {
       Circle()
         .fill(segment.legendColor)
@@ -297,16 +303,27 @@ private struct Legend: View {
         .monospacedDigit()
         .lineLimit(1)
         .fixedSize()
+      if opens {
+        Image(systemName: "chevron.right")
+          .font(.caption.weight(.semibold))
+          .foregroundStyle(.tertiary)
+          .accessibilityHidden(true)
+      }
     }
     .font(.callout)
     .padding(.horizontal, 4)
     .padding(.vertical, 1)
     .background(Color.primary.opacity(hovered == segment.id ? 0.06 : 0), in: .rect(cornerRadius: 5))
     .padding(.horizontal, -4)
+    // The pointer area reaches halfway to each neighbour.
+    .padding(.horizontal, Self.spacing / 2)
+    .padding(.vertical, Self.lineSpacing / 2)
     .contentShape(.rect)
     .onHover { inside in
       if inside { hovered = segment.id } else if hovered == segment.id { hovered = nil }
     }
+    .padding(.horizontal, -Self.spacing / 2)
+    .padding(.vertical, -Self.lineSpacing / 2)
     .accessibilityElement(children: .combine)
   }
 }

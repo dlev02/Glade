@@ -24,6 +24,7 @@ public enum Guide {
 
     ```
     glade scan --json                 # what’s reclaimable, by category; read-only (30–60 s)
+    glade usage --json                # the whole disk, folder by folder; read-only (about a minute)
     glade plan --level careful --json # what that level would remove; read-only
     glade clean --level careful       # dry run: shows exactly what would happen
     glade clean --level careful --confirm

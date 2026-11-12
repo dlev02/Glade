@@ -47,6 +47,7 @@ public enum GladePaths {
   public static var agentRuns: URL { directory(support.appendingPathComponent("AgentRuns", isDirectory: true)) }
   public static var config: URL { support.appendingPathComponent("config.json") }
   public static var lastScan: URL { support.appendingPathComponent("last-scan.json") }
+  public static var diskUsage: URL { support.appendingPathComponent("disk-usage.json") }
   public static var activity: URL { support.appendingPathComponent("activity.json") }
   public static var index: URL { support.appendingPathComponent("index.sqlite") }
 
