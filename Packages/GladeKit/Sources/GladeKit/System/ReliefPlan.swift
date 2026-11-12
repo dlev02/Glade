@@ -161,8 +161,9 @@ public struct ReliefPlan: Codable, Sendable, Equatable {
       case .quitIdleApp, .memoryHog, .gpuHog: kind = .quit
       case .relaunchHeavyApp: kind = .relaunch
       case .shutDownIdleSimulator: kind = .shutDown
-      // A process pinning a core is for the person to look at.
-      case .runawayProcess: continue
+      // A process pinning a core is for the person to look at; battery suggestions
+      // aren’t about memory.
+      case .runawayProcess, .idleEnergyDrain, .forgottenAwakeHolder: continue
       }
 
       var caveat = suggestion.caveat

@@ -1,7 +1,8 @@
 import GladeKit
 import SwiftUI
 
-/// How Glade looks, when it opens, and how boldly it cleans by default.
+/// How Glade looks, when it opens, how much battery detail it shows, and how boldly it
+/// cleans by default.
 struct GeneralPane: View {
   @Environment(AppModel.self) private var model
   @Environment(\.screenOverrides) private var overrides
@@ -30,6 +31,13 @@ struct GeneralPane: View {
       } footer: {
         if let loginProblem {
           Text(loginProblem).foregroundStyle(.secondary)
+        }
+      }
+
+      Section {
+        LabeledContent(BatteryReader.hasBattery ? "Battery detail" : "Energy detail") {
+          MenuPicker("Battery detail", selection: $model.config.battery.detail, options: BatterySettings.Detail.allCases) { $0.title }
+            .help("Technical adds milliamp-hours, watts, volts and the names macOS uses")
         }
       }
 

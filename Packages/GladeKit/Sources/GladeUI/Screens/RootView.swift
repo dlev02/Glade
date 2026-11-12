@@ -37,6 +37,7 @@ public struct RootView: View {
         case .overview: OverviewScreen()
         case .assistant: AssistantScreen()
         case .history: HistoryScreen()
+        case .battery: BatteryScreen()
         case .storage, .performance: EmptyView()
         }
         if section == .storage || kept.contains(.storage) {

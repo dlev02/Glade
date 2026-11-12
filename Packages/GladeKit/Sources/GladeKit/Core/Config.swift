@@ -129,6 +129,30 @@ public struct AutomationSettings: Codable, Sendable, Equatable {
   }
 }
 
+public struct BatterySettings: Codable, Sendable, Equatable {
+  public enum Detail: String, Codable, Sendable, CaseIterable, Identifiable {
+    /// Sentences and percentages.
+    case simple
+    /// Adds milliamp-hours, watts, volts, cycles and the names macOS uses.
+    case technical
+
+    public var id: String { rawValue }
+    public var title: String { rawValue.capitalized }
+  }
+
+  public var detail: Detail
+
+  public init() {
+    detail = .simple
+  }
+
+  public init(from decoder: Decoder) throws {
+    self.init()
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    detail = try c.decodeIfPresent(Detail.self, forKey: .detail) ?? detail
+  }
+}
+
 public struct IndexSettings: Codable, Sendable, Equatable {
   /// Build and keep a searchable understanding of what files contain. Everything
   /// stays on this Mac.
@@ -173,6 +197,7 @@ public struct GladeConfig: Codable, Sendable, Equatable {
   public var assistant: AssistantSettings
   public var automation: AutomationSettings
   public var index: IndexSettings
+  public var battery: BatterySettings
 
   public init() {
     protectedPaths = []
@@ -185,6 +210,7 @@ public struct GladeConfig: Codable, Sendable, Equatable {
     assistant = AssistantSettings()
     automation = AutomationSettings()
     index = IndexSettings()
+    battery = BatterySettings()
   }
 
   public init(from decoder: Decoder) throws {
@@ -200,6 +226,7 @@ public struct GladeConfig: Codable, Sendable, Equatable {
     assistant = try c.decodeIfPresent(AssistantSettings.self, forKey: .assistant) ?? assistant
     automation = try c.decodeIfPresent(AutomationSettings.self, forKey: .automation) ?? automation
     index = try c.decodeIfPresent(IndexSettings.self, forKey: .index) ?? index
+    battery = try c.decodeIfPresent(BatterySettings.self, forKey: .battery) ?? battery
   }
 }
 

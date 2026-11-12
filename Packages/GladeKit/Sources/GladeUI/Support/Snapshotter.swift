@@ -16,7 +16,7 @@ public enum Snapshotter {
         return AnyView(DiskUsageSheet(close: {}).background(Color(nsColor: .windowBackgroundColor)))
       },
     ]
-    for group in [StorageSnapshots.all, PerformanceSnapshots.all, AssistantSnapshots.all, SettingsSnapshots.all, HistorySnapshots.all] {
+    for group in [StorageSnapshots.all, PerformanceSnapshots.all, BatterySnapshots.all, AssistantSnapshots.all, SettingsSnapshots.all, HistorySnapshots.all] {
       all.merge(group) { _, new in new }
     }
     return all

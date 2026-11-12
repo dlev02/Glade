@@ -23,7 +23,11 @@ struct Status: AsyncParsableCommand {
     let sampler = SystemSampler()
     var snapshot = await sampler.snapshot()
     guard let watch else {
-      emit(snapshot, json: output.json) { printStatus(snapshot) }
+      let battery = await BatteryStatus.current()
+      emit(snapshot, json: output.json) {
+        printStatus(snapshot)
+        if battery.reading.hasBattery { print("Battery \(battery.reading.percent.map { "\($0)%" } ?? "?"): \(battery.sentence); health \(battery.reading.healthPercent.map { "\($0)%" } ?? "?"), limit \(battery.limit?.title.lowercased() ?? "unknown")") }
+      }
       return
     }
     let interval = max(0.5, watch)
@@ -209,7 +213,7 @@ struct Context: AsyncParsableCommand {
 
 struct Suggest: AsyncParsableCommand {
   static let configuration = CommandConfiguration(
-    abstract: "Suggest apps to quit or relaunch, and idle simulators to shut down, to free memory, processor or GPU. Changes nothing."
+    abstract: "Suggest apps to quit or relaunch, and idle simulators to shut down, to free memory, processor, GPU or battery. Changes nothing."
   )
 
   @OptionGroup var output: OutputOptions
@@ -231,7 +235,10 @@ struct Suggest: AsyncParsableCommand {
     let simulators = await sampler.simulatorBreakdown(processes: processes).devices
     let snapshot = await snapshotReading
     let context = ActivityContext.current(apps: apps, power: snapshot.power)
+    let history = BatteryHistoryStore.load()
+    let hour = EnergyReport.build(period: .hour, apps: apps, history: history, unpluggedAt: nil)
     let suggestions = PerformanceAdvisor.suggestions(snapshot: snapshot, apps: apps, context: context, simulators: simulators)
+      + PerformanceAdvisor.batterySuggestions(apps: apps, energy: hour.apps.isEmpty ? nil : hour, context: context)
     let report = Report(
       date: Date(), memoryPressure: snapshot.memory.pressure, memoryUsedBytes: snapshot.memory.usedBytes,
       memoryTotalBytes: snapshot.memory.totalBytes, cpuPercentMeans: cpuPercentMeaning, suggestions: suggestions

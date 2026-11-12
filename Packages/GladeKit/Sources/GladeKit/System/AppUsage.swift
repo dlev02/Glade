@@ -71,6 +71,11 @@ public struct AppUsage: Codable, Sendable, Identifiable, Hashable {
   public var isGlade: Bool
   /// Some members belong to another user and couldn’t be measured directly.
   public var hasRestrictedMembers: Bool
+  /// Summed power of members since the last listing, in watts: the processor’s energy
+  /// the kernel billed them. `nil` when none of them could be measured.
+  public var energyWatts: Double? = nil
+  /// When it started keeping the Mac awake, for the oldest such request among members.
+  public var preventingSleepSince: Date? = nil
 }
 
 /// Folds processes into apps.
@@ -201,6 +206,8 @@ public enum AppGrouper {
 
       var cpu = 0.0, memory: Int64 = 0, threads = 0
       var gpu: Double?
+      var watts: Double?
+      var sleepSince: Date?
       var busiest: ProcessSample?
       var audio = AudioUse()
       var sleepReason: String?
@@ -212,6 +219,8 @@ public enum AppGrouper {
         memory += process.memoryBytes ?? 0
         threads += process.threadCount ?? 0
         if let value = process.gpuPercent { gpu = (gpu ?? 0) + value }
+        if let value = process.energyWatts { watts = (watts ?? 0) + value }
+        if let since = signals.sleepSince[process.pid] { sleepSince = min(sleepSince ?? since, since) }
         if (process.cpuPercent ?? 0) > (busiest?.cpuPercent ?? -1) { busiest = process }
         if let use = signals.audioByPID[process.pid] {
           audio.output = audio.output || use.output
@@ -249,7 +258,8 @@ public enum AppGrouper {
         isPlayingAudio: audio.output, isCapturingAudio: audio.input, preventingSleep: sleepReason,
         windowCount: windows, isFullScreen: fullScreen, category: category,
         isGame: GameDetection.isGame(category: category, bundleID: bundleID, bundlePath: bundlePath),
-        isSystem: isSystem, isGlade: isGlade, hasRestrictedMembers: restricted
+        isSystem: isSystem, isGlade: isGlade, hasRestrictedMembers: restricted,
+        energyWatts: watts, preventingSleepSince: sleepReason == nil ? nil : sleepSince
       ))
     }
     rows.sort { $0.memoryBytes > $1.memoryBytes }

@@ -15,6 +15,10 @@ public struct PerformanceSuggestion: Codable, Sendable, Identifiable, Hashable {
     case gpuHog
     /// A booted simulator nothing is using. Shutting it down keeps its apps and data.
     case shutDownIdleSimulator
+    /// An app nobody has used for a while that is still drawing real power.
+    case idleEnergyDrain
+    /// An app that has kept the Mac awake for a long time while nobody used it.
+    case forgottenAwakeHolder
   }
 
   public enum Confidence: String, Codable, Sendable, Comparable {
@@ -279,7 +283,7 @@ public enum PerformanceAdvisor {
   }
 
   /// "45 min", "31 h", "3 days": a duration short enough for a facts line.
-  static func shortDuration(_ seconds: TimeInterval) -> String {
+  public static func shortDuration(_ seconds: TimeInterval) -> String {
     let minutes = Int(seconds / 60)
     if minutes < 90 { return "\(max(minutes, 1)) min" }
     let hours = Int((Double(minutes) / 60).rounded())

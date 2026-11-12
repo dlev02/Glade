@@ -1,6 +1,6 @@
 # Glade
 
-Glade shows what is using your Mac's storage, memory, processors and graphics, and clears it safely. It knows where caches, build data, simulators, package downloads, AI models and agent history pile up, says how each one comes back if removed, and never goes near your keys, mail, photos or cloud folders. Your own AI (Claude Code, Codex and others) can help it decide, and coding agents can drive it from the command line.
+Glade shows what is using your Mac's storage, memory, processors, graphics and battery, and clears it safely. It knows where caches, build data, simulators, package downloads, AI models and agent history pile up, says how each one comes back if removed, and never goes near your keys, mail, photos or cloud folders. Your own AI (Claude Code, Codex and others) can help it decide, and coding agents can drive it from the command line.
 
 ![The Glade window on the Overview section: free space, memory pressure, processor and graphics use, and what a clean would free](docs/images/overview.png)
 
@@ -26,7 +26,7 @@ Setup opens by itself the first time, and again from **Help > Set Up Glade…**.
 
 ## Use
 
-The window has five sections: **Overview**, **Storage**, **Performance**, **Assistant** and **History**. Glade also lives in the menu bar, so closing the window leaves it running.
+The window has six sections: **Overview**, **Storage**, **Performance**, **Battery**, **Assistant** and **History**. Glade also lives in the menu bar, so closing the window leaves it running.
 
 ### Storage
 
@@ -75,6 +75,14 @@ Glade lists apps with their helper processes grouped, and what each is doing: in
 
 **Free Up Memory** does it all in one go, the way a clean does for storage: it lists every app it would quit and simulator it would shut down, with what each holds and any doubt, ticks only the ones it's confident nobody is using, and leaves anything you used in the last few minutes, and anything that goes with a game or full-screen video in front, for you to tick. Afterwards it shows what happened to each and memory in use before and after, as measured; an app asking about unsaved work stays open and is reported. The memory pressure alert says how much it would give back, and clicking the alert opens it.
 
+### Battery
+
+![The Battery section: the charge over the last day with charging and sleep marked, health, power and temperature, and the apps using the most power](docs/images/battery.png)
+
+The charge with one sentence saying what it's doing ("Charging to 80%, there in 25 min", "On battery, about 5 hours left"), and a chart of the last day, week or month with time on the charger and asleep marked. Health is the same "Maximum Capacity" System Settings shows. **Using the most power** lists apps by the energy macOS counted against them, now, in the last hour, the last 12 hours or since you unplugged, with notes such as "keeping your Mac awake" or "not used for 2 days", and quits them from the row. **Keeping your Mac awake** names each app, simulator or tool holding off sleep, what it's doing and for how long, crediting sound a simulator plays to that simulator rather than to macOS's audio service. **While it slept** shows each recent sleep with the charge it cost and why the Mac woke by itself.
+
+The charge limit you set in System Settings › Battery shows here too. Glade can't change it: macOS only takes a new limit from System Settings, so **Change…** opens that pane. Glade records the charge every five minutes while it's open, on your Mac only; the energy figures cover the processor and neural engine, not the screen or graphics chip. **Settings > General > Battery detail** switches to Technical for milliamp-hours, watts, volts and cycles. On a Mac without a battery the section is **Energy** and shows what applies.
+
 ### Assistant
 
 ![The Assistant section: a question about the Mac and the answer, and a storage plan the AI refined with its reasons](docs/images/assistant.png)
@@ -117,9 +125,12 @@ Every command accepts `--json`, and nothing is removed without `--confirm`.
 | `glade status`, `glade apps`, `glade suggest` | Processor, memory, graphics and disk; what each app is doing; what to quit. |
 | `glade relieve` | Free Up Memory: what Glade would quit and shut down in one go, and what it ticks. Add `--confirm` to do it; `--include`/`--exclude` change the ticks. |
 | `glade quit "<app>"` | Ask an app to quit. |
+| `glade battery`, `glade battery history` | Charge, health, power, temperature, charge limit and estimates; what was recorded day by day. |
+| `glade energy --period hour` | Apps by energy: `now`, `hour`, `12h` or `unplugged`. |
+| `glade awake`, `glade sleeps` | What is keeping the Mac awake; recent sleeps with the charge they cost and what woke the Mac. |
 | `glade protect check <path>` | Why a path is or isn't off limits. |
 | `glade doctor` | Permissions and what Glade can't see; when space is low, what a clean would free. |
-| `glade show storage` | Open the window on overview, storage, performance, assistant or history. |
+| `glade show storage` | Open the window on overview, storage, performance, battery, assistant or history. |
 
 Run `glade --help` for the rest.
 

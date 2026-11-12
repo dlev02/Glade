@@ -14,6 +14,7 @@ public final class SystemSampler: Sendable {
   private struct ProcessMark: Sendable {
     var startKey: UInt64
     var cpuNanos: UInt64
+    var energy: UInt64?
   }
 
   private struct State {
@@ -143,7 +144,7 @@ public final class SystemSampler: Sendable {
     var marks: [pid_t: ProcessMark] = [:]
     marks.reserveCapacity(raws.count)
     for raw in raws {
-      if let cpu = raw.cpuNanos { marks[raw.pid] = ProcessMark(startKey: raw.startKey, cpuNanos: cpu) }
+      if let cpu = raw.cpuNanos { marks[raw.pid] = ProcessMark(startKey: raw.startKey, cpuNanos: cpu, energy: raw.energy) }
     }
     let previous = state.withLock { state -> (cpu: [pid_t: ProcessMark], gpu: [pid_t: UInt64]?, time: UInt64) in
       let old = (state.processCPU, state.gpuTimes, state.processTime)
@@ -158,11 +159,15 @@ public final class SystemSampler: Sendable {
     let user = ProcessTable.currentUser
     return raws.map { raw in
       var cpu: Double?
+      var watts: Double?
       if let nanos = raw.cpuNanos, elapsed > 0 {
         if let mark = previous.cpu[raw.pid], mark.startKey == raw.startKey {
           cpu = Double(nanos &- min(nanos, mark.cpuNanos)) / elapsed * 100
+          // Nanojoules over nanoseconds is watts.
+          if let energy = raw.energy, let before = mark.energy { watts = Double(energy &- min(energy, before)) / elapsed }
         } else {
           cpu = 0
+          watts = raw.energy == nil ? nil : 0
         }
       }
       var gpuPercent: Double?
@@ -177,7 +182,8 @@ public final class SystemSampler: Sendable {
         userID: raw.userID, isCurrentUser: raw.userID == user, cpuPercent: cpu,
         memoryBytes: raw.footprint.map { Int64(clamping: $0) }, threadCount: raw.threads,
         startTime: raw.startKey > 0 ? Date(timeIntervalSince1970: Double(raw.startKey) / 1_000_000) : nil,
-        gpuPercent: gpuPercent, isRestricted: raw.cpuNanos == nil
+        gpuPercent: gpuPercent, isRestricted: raw.cpuNanos == nil,
+        energyNanojoules: raw.energy, energyWatts: watts
       )
     }
   }

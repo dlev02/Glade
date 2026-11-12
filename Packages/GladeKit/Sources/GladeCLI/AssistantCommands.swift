@@ -88,8 +88,16 @@ struct Ask: AsyncParsableCommand {
     let context = ActivityContext.current(apps: apps, power: snapshot.power)
     let suggestions = PerformanceAdvisor.suggestions(snapshot: snapshot, apps: apps, context: context)
     let scan = ScanEngine.loadLast()
+    let history = BatteryHistoryStore.load()
+    let status = await BatteryStatus.current(history: history)
+    let unplugged = status.reading.state == .onBattery ? history.unpluggedSince() : nil
+    let energy = EnergyReport.build(period: unplugged == nil ? .hour : .unplugged, apps: apps, history: history, unpluggedAt: unplugged)
     let description = MacDescription.build(
-      snapshot: snapshot, apps: apps, context: context, suggestions: suggestions, scan: scan, plan: nil
+      snapshot: snapshot, apps: apps, context: context, suggestions: suggestions, scan: scan, plan: nil,
+      battery: MacDescription.Battery(
+        status: status, energy: energy.apps.isEmpty ? EnergyReport.build(period: .now, apps: apps, history: nil, unpluggedAt: nil) : energy,
+        awake: await AwakeReport.current(apps: apps, sampler: sampler), sleeps: await SleepLog.recent()
+      )
     )
     if showSnapshot {
       print(description)

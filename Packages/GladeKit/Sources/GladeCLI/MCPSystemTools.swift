@@ -112,8 +112,8 @@ extension MCPTools {
     },
     MCPTool(
       name: "glade_show",
-      description: "Open Glade’s window on a section, so the person can see what you’re talking about: overview, storage, performance, assistant or history. Starts the app if it isn’t running. Changes nothing on the Mac.",
-      schema: #"{"type":"object","properties":{"section":{"type":"string","enum":["overview","storage","performance","assistant","history"]}},"required":["section"],"additionalProperties":false}"#,
+      description: "Open Glade’s window on a section, so the person can see what you’re talking about: overview, storage, performance, battery, assistant or history. Starts the app if it isn’t running. Changes nothing on the Mac.",
+      schema: #"{"type":"object","properties":{"section":{"type":"string","enum":["overview","storage","performance","battery","assistant","history"]}},"required":["section"],"additionalProperties":false}"#,
       readOnly: true
     ) { arguments in
       guard let section = arguments["section"]?.string else { throw MCPFailure(message: "section is required.") }

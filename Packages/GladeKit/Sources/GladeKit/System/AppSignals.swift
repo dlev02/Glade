@@ -15,8 +15,10 @@ struct AudioUse: Sendable, Hashable {
 struct AppSignals: Sendable {
   var audioByPID: [pid_t: AudioUse] = [:]
   var audioByBundleID: [String: AudioUse] = [:]
-  /// Assertion names per pid, for assertions that keep the Mac or its display awake.
+  /// What each pid is keeping the Mac or its display awake for, in a few words.
   var sleepReasons: [pid_t: [String]] = [:]
+  /// When each pid started keeping the Mac awake.
+  var sleepSince: [pid_t: Date] = [:]
   /// On-screen, normal-level windows per owner pid.
   var windowCounts: [pid_t: Int] = [:]
   /// Pids with a window covering a whole display.
@@ -28,7 +30,7 @@ struct AppSignals: Sendable {
       if let pid = process.pid { signals.audioByPID[pid] = process.use }
       if let bundleID = process.bundleID { signals.audioByBundleID[bundleID.lowercased()] = process.use }
     }
-    signals.sleepReasons = SleepAssertions.byProcess()
+    (signals.sleepReasons, signals.sleepSince) = SleepAssertions.byProcess()
     (signals.windowCounts, signals.fullScreen) = Windows.onScreen()
     return signals
   }
@@ -104,30 +106,80 @@ enum AudioActivity {
   }
 }
 
+/// One request to macOS to stay awake, as power management reports it.
+public struct SleepAssertion: Codable, Sendable, Hashable {
+  /// The process that made the request.
+  public var pid: Int32
+  public var processName: String
+  /// The process it was made for, when one process asks on another’s behalf: coreaudiod
+  /// holds one for whatever is playing sound.
+  public var onBehalfOfPID: Int32?
+  /// `PreventUserIdleSystemSleep`, `PreventUserIdleDisplaySleep` and so on.
+  public var type: String
+  /// The name the process gave it, such as "Playing video" or "Electron".
+  public var name: String
+  /// A sentence some processes add.
+  public var detail: String?
+  /// What it’s using, such as `audio-out`.
+  public var resources: [String]
+  public var since: Date?
+  /// Seconds before macOS lets it go by itself, when it has a timeout.
+  public var timeoutSeconds: Double?
+
+  /// The process the request is really for.
+  public var ownerPID: Int32 { onBehalfOfPID ?? pid }
+
+  /// Keeps the screen on, not just the Mac.
+  public var holdsDisplay: Bool { SleepAssertions.displayTypes.contains(type) }
+}
+
 /// Power-management assertions that hold off sleep: an export, a download, a call.
 enum SleepAssertions {
-  static let types: Set<String> = [
-    "PreventUserIdleSystemSleep", "PreventUserIdleDisplaySleep", "NoIdleSleepAssertion",
-    "NoDisplaySleepAssertion", "PreventSystemSleep",
-  ]
+  static let displayTypes: Set<String> = ["PreventUserIdleDisplaySleep", "NoDisplaySleepAssertion"]
+  static let types: Set<String> = displayTypes.union(["PreventUserIdleSystemSleep", "NoIdleSleepAssertion", "PreventSystemSleep"])
 
-  static func byProcess() -> [pid_t: [String]] {
+  /// Every request that keeps the Mac or its display awake, except powerd’s own
+  /// "prevent sleep while display is on", which only says the screen is in use.
+  static func current() -> [SleepAssertion] {
     var assertions: Unmanaged<CFDictionary>?
     let result = IOPMCopyAssertionsByProcess(&assertions)
     guard result == kIOReturnSuccess, let dictionary = assertions?.takeRetainedValue() as NSDictionary? else {
       SystemIssues.warn("IOPMCopyAssertionsByProcess", "IOPMCopyAssertionsByProcess failed with \(result); sleep assertions unavailable")
-      return [:]
+      return []
     }
-    var reasons: [pid_t: [String]] = [:]
+    var list: [SleepAssertion] = []
     for (key, value) in dictionary {
-      guard let pid = (key as? NSNumber)?.int32Value, let list = value as? [[String: Any]] else { continue }
-      for assertion in list {
-        guard let type = assertion["AssertType"] as? String, types.contains(type) else { continue }
-        let name = (assertion["AssertName"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? type
-        if !(reasons[pid]?.contains(name) ?? false) { reasons[pid, default: []].append(name) }
+      guard let pid = (key as? NSNumber)?.int32Value, let entries = value as? [[String: Any]] else { continue }
+      for entry in entries {
+        guard let type = entry["AssertType"] as? String, types.contains(type) else { continue }
+        let process = entry["Process Name"] as? String ?? ""
+        let name = (entry["AssertName"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? type
+        if process == "powerd" && name.hasPrefix("Powerd - ") { continue }
+        let behalf = (entry["AssertionOnBehalfOfPID"] as? NSNumber)?.int32Value
+        let timeout = (entry["AssertTimeoutTimeLeft"] as? NSNumber)?.doubleValue
+        list.append(SleepAssertion(
+          pid: pid, processName: process, onBehalfOfPID: behalf.flatMap { $0 > 0 && $0 != pid ? $0 : nil },
+          type: type, name: name, detail: entry["HumanReadableReason"] as? String,
+          resources: entry["ResourcesUsed"] as? [String] ?? [], since: entry["AssertStartWhen"] as? Date,
+          timeoutSeconds: timeout.flatMap { $0 > 0 ? $0 : nil }
+        ))
       }
     }
-    return reasons
+    return list
+  }
+
+  /// Assertion names and the earliest start per process, credited to the process each
+  /// was made for.
+  static func byProcess(_ list: [SleepAssertion] = current()) -> (reasons: [pid_t: [String]], since: [pid_t: Date]) {
+    var reasons: [pid_t: [String]] = [:]
+    var since: [pid_t: Date] = [:]
+    for assertion in list {
+      let pid = assertion.ownerPID
+      let name = AwakeReasons.describe(assertion)
+      if !(reasons[pid]?.contains(name) ?? false) { reasons[pid, default: []].append(name) }
+      if let start = assertion.since { since[pid] = min(since[pid] ?? start, start) }
+    }
+    return (reasons, since)
   }
 }
 
