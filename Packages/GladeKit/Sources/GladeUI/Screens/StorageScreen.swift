@@ -184,16 +184,18 @@ struct StorageScreen: View {
           }
           .selectionDisabled()
         }
+        // Each heading is an ordinary row, not a section header: macOS pins section
+        // headers to the top on its own lighter strip, which clashes with the card.
         ForEach(state.list.groups) { group in
           Section {
+            GroupHeader(group: group, isExpanded: expanded(group.category))
+              .selectionDisabled()
             if !state.collapsed.contains(group.category) {
               ForEach(group.entries) { entry in
                 FindingRow(entry: entry, compact: isCompact)
                   .tag(entry.id)
               }
             }
-          } header: {
-            GroupHeader(group: group, isExpanded: expanded(group.category))
           }
         }
       }
@@ -232,17 +234,21 @@ struct StorageScreen: View {
     }
   }
 
-  @ViewBuilder
+  /// Fills the space above the clean bar, so the bar stays at the bottom and the
+  /// card colour reaches the top.
   private var emptyScope: some View {
-    if !state.query.trimmingCharacters(in: .whitespaces).isEmpty {
-      ContentUnavailableView.search(text: state.query)
-    } else {
-      switch state.scope {
-      case .ready: EmptyState("Nothing to free right now", symbol: "checkmark.circle")
-      case .review: EmptyState("Nothing to review", symbol: Symbols.review)
-      case .everything: EmptyState("Nothing found", symbol: AppModel.Section.storage.symbol)
+    Group {
+      if !state.query.trimmingCharacters(in: .whitespaces).isEmpty {
+        ContentUnavailableView.search(text: state.query)
+      } else {
+        switch state.scope {
+        case .ready: EmptyState("Nothing to free right now", symbol: "checkmark.circle")
+        case .review: EmptyState("Nothing to review", symbol: Symbols.review)
+        case .everything: EmptyState("Nothing found", symbol: AppModel.Section.storage.symbol)
+        }
       }
     }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
   }
 
   private func expanded(_ category: StorageCategory) -> Binding<Bool> {
