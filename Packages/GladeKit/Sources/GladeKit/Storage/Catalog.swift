@@ -262,7 +262,8 @@ public enum Catalog {
     // Not a cache: the browsers testing and agent tools launch. Most tools stop with
     // an error until you install them again rather than downloading them by themselves.
     // Each downloaded version is its own finding (`chromium-1140`, `mac_arm-131.0…`,
-    // Cypress `13.6.0`), so a version run today doesn’t hold back ones unused for months.
+    // Cypress `13.6.0`), so a version run today doesn’t hold back ones unused for months,
+    // and an older one goes after a few days once a newer one is the one being run.
     LocationRule(
       id: "pkg.playwright", category: .packageCaches, title: "Test browser",
       detail: "One version of a browser that testing and agent tools such as Playwright, Puppeteer and Cypress run. A tool that still needs it stops working until you install it again (for Playwright, `npx playwright install`).",
@@ -270,7 +271,8 @@ public enum Catalog {
         "~/Library/Caches/ms-playwright/*-[0-9]*", "~/Library/Caches/ms-playwright-go/*-[0-9]*",
         "~/.cache/puppeteer/*/*-[0-9]*", "~/Library/Caches/Cypress/[0-9]*",
       ],
-      split: .each, titleStyle: .child, recovery: .reinstall, risk: .caution, used: .accessed
+      split: .each, titleStyle: .child, recovery: .reinstall, risk: .caution, used: .accessed,
+      versioned: true
     ),
     LocationRule(
       id: "pkg.playwright-other", category: .packageCaches, title: "Test browsers",
@@ -459,6 +461,14 @@ public enum Catalog {
       ],
       risk: .caution, olderThanDays: staleAgentDays, auto: .at(.balanced), minimumBytes: 1_000_000
     ),
+    // Aside's record of what its agent did in the browser. Personal: listed for the
+    // person to decide, never selected for them, and sent to the Trash.
+    LocationRule(
+      id: "agent.aside-sessions", category: .agentHistory, title: "Aside sessions",
+      detail: "Aside’s saved browsing sessions older than two weeks: what its agent did and saw. Its memory and settings are separate and stay. Nothing recreates a session.",
+      paths: ["~/.aside/u/*/sessions/*"], recovery: .permanent, risk: .personal,
+      method: .trash, olderThanDays: staleAgentDays, auto: .never, minimumBytes: 20_000_000
+    ),
     LocationRule(
       id: "agent.gemini-scratch", category: .agentHistory, title: "Gemini CLI history",
       detail: "Conversation checkpoints and prompt history from Gemini CLI sessions. Stale ones only matter if you’d go back to that old session.",
@@ -492,9 +502,9 @@ public enum Catalog {
   static let media: [LocationRule] = [
     LocationRule(
       id: "media.cleanshot", category: .largeFiles, title: "CleanShot capture history",
-      detail: "Screenshots and recordings CleanShot keeps in its history, older than 30 days. Captures you saved or exported elsewhere are separate files and stay.",
+      detail: "Screenshots and recordings CleanShot keeps in its history, older than a week. Captures you saved or exported elsewhere are separate files and stay.",
       paths: ["~/Library/Application Support/CleanShot/media/*"], recovery: .permanent, risk: .personal,
-      method: .trash, olderThanDays: 30, minimumBytes: 20_000_000
+      method: .trash, olderThanDays: 7, minimumBytes: 20_000_000
     ),
     LocationRule(
       id: "media.podcasts", category: .mediaDownloads, title: "Podcast downloads",

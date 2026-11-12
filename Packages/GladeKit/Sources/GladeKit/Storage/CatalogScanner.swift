@@ -75,6 +75,10 @@ public struct LocationRule: Sendable {
   public var allowsLibrariesInside = false
   /// Show it but never remove it; `reportOnly` explains what to use instead.
   public var reportOnly: String?
+  /// Each match is one downloaded version of the same thing, named with its version
+  /// (`chromium-1140`, `mac_arm-131.0.6778.33`, `13.6.0`). An older one waits only
+  /// a few days once a newer one beside it is the one in use.
+  public var versioned = false
 }
 
 extension LocationRule {
@@ -142,10 +146,11 @@ public struct CatalogScanner: StorageScanner {
       return make(rule, paths: matches, measure: measure, name: nil, context: context).map { [$0] } ?? []
     case .each:
       let measured = await measureEach(matches, context)
-      return measured.compactMap { path, measure in
+      let findings = measured.compactMap { path, measure -> Finding? in
         if let days = rule.olderThanDays, (context.days(since: Self.lastUsed(measure, rule)) ?? 0) < days { return nil }
         return make(rule, paths: [path], measure: measure, name: (path as NSString).lastPathComponent, context: context)
       }
+      return rule.versioned ? Self.markingSuperseded(findings) : findings
     }
   }
 
@@ -260,6 +265,26 @@ public struct CatalogScanner: StorageScanner {
     )
   }
 
+  /// Notes, on each older version, the newest version beside it that was used at
+  /// least as recently: the tool has moved on to that one. A version used after
+  /// every newer one is still somebody's, and is left as it is.
+  static func markingSuperseded(_ findings: [Finding]) -> [Finding] {
+    var marked = findings
+    let versions = findings.map { $0.paths.first.flatMap(VersionedName.init) }
+    for (index, finding) in findings.enumerated() {
+      guard let own = versions[index], let used = finding.lastUsed else { continue }
+      let newer = findings.indices.filter { other in
+        guard let version = versions[other], version.family == own.family, own.isOlder(than: version),
+              let otherUsed = findings[other].lastUsed else { return false }
+        return otherUsed >= used
+      }
+      guard let newest = newer.max(by: { versions[$0]!.isOlder(than: versions[$1]!) }), let version = versions[newest] else { continue }
+      marked[index].newerVersion = version.text
+      marked[index].evidence.append("Version \(version.text) is newer and was used more recently.")
+    }
+    return marked
+  }
+
   static func lastUsed(_ measure: Measure, _ rule: LocationRule) -> Date? {
     rule.used == .modified ? measure.newestModification : measure.lastUsed
   }
@@ -281,6 +306,36 @@ public struct CatalogScanner: StorageScanner {
     guard let dash = name.lastIndex(of: "-") else { return name }
     let suffix = name[name.index(after: dash)...]
     return suffix.count >= 20 && suffix.allSatisfy({ $0.isLowercase && $0.isLetter }) ? String(name[..<dash]) : name
+  }
+}
+
+/// A folder named after a version, split into what it is a version of and the
+/// version's numbers: `…/chrome/mac_arm-131.0.6778.33`, `…/chromium-1140`, `…/Cypress/13.6.0`.
+struct VersionedName: Equatable {
+  /// The folder it sits in and the name without its version; versions are only
+  /// compared within one family.
+  var family: String
+  var text: String
+  var numbers: [Int]
+
+  init?(_ path: String) {
+    let name = (path as NSString).lastPathComponent
+    let dash = name.lastIndex(of: "-")
+    let text = dash.map { String(name[name.index(after: $0)...]) } ?? name
+    let parts = text.split(separator: ".", omittingEmptySubsequences: false).map { Int($0) }
+    guard !parts.isEmpty, !parts.contains(nil) else { return nil }
+    family = (path as NSString).deletingLastPathComponent + "/" + (dash.map { String(name[..<$0]) } ?? "")
+    self.text = text
+    numbers = parts.compactMap { $0 }
+  }
+
+  func isOlder(than other: VersionedName) -> Bool {
+    for index in 0..<max(numbers.count, other.numbers.count) {
+      let mine = index < numbers.count ? numbers[index] : 0
+      let theirs = index < other.numbers.count ? other.numbers[index] : 0
+      if mine != theirs { return mine < theirs }
+    }
+    return false
   }
 }
 

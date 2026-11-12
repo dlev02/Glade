@@ -123,7 +123,10 @@ enum ProjectRules {
       siblings: ["Package.swift"], idleDays: rebuildIdleDays
     ),
     ProjectRule(
-      id: "project.deriveddata", names: ["DerivedData"], label: "DerivedData", category: .buildOutputs,
+      // Also the hidden folders scripts and agents point `-derivedDataPath` at.
+      id: "project.deriveddata",
+      names: ["DerivedData", ".DerivedData", ".derivedData", ".deriveddata", ".deriveddata-release", ".deriveddata-debug"],
+      label: "DerivedData", category: .buildOutputs,
       recovery: .automatic, level: .careful,
       detail: "Xcode’s build products and index for this project, which the next build recreates.",
       siblings: ["Package.swift"], siblingExtensions: ["xcodeproj", "xcworkspace"], idleDays: rebuildIdleDays

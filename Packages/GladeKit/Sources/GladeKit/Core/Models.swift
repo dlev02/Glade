@@ -205,6 +205,9 @@ public struct Finding: Codable, Sendable, Identifiable, Hashable {
   public var needsOwnerClosed: Bool
   /// The finding this one sits inside, if any. Its space is counted there.
   public var within: String?
+  /// A newer version of the same thing that is also on this Mac and was used at
+  /// least as recently, when this is an older download it has taken the place of.
+  public var newerVersion: String?
 
   public init(
     id: String, ruleID: String, category: StorageCategory, title: String, detail: String,

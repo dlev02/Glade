@@ -111,6 +111,7 @@ public enum Planner {
         return (false, idle == 0 ? "Used today." : "Used \(idle) days ago; \(level.title) waits \(required).")
       }
     }
+    if let newer = finding.newerVersion { return (true, "Version \(newer) has taken its place.") }
     switch finding.recovery {
     case .automatic: return (true, "Rebuilds itself when needed.")
     case .redownload: return (true, "Downloads again when needed.")
@@ -157,14 +158,20 @@ public enum Planner {
     }.joined(separator: " ")
   }
 
+  /// How long an older version waits once a newer one beside it is the one in use:
+  /// long enough that two projects taking turns on different versions keep both.
+  static let supersededIdleDays = 3
+
   /// Bolder levels wait less: half as long one level up, not at all two levels up.
+  /// An older version a newer one has taken the place of waits a few days at most.
   static func requiredIdleDays(_ finding: Finding, level: CleanLevel) -> Int {
-    guard let autoLevel = finding.autoLevel else { return finding.idleDaysRequired }
+    let base = finding.newerVersion == nil ? finding.idleDaysRequired : min(finding.idleDaysRequired, supersededIdleDays)
+    guard let autoLevel = finding.autoLevel else { return base }
     let order: [CleanLevel] = [.careful, .balanced, .aggressive]
     let gap = (order.firstIndex(of: level) ?? 0) - (order.firstIndex(of: autoLevel) ?? 0)
     switch gap {
-    case ...0: return finding.idleDaysRequired
-    case 1: return finding.idleDaysRequired / 2
+    case ...0: return base
+    case 1: return base / 2
     default: return 0
     }
   }
