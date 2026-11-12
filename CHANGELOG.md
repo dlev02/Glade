@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.2.1 — unreleased
+## 0.2.1 — 2026-11-11
+
+### Fixed
+
+- Glade now notices Full Disk Access on newer versions of macOS. Before, it could go on saying access was off after you had switched it on.
 
 ### More space from Balanced
 
