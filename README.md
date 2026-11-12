@@ -51,7 +51,11 @@ Every finding says how it comes back:
 | Balanced | Waits half as long for those (a day, and 3 days for build folders), and adds package caches, stale agent sessions (14 days and older), idle simulators and AI models. |
 | Aggressive | Everything that can come back, even if it was used recently. |
 
-The level picks a starting selection. Change any item by hand before you clean. Each of Xcode's test and preview simulators is listed on its own, so the ones Xcode used today stay while older ones go. When a bolder level would free a lot more, `glade plan` says how much and what it would add.
+The level picks a starting selection. Change any item by hand before you clean. Each of Xcode's test and preview simulators is listed on its own, so the ones Xcode used today stay while older ones go. When a bolder level would free a lot more, `glade plan` says how much and what it would add. An older version of a test browser goes after three days once a newer version beside it is the one being used.
+
+To free only some rows, highlight them (Shift- or Command-click), then right-click and choose **Free Up…** or press Delete; what is ticked elsewhere stays as it was.
+
+On Overview, **Other** opens a list of everything else on the disk, folder by folder: your home folder, apps, macOS and its downloads, system data. It reads names and sizes only and never measures protected folders.
 
 ### What Glade never touches
 
@@ -106,6 +110,7 @@ Every command accepts `--json`, and nothing is removed without `--confirm`.
 | Command | What it does |
 | --- | --- |
 | `glade scan` | What's reclaimable, by category. Changes nothing. |
+| `glade usage` | Everything on the disk, folder by folder, biggest first. Changes nothing. |
 | `glade plan --level careful` | What that level would remove. Changes nothing. |
 | `glade clean --level careful` | A dry run; add `--confirm` to remove. Also `--ids <id>…` for chosen findings. |
 | `glade undo` | Put back what the last clean moved to the Trash. |

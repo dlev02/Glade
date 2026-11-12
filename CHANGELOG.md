@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.2.2 — 2026-11-12
+
+### See what "Other" is
+
+- On Overview, **Other** now opens a list of everything else on the disk, biggest first: your home folder, apps, macOS and the simulator systems and assets it downloads, system data and memory swap. Open any folder to see the biggest things inside it, and how much of it Storage already lists. It reads names and sizes only, and protected folders are never measured. `glade usage` shows the same from the command line.
+- Other sits with the rest of the key under the storage bar instead of on the heading's line.
+
+### Storage
+
+- An older version of a test browser is cleared after three days once a newer version beside it is the one being used, instead of waiting a month.
+- Hidden Xcode build folders inside projects (`.deriveddata` and the like, which scripts and agents make) are found and cleared like any other build data.
+- Aside's saved sessions older than two weeks are listed, and CleanShot's capture history is listed once it is a week old instead of a month. Both are yours to decide: Glade never ticks them, and they go to the Trash.
+- Free just the rows you highlight: Shift- or Command-click several, then right-click and choose **Free Up…** (or press Delete). What you ticked elsewhere stays as it was.
+
+### Fixed
+
+- Pointing at the storage bar on Overview shows the slice under the pointer. Before, every part of the bar answered as Other.
+- The key under the bar no longer flickers as the pointer moves from one entry to the next.
+
 ## 0.2.1 — 2026-11-11
 
 ### Fixed
