@@ -85,10 +85,6 @@ struct AppInspector: View {
       }
     } else if finding.isAppOpen {
       note(finding.blockers.first { $0.kind == .appRunning }?.detail)
-    } else if finding.needsFinder {
-      note(finding.blockers.first { $0.kind == .needsAdmin }?.detail)
-      Button("Show in Finder", systemImage: Symbols.showInFinder) { model.showInFinder(finding.paths.first ?? "") }
-        .secondaryAction()
     } else if let blocker = finding.blockers.first {
       note(blocker.detail)
     } else {
@@ -97,6 +93,7 @@ struct AppInspector: View {
         set: { model.setSelected(finding.id, $0) }
       ))
       .toggleStyle(.checkbox)
+      if finding.needsPassword { note("macOS asks for your password to move this app. Finder shows the prompt.") }
     }
   }
 

@@ -42,10 +42,10 @@ extension MacDescription {
       if !vendors.isEmpty { parts.append("developer \(vendors.sorted().joined(separator: "/"))") }
       if kinds.contains(.ownUninstaller) {
         parts.append("has its own uninstaller")
-      } else if kinds.contains(.needsAdmin) {
-        parts.append("needs Finder and the owner’s password")
       } else if kinds.contains(.reportOnly) {
         parts.append("can’t be removed by Glade")
+      } else if app.needsAdministrator {
+        parts.append("Glade can move it to the Trash through Finder, which asks for the owner’s password")
       } else {
         parts.append("Glade can move it to the Trash")
       }

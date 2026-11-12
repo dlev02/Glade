@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Uninstall any app
+
+- Apps that belong to the system, which includes most from the App Store such as iMovie, Keynote and Xcode, can now be uninstalled from Glade like any other. Glade asks Finder to move the app, and Finder asks for your password or Touch ID; Glade never sees it. The first time, macOS asks whether Glade may control Finder. **Put Back** brings the app back the same way.
+- The Assistant can now propose these apps when you name them, ticked like the rest.
+- On the command line, `glade uninstall --finder` and `glade undo --finder` do the same.
+
 ### Fixed
 
 - An app you deleted by hand but installed with Homebrew no longer keeps its leftovers hidden from App Leftovers.

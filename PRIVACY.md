@@ -72,6 +72,7 @@ Each AI tool runs in a new, empty temporary folder that is deleted afterwards, w
 
 - **Full Disk Access** lets Glade measure folders macOS otherwise keeps from every app. Glade works without it and says what it couldn't see. Withdraw it in System Settings under Privacy & Security > Full Disk Access.
 - **Notifications** carry Glade's alerts. Turn them off in System Settings under Notifications.
+- **Control Finder** (Automation) is asked for the first time you uninstall, or put back, an app that belongs to the system. Glade asks Finder to move that one app, and Finder asks for your password; Glade never sees it and sends Finder nothing else. Withdraw it in System Settings under Privacy & Security > Automation.
 
 The `glade` command and the MCP server run with the permissions of the app you start them from, such as Terminal or your coding agent.
 

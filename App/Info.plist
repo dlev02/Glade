@@ -37,6 +37,8 @@
 	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Glade asks Finder to move apps that belong to the system to the Trash. Finder then asks for your password; Glade never sees it.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2026 Drew Levinson</string>
 	<key>NSPrincipalClass</key>

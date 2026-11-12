@@ -8,8 +8,8 @@ extension Finding {
   /// The app comes with its own uninstaller, which Glade opens instead.
   var hasOwnUninstaller: Bool { blockers.contains { $0.kind == .ownUninstaller } }
 
-  /// Only Finder can move it to the Trash, because it needs the person’s password.
-  var needsFinder: Bool { isApp && !hasOwnUninstaller && blockers.contains { $0.kind == .needsAdmin } }
+  /// It belongs to the system, so Finder moves it and asks for the person’s password.
+  var needsPassword: Bool { isApp && !hasOwnUninstaller && app?.needsAdministrator == true }
 
   var isAppOpen: Bool { isApp && blockers.contains { $0.kind == .appRunning } }
 

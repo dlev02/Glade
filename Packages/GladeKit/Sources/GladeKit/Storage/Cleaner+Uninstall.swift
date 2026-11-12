@@ -8,7 +8,8 @@ extension Cleaner {
   /// Moves an app finding’s bundle and data to the Trash.
   /// - Returns: What happened, and the data folders left where they are with the reason.
   static func uninstall(
-    _ finding: Finding, bundleID: String, protection: Protection, running: RunningApps, dryRun: Bool
+    _ finding: Finding, bundleID: String, protection: Protection, running: RunningApps, dryRun: Bool,
+    askFinder: Bool = false
   ) async -> (RemovalOutcome, [String: String]) {
     if let held = heldBack(finding, running: running) { return (held, [:]) }
     guard finding.category == .installedApps, let bundle = finding.paths.first.map(Protection.clean) else {
@@ -64,10 +65,19 @@ extension Cleaner {
       locations[bundle] = resulting?.path ?? ""
     } catch {
       Log.warning(.clean, "Couldn’t move \(name) to the Trash: \(reason(error))")
-      if Self.isPermission(error) {
-        return (.failed(reason: "macOS needs your password to remove \(name). Select it in Finder and choose Move to Trash."), [:])
+      guard Self.isPermission(error) else { return (.failed(reason: reason(error)), [:]) }
+      // Owned by the system: only Finder, with the person’s password, can move it.
+      guard askFinder else {
+        return (.failed(reason: "macOS needs your password to remove \(name). Uninstall it in Glade’s window, or with `glade uninstall --finder`, and Finder will ask for it."), [:])
       }
-      return (.failed(reason: reason(error)), [:])
+      switch await FinderHandoff.trash(bundle) {
+      case .success(let moved):
+        locations[bundle] = moved
+      case .failure(.cancelled):
+        return (.skipped(reason: FinderHandoff.Failure.cancelled.reason), [:])
+      case .failure(let failure):
+        return (.failed(reason: failure.reason), [:])
+      }
     }
     for path in targets {
       do {

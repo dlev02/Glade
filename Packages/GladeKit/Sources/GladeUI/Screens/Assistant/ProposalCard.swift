@@ -51,7 +51,7 @@ struct ProposalCard: View {
         )
         Spacer(minLength: Metrics.m)
         if !outcome.putBack, outcome.removed.values.contains(true) {
-          Button("Put Back") { model.putBackRemoval(in: message) }
+          Button("Put Back") { Task { await model.putBackRemoval(in: message) } }
             .secondaryAction()
             .accessibilityIdentifier("proposal.putBack")
         }
@@ -132,7 +132,6 @@ private struct ProposalRow: View {
     case stayed(String)
     case gone
     case uninstaller
-    case finder
     case quitFirst
     case locked(String)
   }
@@ -182,10 +181,9 @@ private struct ProposalRow: View {
     guard let finding else { return .gone }
     switch model.currentAction(of: item) {
     case .openUninstaller: return .uninstaller
-    case .showInFinder: return .finder
     case .quitFirst: return .quitFirst
     case .listOnly: return .locked(finding.blockers.first?.detail ?? "")
-    case .remove: return .tickable
+    case .remove, .showInFinder: return .tickable
     case nil: return .gone
     }
   }
@@ -209,8 +207,6 @@ private struct ProposalRow: View {
       glyph("circle.dashed", label: "No longer available")
     case .uninstaller:
       glyph(Symbols.uninstaller, label: "Has its own uninstaller")
-    case .finder:
-      glyph("lock.fill", label: "Needs your password; remove it in Finder")
     case .quitFirst:
       glyph("lock.fill", label: "Open now")
     case .locked(let reason):
@@ -245,7 +241,7 @@ private struct ProposalRow: View {
     case .stayed(let reason): reason
     case .gone: "No longer available"
     case .quitFirst: "Open now. Quit it first."
-    case .tickable, .uninstaller, .finder, .locked: item.why.isEmpty ? nil : item.why
+    case .tickable, .uninstaller, .locked: item.why.isEmpty ? nil : item.why
     }
   }
 
@@ -273,15 +269,6 @@ private struct ProposalRow: View {
           .font(.callout)
           .help(finding.blockers.first { $0.kind == .ownUninstaller }?.detail ?? "")
           .accessibilityLabel("Open Uninstaller for \(item.title)")
-      }
-    case .finder:
-      if let path = finding?.paths.first {
-        Button("Show in Finder") { model.showInFinder(path) }
-          .buttonStyle(.bordered)
-          .controlSize(.small)
-          .font(.callout)
-          .help(finding?.blockers.first { $0.kind == .needsAdmin }?.detail ?? "")
-          .accessibilityLabel("Show \(item.title) in Finder")
       }
     default:
       EmptyView()

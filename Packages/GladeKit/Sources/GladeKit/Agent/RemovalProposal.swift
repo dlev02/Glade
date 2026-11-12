@@ -11,7 +11,8 @@ public struct RemovalProposal: Codable, Sendable {
     case remove
     /// The app comes with its own uninstaller, which Glade opens instead.
     case openUninstaller
-    /// The app belongs to the system account, so only Finder can move it to the Trash.
+    /// No longer given: apps that need the person’s password are removed through
+    /// Finder now. Kept so proposals saved before that still read.
     case showInFinder
     /// The app is open; it has to be quit first.
     case quitFirst
@@ -102,16 +103,15 @@ public struct RemovalProposal: Codable, Sendable {
   /// here, and whether it starts ticked. Only something the person named that can be
   /// removed right now starts ticked: an app, or a finding the rules would let an
   /// assistant select (`Planner.mayAutoSelect`) and that comes back, so personal and
-  /// permanent things never are. Apps with their own uninstaller, ones that need Finder and ones that are open
-  /// never are.
+  /// permanent things never are. Apps with their own uninstaller and ones that are open
+  /// never are. An app that needs the person’s password can start ticked; Finder asks
+  /// for the password when it goes.
   public static func item(for finding: Finding, why: String, named: Bool) -> Item {
     let kinds = Set(finding.blockers.map(\.kind))
     let isApp = finding.category == .installedApps
     let action: Action
     if isApp, kinds.contains(.ownUninstaller) {
       action = .openUninstaller
-    } else if isApp, kinds.contains(.needsAdmin) {
-      action = .showInFinder
     } else if kinds.contains(.appRunning) {
       action = .quitFirst
     } else if finding.isBlocked {

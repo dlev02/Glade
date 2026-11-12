@@ -160,7 +160,7 @@ struct SafetyTests {
       return
     }
     #expect(!exists("Downloads/old-installer.dmg"))
-    let restored = Cleaner.restore(real)
+    let restored = await Cleaner.restore(real)
     #expect(restored.restored.count == 1)
     #expect(exists("Downloads/old-installer.dmg"))
     for trashed in locations.values { try? FileManager.default.removeItem(atPath: trashed) }
@@ -584,7 +584,7 @@ struct SafetyTests {
     #expect(FileManager.default.fileExists(atPath: outside + "/victim/file.txt"))
 
     // Put Back brings the app and its data home.
-    let restored = Cleaner.restore(receipt)
+    let restored = await Cleaner.restore(receipt)
     #expect(restored.restored.count == 2)
     #expect(FileManager.default.fileExists(atPath: bundle + "/Contents/Info.plist"))
     #expect(FileManager.default.fileExists(atPath: data + "/state.db"))
