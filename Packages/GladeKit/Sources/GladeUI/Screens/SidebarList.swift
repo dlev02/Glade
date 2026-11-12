@@ -8,20 +8,21 @@ import SwiftUI
 /// selected. The sidebar’s material comes from the split view, as before.
 struct SidebarList: View {
   @Environment(AppModel.self) private var model
+  @Environment(\.drawsOffscreen) private var drawsOffscreen
   @FocusState private var focused: Bool
 
   var body: some View {
-    ScrollView {
-      VStack(spacing: 2) {
-        ForEach(AppModel.Section.allCases) { section in
-          SidebarRow(section: section, metrics: SidebarMetrics.current, focused: focused)
+    Group {
+      if drawsOffscreen {
+        VStack(spacing: 0) {
+          rows
+          Spacer(minLength: 0)
         }
+      } else {
+        ScrollView { rows }
+          .scrollBounceBehavior(.basedOnSize)
       }
-      .padding(.horizontal, 10)
-      .padding(.top, 2)
-      .padding(.bottom, Metrics.s)
     }
-    .scrollBounceBehavior(.basedOnSize)
     .focusable()
     .focused($focused)
     .focusEffectDisabled()
@@ -29,6 +30,17 @@ struct SidebarList: View {
     .onKeyPress(.upArrow) { move(-1) }
     .accessibilityElement(children: .contain)
     .accessibilityLabel("Sections")
+  }
+
+  private var rows: some View {
+    VStack(spacing: 2) {
+      ForEach(AppModel.Section.allCases) { section in
+        SidebarRow(section: section, metrics: SidebarMetrics.current, focused: focused)
+      }
+    }
+    .padding(.horizontal, 10)
+    .padding(.top, 2)
+    .padding(.bottom, Metrics.s)
   }
 
   private func move(_ step: Int) -> KeyPress.Result {

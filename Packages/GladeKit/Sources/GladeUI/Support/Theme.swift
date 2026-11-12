@@ -317,3 +317,9 @@ extension String {
     replacingOccurrences(of: " \u{2013} ", with: "\u{00A0}\u{2013} ")
   }
 }
+
+extension EnvironmentValues {
+  /// True while a screen is drawn into an image rather than a window. A sidebar’s own
+  /// scroll view doesn’t draw there, so the sidebar lays its rows out without one.
+  @Entry var drawsOffscreen = false
+}

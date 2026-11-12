@@ -3,7 +3,8 @@ import GladeKit
 import SwiftUI
 
 /// Draws a screen into a PNG without showing a window, so layouts can be checked from
-/// the command line. Glass and blur don’t draw offscreen; everything else does.
+/// the command line. Glass and blur don’t draw offscreen; everything else does (the
+/// sidebar through `drawsOffscreen`).
 public enum Snapshotter {
   /// Every screen that can be drawn, by name. Each area of the app adds its own
   /// (including variants such as a sheet or an empty state) in its `…Snapshots` file.
@@ -61,6 +62,7 @@ public enum Snapshotter {
       .accent(model.tint)
       // Drawn as the frontmost window would be; the render’s own window never is.
       .environment(\.appearsActive, true)
+      .environment(\.drawsOffscreen, true)
       .frame(width: size.width, height: size.height)
       .background(Color(nsColor: .windowBackgroundColor))
     let host = NSHostingView(rootView: root)
