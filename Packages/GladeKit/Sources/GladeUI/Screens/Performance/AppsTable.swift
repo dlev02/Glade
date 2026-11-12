@@ -107,6 +107,10 @@ struct AppsTable: View {
       rebuild(resort: true)
     }
     .onChange(of: filter) { rebuild(resort: true) }
+    // An Overview tile asks for its own column first when it opens Performance.
+    .onChange(of: isShowing) {
+      if isShowing, AppsTableMemory.sortOrder != sortOrder { sortOrder = AppsTableMemory.sortOrder }
+    }
     .onChange(of: search) { rebuild(resort: true) }
     // Live re-sorts jump straight to the new order; rows sliding every second is noise.
     .transaction { $0.animation = nil }

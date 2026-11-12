@@ -13,10 +13,11 @@ struct OverviewScreen: View {
       VStack(alignment: .leading, spacing: Metrics.l) {
         FullDiskAccessBanner()
         StorageSummary()
+        // Each tile opens Performance, sorted by what it shows.
         HStack(alignment: .top, spacing: Metrics.l) {
-          memoryTile
-          processorTile
-          graphicsTile
+          TileLink(sort: KeyPathComparator(\UsageRow.memory, order: .reverse)) { memoryTile }
+          TileLink(sort: KeyPathComparator(\UsageRow.processor, order: .reverse)) { processorTile }
+          TileLink(sort: KeyPathComparator(\UsageRow.graphics, order: .reverse)) { graphicsTile }
         }
         SuggestionList()
       }
@@ -93,6 +94,39 @@ struct OverviewScreen: View {
       history: model.history.map { $0.gpu?.utilizationPercent ?? 0 },
       color: Palette.load((gpu?.utilizationPercent ?? 0) / 100)
     )
+  }
+}
+
+/// A live tile as a button that opens Performance with its apps sorted by the same
+/// reading. It looks the same at rest and lightens a little under the pointer.
+private struct TileLink<Tile: View>: View {
+  @Environment(AppModel.self) private var model
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  var sort: KeyPathComparator<UsageRow>
+  @ViewBuilder var tile: Tile
+  @State private var isHovering = false
+
+  var body: some View {
+    Button {
+      // Graphics sorts only when the table shows its column.
+      if sort.keyPath != \UsageRow.graphics || AppsTableMemory.columns.graphics {
+        AppsTableMemory.sortOrder = [sort]
+      }
+      model.section = .performance
+    } label: {
+      tile
+        .overlay {
+          RoundedRectangle(cornerRadius: Metrics.cardRadius)
+            .fill(Color.primary.opacity(isHovering ? 0.04 : 0))
+            .allowsHitTesting(false)
+        }
+        .contentShape(.rect(cornerRadius: Metrics.cardRadius))
+    }
+    .buttonStyle(.plain)
+    .onHover { hovering in
+      withAnimation(reduceMotion ? nil : .snappy(duration: 0.12)) { isHovering = hovering }
+    }
+    .accessibilityHint("Opens Performance")
   }
 }
 
