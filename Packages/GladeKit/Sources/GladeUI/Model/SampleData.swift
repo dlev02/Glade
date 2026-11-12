@@ -286,6 +286,7 @@ public struct SampleData: Sendable {
     add("Hades II", .games, 9.6, daysAgo: 140, .redownload, .caution, nil, path: "Library/Application Support/Steam/steamapps/common/Hades II", detail: "An installed Steam game. Steam downloads it again from your library; cloud saves depend on the game.", method: .trash)
     add("holiday-2025.mov – 2 copies", .duplicates, 2.3, daysAgo: 200, .permanent, .personal, nil, path: "Downloads/holiday-2025 copy.mov", detail: "An identical copy of a file kept elsewhere. The other copy stays.", method: .trash)
 
+    findings += sampleApps()
     findings.sort { $0.bytes > $1.bytes }
     return ScanResult(
       started: Date().addingTimeInterval(-600), finished: Date().addingTimeInterval(-560), volume: volume,

@@ -21,6 +21,7 @@ public enum StorageCategory: String, Codable, Sendable, CaseIterable, Identifiab
   case agentHistory
   case agentWorktrees
   case editorExtensions
+  case installedApps
   case appLeftovers
   case appCopies
   case downloads
@@ -52,6 +53,7 @@ public enum StorageCategory: String, Codable, Sendable, CaseIterable, Identifiab
     case .agentHistory: "Agent & Editor History"
     case .agentWorktrees: "Agent Worktrees"
     case .editorExtensions: "Editor Extensions"
+    case .installedApps: "Apps"
     case .appLeftovers: "App Leftovers"
     case .appCopies: "App Copies"
     case .downloads: "Downloads & Installers"
@@ -63,6 +65,11 @@ public enum StorageCategory: String, Codable, Sendable, CaseIterable, Identifiab
     case .documentVersions: "Document Versions & Snapshots"
     }
   }
+
+  /// Whether the category counts towards what a scan says could be freed. Installed
+  /// apps are listed so a person can choose, but most of them are in use, so their
+  /// size isn’t space waiting to be cleared.
+  public var countsAsReclaimable: Bool { self != .installedApps }
 }
 
 /// What it takes to get something back after it’s removed.
@@ -133,6 +140,8 @@ public struct Owner: Codable, Sendable, Hashable {
 public struct Blocker: Codable, Sendable, Hashable {
   public enum Kind: String, Codable, Sendable {
     case appRunning, uncommittedWork, needsAdmin, needsFullDiskAccess, inUse, reportOnly
+    /// The app comes with its own uninstaller, which removes parts Glade can’t reach.
+    case ownUninstaller
   }
 
   public var kind: Kind
@@ -167,6 +176,9 @@ public enum RemovalMethod: Codable, Sendable, Hashable {
   case gitWorktree(repository: String)
   /// Emptying the Trash itself.
   case emptyTrash
+  /// Moving an app to the Trash with the data it keeps in the home folder. The first
+  /// path is the app; the bundle there must still carry this identifier.
+  case uninstallApp(bundleID: String)
 }
 
 /// One removable thing: a folder, a file, or a small set of paths that belong together.
@@ -208,6 +220,8 @@ public struct Finding: Codable, Sendable, Identifiable, Hashable {
   /// A newer version of the same thing that is also on this Mac and was used at
   /// least as recently, when this is an older download it has taken the place of.
   public var newerVersion: String?
+  /// For an installed app: what it is, what goes with it and what stays.
+  public var app: AppDetails?
 
   public init(
     id: String, ruleID: String, category: StorageCategory, title: String, detail: String,
@@ -333,7 +347,9 @@ public struct ScanResult: Codable, Sendable, Identifiable {
   }
 
   /// Everything found, with nested findings counted once.
-  public var totalBytes: Int64 { findings.filter { $0.within == nil }.reduce(0) { $0 + $1.bytes } }
+  public var totalBytes: Int64 {
+    findings.filter { $0.within == nil && $0.category.countsAsReclaimable }.reduce(0) { $0 + $1.bytes }
+  }
 
   public func bytes(in category: StorageCategory) -> Int64 {
     findings.filter { $0.category == category && $0.within == nil }.reduce(0) { $0 + $1.bytes }
@@ -350,11 +366,11 @@ public struct ScanResult: Codable, Sendable, Identifiable {
       }
     })
     // Anything inside a removed finding went with it.
-    let roots = findings.filter { gone.contains($0.id) }.flatMap { $0.paths.map { $0 + "/" } }
+    let roots = findings.filter { gone.contains($0.id) }.flatMap(\.paths)
     var copy = self
     copy.findings.removeAll { finding in
       gone.contains(finding.id)
-        || (!finding.paths.isEmpty && finding.paths.allSatisfy { path in roots.contains { path.hasPrefix($0) } })
+        || (!finding.paths.isEmpty && finding.paths.allSatisfy { path in roots.contains { path == $0 || path.hasPrefix($0 + "/") } })
     }
     copy.volume = .current()
     return copy
@@ -401,6 +417,8 @@ public struct ReceiptEntry: Codable, Sendable, Identifiable {
   public var paths: [String]
   public var bytes: Int64
   public var outcome: RemovalOutcome
+  /// Paths that were left where they are while the rest went, each with the reason.
+  public var leftInPlace: [String: String]?
 
   public init(id: String, title: String, category: StorageCategory, paths: [String], bytes: Int64, outcome: RemovalOutcome) {
     self.id = id

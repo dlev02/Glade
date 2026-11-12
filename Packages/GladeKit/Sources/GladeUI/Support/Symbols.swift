@@ -16,6 +16,12 @@ public enum Symbols {
   public static let fullDiskAccess = "lock"
   public static let showInFinder = "folder"
   public static let more = "ellipsis"
+  /// An app’s own uninstaller, which Glade opens rather than removing the app itself.
+  public static let uninstaller = "arrow.up.forward.app"
+  /// Moving something to the Trash.
+  public static let trash = "trash"
+  /// Going to a finding in Storage.
+  public static let showInStorage = "internaldrive"
 
   /// Who started a clean.
   public static let byPerson = "person.fill"

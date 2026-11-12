@@ -54,17 +54,35 @@ extension AppModel {
     return usage.clearable(in: scan)
   }
 
-  /// A made-up disk for screenshots.
+  /// A made-up disk for screenshots. Places in the home folder and Applications carry
+  /// the paths they’d have, so the sheet offers what it would for them; the sample
+  /// findings and apps sit at the same paths.
   static func sampleUsage(volume: VolumeInfo) -> DiskUsage {
-    func node(_ title: String, _ gigabytes: Double, _ children: [UsageNode] = []) -> UsageNode {
-      UsageNode(id: "sample:" + title, title: title, bytes: Int64(gigabytes * 1e9), children: children)
+    let home = Protection.clean(NSHomeDirectory())
+    func node(_ title: String, _ gigabytes: Double, path: String? = nil, _ children: [UsageNode] = []) -> UsageNode {
+      UsageNode(id: path ?? "sample:" + title, title: title, path: path, bytes: Int64(gigabytes * 1e9), children: children)
     }
+    let support = home + "/Library/Application Support"
     let areas = [
-      node("Home Folder", 212, [
-        node("Library", 131, [node("Application Support", 58), node("Developer", 49), node("Containers", 14)]),
-        node("Movies", 38), node("Developer", 24), node("Pictures", 11), node("Documents", 6.2),
+      node("Home Folder", 212, path: home, [
+        node("Library", 131, path: home + "/Library", [
+          node("Application Support", 58, path: support, [
+            node("CleanShot", 22.4, path: support + "/CleanShot"), node("Dreamtime", 14.2, path: support + "/Dreamtime"),
+            node("Steam", 9.9, path: support + "/Steam"), node("minecraft", 2.9, path: support + "/minecraft"),
+          ]),
+          node("Developer", 49, path: home + "/Library/Developer"),
+          node("Containers", 14, path: home + "/Library/Containers", [
+            node("Docker", 11.5, path: home + "/Library/Containers/com.docker.docker"),
+            node("Final Cut Pro", 2.4, path: home + "/Library/Containers/com.apple.FinalCut"),
+          ]),
+        ]),
+        node("Movies", 38, path: home + "/Movies"), node("Developer", 24, path: home + "/Developer"),
+        node("Pictures", 11, path: home + "/Pictures"), node("Documents", 6.2, path: home + "/Documents"),
       ]),
-      node("Applications", 64, [node("Xcode.app", 12.4), node("Final Cut Pro.app", 6), node("Logic Pro.app", 3.1)]),
+      node("Applications", 64, path: "/Applications", [
+        node("Final Cut Pro.app", 6, path: "/Applications/Final Cut Pro.app"), node("Xcode.app", 4.2, path: "/Applications/Xcode.app"),
+        node("iMovie.app", 4, path: "/Applications/iMovie.app"),
+      ]),
       node("macOS Downloads & Assets", 48, [node("iOS Simulator Systems", 25), node("visionOS Simulator Systems", 15)]),
       node("macOS", 37, [node("Preboot", 19), node("System", 14), node("Recovery", 3)]),
       node("System Data", 22), node("Library (Shared by All Accounts)", 18), node("Memory Swap", 8),

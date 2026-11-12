@@ -64,7 +64,13 @@ public enum Cleaner {
         continue
       }
       progress(index, unique.count, finding.title)
-      let outcome = await remove(finding, protection: protection, running: running, config: config, dryRun: options.dryRun)
+      let outcome: RemovalOutcome
+      var leftInPlace: [String: String] = [:]
+      if case .uninstallApp(let bundleID) = finding.method {
+        (outcome, leftInPlace) = await uninstall(finding, bundleID: bundleID, protection: protection, running: running, dryRun: options.dryRun)
+      } else {
+        outcome = await remove(finding, protection: protection, running: running, config: config, dryRun: options.dryRun)
+      }
       // A folder that holds other selected findings counts only what they don’t, so a
       // receipt’s total matches the plan’s and nothing is counted twice.
       let inside = unique.compactMap { scan.finding($0) }.filter { other in
@@ -73,10 +79,12 @@ public enum Cleaner {
         }
       }
       let own = max(0, finding.bytes - inside.reduce(0) { $0 + $1.bytes })
-      entries.append(ReceiptEntry(
+      var entry = ReceiptEntry(
         id: finding.id, title: finding.title, category: finding.category, paths: finding.paths,
         bytes: own, outcome: outcome
-      ))
+      )
+      if !leftInPlace.isEmpty { entry.leftInPlace = leftInPlace }
+      entries.append(entry)
       Log.info(.clean, "\(finding.title) [\(finding.ruleID)] \(Format.bytes(finding.bytes)): \(describe(outcome))")
     }
     progress(unique.count, unique.count, "")
@@ -101,20 +109,7 @@ public enum Cleaner {
   private static func remove(
     _ finding: Finding, protection: Protection, running: RunningApps, config: GladeConfig, dryRun: Bool
   ) async -> RemovalOutcome {
-    // Blockers recorded by the scan that still hold.
-    for blocker in finding.blockers {
-      switch blocker.kind {
-      case .reportOnly, .needsAdmin, .needsFullDiskAccess, .uncommittedWork, .inUse:
-        return .skipped(reason: blocker.detail)
-      case .appRunning:
-        // Only still a blocker if the app is open right now.
-        if let owner = finding.owner, running.runningName(of: owner) == nil { continue }
-        return .skipped(reason: blocker.detail)
-      }
-    }
-    if finding.needsOwnerClosed, let owner = finding.owner, let name = running.runningName(of: owner) {
-      return .skipped(reason: "\(name) is open. Quit it first.")
-    }
+    if let held = heldBack(finding, running: running) { return held }
 
     switch finding.method {
     case .emptyTrash:
@@ -133,6 +128,9 @@ public enum Cleaner {
       return await simulator(["runtime", "delete", identifier], udid: identifier, dryRun: dryRun)
     case .gitWorktree(let repository):
       return await worktree(finding, repository: repository, protection: protection, dryRun: dryRun)
+    case .uninstallApp:
+      // Handled by `uninstall`, which also reports what it left in place.
+      return .skipped(reason: "Not an app this can uninstall.")
     case .delete, .trash:
       break
     }
@@ -205,11 +203,29 @@ public enum Cleaner {
     return .failed(reason: "\(failures.count) of \(present.count) items couldn’t be removed (\(failures[0])); the rest were.")
   }
 
+  /// A reason recorded by the scan that still holds, or that the owner is open now.
+  static func heldBack(_ finding: Finding, running: RunningApps) -> RemovalOutcome? {
+    for blocker in finding.blockers {
+      switch blocker.kind {
+      case .reportOnly, .needsAdmin, .needsFullDiskAccess, .uncommittedWork, .inUse, .ownUninstaller:
+        return .skipped(reason: blocker.detail)
+      case .appRunning:
+        // Only still a blocker if the app is open right now.
+        if let owner = finding.owner, running.runningName(of: owner) == nil { continue }
+        return .skipped(reason: blocker.detail)
+      }
+    }
+    if finding.needsOwnerClosed, let owner = finding.owner, let name = running.runningName(of: owner) {
+      return .skipped(reason: "\(name) is open. Quit it first.")
+    }
+    return nil
+  }
+
   /// Categories whose contents rebuild from a manifest, so they’re deleted outright
   /// even inside Documents or Desktop.
   private static let rebuildable: Set<StorageCategory> = [.projectDependencies, .buildOutputs]
 
-  private static func refuse(_ finding: Finding, _ path: String, _ verdict: Verdict) -> RemovalOutcome {
+  static func refuse(_ finding: Finding, _ path: String, _ verdict: Verdict) -> RemovalOutcome {
     Log.error(.safety, "Refused to remove \(path) for \(finding.ruleID): \(verdict.explanation)")
     return .skipped(reason: verdict.explanation)
   }
@@ -362,7 +378,7 @@ public enum Cleaner {
 
   // MARK: Helpers
 
-  private static func reason(_ error: Error) -> String {
+  static func reason(_ error: Error) -> String {
     let nsError = error as NSError
     return "\(nsError.localizedDescription) (\(nsError.domain) \(nsError.code))"
   }

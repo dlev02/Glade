@@ -77,6 +77,23 @@ public struct InstalledApps: Sendable {
 
   private static let cache = Cache()
 
+  /// The index outside a scan, for the window’s whole-disk view.
+  public static func current(config: GladeConfig) async -> InstalledApps {
+    await build(ScanContext(config: config))
+  }
+
+  /// An index of the apps a scan found, for sample data and for describing folders
+  /// without looking at the disk again.
+  public static func index(from findings: [Finding]) -> InstalledApps {
+    InstalledApps(apps: findings.compactMap { finding in
+      guard let app = finding.app else { return nil }
+      return InstalledApp(
+        path: app.bundlePath, bundleID: app.bundleID, name: app.name, version: app.version, build: nil,
+        isStandardLocation: true, identifiers: [app.bundleID.lowercased()], teamID: nil
+      )
+    })
+  }
+
   private actor Cache {
     private var key: Date?
     private var task: Task<InstalledApps, Never>?

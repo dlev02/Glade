@@ -14,6 +14,8 @@ struct FindingRow: View {
   static let sizeWidth: CGFloat = 64
   /// The checkbox column, shared with group headers so everything lines up.
   static let checkWidth: CGFloat = 18
+  /// An app’s icon beside its name: the height of the name and its second line.
+  static let appIconSize: CGFloat = 26
 
   var body: some View {
     let finding = entry.finding
@@ -21,6 +23,9 @@ struct FindingRow: View {
       HStack(spacing: Metrics.s) {
         leading(finding)
           .frame(width: Self.checkWidth)
+        if finding.isApp {
+          AppIconView(path: finding.paths.first, size: Self.appIconSize)
+        }
         VStack(alignment: .leading, spacing: 1) {
           Text(finding.title)
             .lineLimit(1)
@@ -37,7 +42,11 @@ struct FindingRow: View {
       .padding(.leading, CGFloat(entry.depth) * Metrics.xl)
       .opacity(finding.isBlocked ? 0.55 : 1)
       Spacer(minLength: Metrics.s)
-      RecoveryColumn(recovery: finding.recovery, compact: compact)
+      if finding.isApp {
+        AppColumn(finding: finding, compact: compact)
+      } else {
+        RecoveryColumn(recovery: finding.recovery, compact: compact)
+      }
       Text(Format.bytes(finding.bytes))
         .monospacedDigit()
         .foregroundStyle(finding.isBlocked ? .secondary : .primary)
@@ -49,7 +58,13 @@ struct FindingRow: View {
 
   @ViewBuilder
   private func leading(_ finding: Finding) -> some View {
-    if let blocker = finding.blockers.first {
+    if finding.hasOwnUninstaller {
+      // Its button is in the row; nothing here to tick.
+      Image(systemName: Symbols.uninstaller)
+        .foregroundStyle(.secondary)
+        .help(finding.blockers.first?.detail ?? "")
+        .accessibilityLabel(finding.blockers.first { $0.kind == .ownUninstaller }?.detail ?? "")
+    } else if let blocker = finding.blockers.first {
       Image(systemName: "lock.fill")
         .foregroundStyle(.secondary)
         .help(blocker.detail)
@@ -63,8 +78,10 @@ struct FindingRow: View {
     }
   }
 
-  /// Why it can’t be removed, or when it was last used.
+  /// Why it can’t be removed, or when it was last used. An app says when it was last
+  /// opened; why it can’t be ticked is in the tooltip and the inspector.
   private func secondLine(_ finding: Finding) -> String? {
-    finding.blockers.first?.detail ?? finding.lastUsedText
+    if finding.isApp { return finding.openedText }
+    return finding.blockers.first?.detail ?? finding.lastUsedText
   }
 }

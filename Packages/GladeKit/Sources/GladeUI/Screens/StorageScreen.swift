@@ -23,6 +23,8 @@ struct StorageScreen: View {
   @State private var showsCleanSheet = false
   @State private var protectedPath: String?
   @State private var searchFocus = 0
+  /// A finding asked for from elsewhere (the whole-disk sheet), to scroll to.
+  @State private var scrollTarget: String?
   /// The list is too narrow for words in the recovery column.
   @State private var isCompact = false
   /// Advice to show instead of the model’s, for drawing the screen in snapshots.
@@ -101,6 +103,21 @@ struct StorageScreen: View {
       .onChange(of: inputs, initial: true) {
         state.refresh(scan: model.scan)
       }
+      .onReceive(NotificationCenter.default.publisher(for: .gladeRevealFinding)) { _ in takeReveal() }
+      .onAppear { takeReveal() }
+  }
+
+  /// Shows a finding another part of the window asked for.
+  private func takeReveal() {
+    guard let id = StorageReveal.take(), let finding = model.scan?.finding(id) else { return }
+    if !state.scope.includes(finding) {
+      state.scope = StorageScope.review.includes(finding) ? .review : .everything
+    }
+    if !state.query.isEmpty { state.query = "" }
+    state.collapsed.remove(finding.category)
+    state.refresh(scan: model.scan)
+    state.highlighted = [id]
+    scrollTarget = id
   }
 
   private var inputs: ListInputs {
@@ -213,6 +230,14 @@ struct StorageScreen: View {
       }
       // Delete asks about freeing the highlighted rows, as the menu does.
       .onDeleteCommand { freeUp(state.highlighted) }
+      .onChange(of: scrollTarget) {
+        guard let id = scrollTarget else { return }
+        scrollTarget = nil
+        Task {
+          await Task.yield()
+          withAnimation(reduceMotion ? nil : .smooth) { proxy.scrollTo(id, anchor: .center) }
+        }
+      }
       }
     }
   }
@@ -316,12 +341,16 @@ struct StorageScreen: View {
     if !selectable.isEmpty {
       // Frees just these rows, whatever else is ticked; the sheet asks first.
       let trashOnly = selectable.allSatisfy { $0.goesToTrash(model.config) }
-      let verb = trashOnly ? "Move to Trash" : "Free Up"
+      let apps = selectable.allSatisfy(\.isApp)
+      let verb = apps ? "Uninstall" : trashOnly ? "Move to Trash" : "Free Up"
       Button(
-        selectable.count == 1 ? "\(verb)…" : "\(verb) \(selectable.count) Items…",
+        selectable.count == 1 ? "\(verb)…" : "\(verb) \(selectable.count) \(apps ? "Apps" : "Items")…",
         systemImage: trashOnly ? "trash" : "bolt"
       ) { freeUp(ids) }
       .disabled(model.isScanning || model.isCleaning)
+    }
+    if chosen.count == 1, let app = chosen.first, app.hasOwnUninstaller, app.app?.uninstaller != nil {
+      Button("Open Uninstaller", systemImage: Symbols.uninstaller) { model.openUninstaller(app) }
     }
     let paths = chosen.flatMap(\.paths)
     if !paths.isEmpty {

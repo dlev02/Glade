@@ -55,14 +55,20 @@ The level picks a starting selection. Change any item by hand before you clean. 
 
 To free only some rows, highlight them (Shift- or Command-click), then right-click and choose **Free Up…** or press Delete; what is ticked elsewhere stays as it was.
 
-On Overview, **Other** opens a list of everything else on the disk, folder by folder: your home folder, apps, macOS and its downloads, system data. It reads names and sizes only and never measures protected folders.
+### Apps
+
+**Apps** in Storage lists every app in your Applications folders, big and long-unused ones first, with when each was last opened and where it came from. The inspector shows what goes with an app (its settings, caches and data in your home folder, each with its size) and what stays and why, such as a folder another app from the same developer shares. Apps are never ticked for you at any level. Uninstalling moves the app and its data to the Trash, so **Put Back** brings everything back.
+
+Some apps, Adobe's above all, put parts across the system that only their own uninstaller removes. For those Glade shows **Open Uninstaller** instead of a tick box; scan again afterwards and App Leftovers lists anything it left. Apps that belong to the system account, which includes most App Store apps, need your password to move, and Glade never asks for it: **Show in Finder** takes you there to drag it to the Trash. Glade itself and macOS's own apps aren't listed.
+
+On Overview, **Other** opens a list of everything else on the disk, folder by folder: your home folder, apps, macOS and its downloads, system data. It reads names and sizes only and never measures protected folders. A folder in your Library that belongs to an app says whose it is, or that no installed app uses it. Right-click a row, or use the button that appears when you point at it, to **Move to Trash…** (when it's yours to remove; otherwise the menu says why not), **Uninstall…** an app, or **Show in Storage**. This works in the window only: there is no command for it, so an agent can never name a folder for Glade to remove.
 
 ### What Glade never touches
 
 This is the part to read.
 
 - **Protected areas are invisible.** SSH, GPG and cloud credentials, `.env` and key files, Keychains and password managers, your AI agents' memory, skills, settings and sign-ins, Photos, Music and other media libraries, Messages and Mail, Notes, Contacts, Calendars and Health, iCloud Drive, Dropbox, Google Drive and OneDrive, browser profiles, Time Machine and other backups, endpoint security, VPN and device management software, and every `.git` folder. Glade never scans, lists or removes them, and never shows them to an AI. `glade protect check <path>` explains why any path is off limits, and you can add folders of your own.
-- **Only findings can be removed.** Cleaning takes the identifiers of things a scan found, never a path. Before removing anything, Glade checks every path against the protected areas again, refuses anything outside your home and temporary folders or on another disk, follows no link out of where it may work, and won't remove a repository whole.
+- **Only findings can be removed.** Cleaning takes the identifiers of things a scan found, never a path. Before removing anything, Glade checks every path against the protected areas again, refuses anything outside your home and temporary folders or on another disk, follows no link out of where it may work, and won't remove a repository whole. The one thing outside your home folder it may move is an app you chose to uninstall, and only a real app (not a link) directly in an Applications folder or one folder down, on the same disk, that isn't open, isn't part of macOS and isn't Glade.
 - **Personal files are never chosen for you.** Anything in Desktop, Documents, Downloads, Movies, Music, Pictures, Public or Sites, and anything permanent, is only removed when you pick it.
 - **Cleaning can be undone where it matters.** Things that rebuild or download again are deleted. Everything else goes to the Trash, and **Put Back** in History (or `glade undo`) returns it to where it was. Space held in the Trash is only freed when you empty it, so Glade counts it separately from space it frees.
 - **Apps in use are left alone.** A cache isn't offered while its app is open, a toolkit, runtime or app version that a running program was started from isn't removed, an agent's worktree with uncommitted changes is never removed, and a scan older than 12 hours must be redone before cleaning from it. Both checks are made again at the moment of removal.
@@ -113,6 +119,8 @@ Every command accepts `--json`, and nothing is removed without `--confirm`.
 | `glade usage` | Everything on the disk, folder by folder, biggest first. Changes nothing. |
 | `glade plan --level careful` | What that level would remove. Changes nothing. |
 | `glade clean --level careful` | A dry run; add `--confirm` to remove. Also `--ids <id>…` for chosen findings. |
+| `glade installed` | Every app with its size, when it was last opened, where it came from and whether it has its own uninstaller. `--unused <days>`, `--sort size\|opened`. |
+| `glade uninstall "<app>"` | A dry run of what goes to the Trash and what stays; add `--confirm` to do it, or `--open-uninstaller` for apps with their own. |
 | `glade undo` | Put back what the last clean moved to the Trash. |
 | `glade status`, `glade apps`, `glade suggest` | Processor, memory, graphics and disk; what each app is doing; what to quit. |
 | `glade relieve` | Free Up Memory: what Glade would quit and shut down in one go, and what it ticks. Add `--confirm` to do it; `--include`/`--exclude` change the ticks. |

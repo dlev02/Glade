@@ -439,4 +439,223 @@ struct SafetyTests {
     let withLibrary = findings.first { $0.paths.contains { $0.hasSuffix("com.example.withlibrary") } }
     #expect(withLibrary?.isBlocked == true)
   }
+
+  // MARK: Uninstalling apps
+
+  /// A minimal app bundle: a folder with an Info.plist naming its identifier.
+  @discardableResult
+  private func makeApp(_ path: String, id: String?) throws -> String {
+    try FileManager.default.createDirectory(atPath: path + "/Contents/MacOS", withIntermediateDirectories: true)
+    var info: [String: Any] = ["CFBundleName": ((path as NSString).lastPathComponent as NSString).deletingPathExtension, "CFBundleExecutable": "app"]
+    if let id { info["CFBundleIdentifier"] = id }
+    let data = try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
+    try data.write(to: URL(fileURLWithPath: path + "/Contents/Info.plist"))
+    try Data(repeating: 1, count: 4096).write(to: URL(fileURLWithPath: path + "/Contents/MacOS/app"))
+    return path
+  }
+
+  private func appFinding(_ id: String, _ paths: [String], bundleID: String, blockers: [Blocker] = []) -> Finding {
+    Finding(
+      id: id, ruleID: "apps.installed", category: .installedApps, title: id, detail: "", paths: paths,
+      bytes: 8192, recovery: .reinstall, risk: .personal, owner: Owner(id, bundleIDs: [bundleID]),
+      blockers: blockers, method: .uninstallApp(bundleID: bundleID), autoLevel: nil, needsOwnerClosed: true
+    )
+  }
+
+  @Test func uninstallVerdictAllowsOnlyRealAppsInApplicationsFolders() throws {
+    let apps = home + "/Applications"
+    try makeApp(apps + "/Good.app", id: "com.example.good")
+    try makeApp(apps + "/Vendor/Inner.app", id: "com.example.inner")
+    try makeApp(apps + "/Vendor/Deeper/Deep.app", id: "com.example.deep")
+    try makeApp(apps + "/Good.app/Contents/Nested.app", id: "com.example.nested")
+    try makeApp(apps + "/Bundle.folder/Inside.app", id: "com.example.inside")
+    try makeApp(apps + "/Glade.app", id: "io.github.dlev02.glade")
+    try makeApp(apps + "/Glade Dev.app", id: "io.github.dlev02.glade.dev")
+    try makeApp(apps + "/Safari Copy.app", id: "com.apple.Safari")
+    try makeApp(apps + "/NoIdentity.app", id: nil)
+    try makeApp(home + "/Other/Out.app", id: "com.example.out")
+    try makeApp(outside + "/Elsewhere/Far.app", id: "com.example.far")
+    try FileManager.default.createSymbolicLink(atPath: apps + "/Link.app", withDestinationPath: apps + "/Good.app")
+    try FileManager.default.createSymbolicLink(atPath: apps + "/Escape.app", withDestinationPath: outside + "/Elsewhere/Far.app")
+    try FileManager.default.createSymbolicLink(atPath: apps + "/LinkedFolder", withDestinationPath: outside + "/Elsewhere")
+    try Data("not an app".utf8).write(to: URL(fileURLWithPath: apps + "/File.app"))
+
+    #expect(protection.verdict(forUninstalling: apps + "/Good.app") == .allowed)
+    #expect(protection.verdict(forUninstalling: apps + "/Vendor/Inner.app") == .allowed)
+    let refused = [
+      apps + "/Link.app", apps + "/Escape.app", apps + "/LinkedFolder/Far.app", apps + "/Vendor/Deeper/Deep.app",
+      apps + "/Good.app/Contents/Nested.app", apps + "/Bundle.folder/Inside.app", apps + "/Glade.app", apps + "/Glade Dev.app",
+      apps + "/Safari Copy.app", apps + "/NoIdentity.app", apps + "/File.app", apps + "/Vendor", apps + "/Missing.app",
+      home + "/Other/Out.app", outside + "/Elsewhere/Far.app", apps, home,
+      // Written with `..` or `.`, even where it would land on an allowed app.
+      apps + "/Vendor/../Good.app", home + "/Other/../Applications/Good.app", apps + "/./Good.app",
+      "Applications/Good.app", "/System/Applications/Calculator.app", "/System/Applications/Utilities/Terminal.app",
+      "/Applications/Safari.app", "/System/Library/CoreServices/Finder.app",
+    ]
+    for path in refused {
+      #expect(!protection.verdict(forUninstalling: path).isAllowed, "must refuse \(path)")
+    }
+    // The general rule still refuses every app: only the uninstall rule allows one.
+    #expect(!protection.verdict(forRemoving: "/Applications/Safari.app").isAllowed)
+  }
+
+  @Test func uninstallVerdictRefusesAnotherDisk() throws {
+    // A small disk image mounted inside ~/Applications/Disk, holding an app.
+    let image = outside + "/disk.dmg", mount = home + "/Applications/Disk"
+    try FileManager.default.createDirectory(atPath: mount, withIntermediateDirectories: true)
+    func hdiutil(_ arguments: [String]) -> Bool {
+      let process = Process()
+      process.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
+      process.arguments = arguments
+      process.standardOutput = FileHandle.nullDevice
+      process.standardError = FileHandle.nullDevice
+      guard (try? process.run()) != nil else { return false }
+      process.waitUntilExit()
+      return process.terminationStatus == 0
+    }
+    guard hdiutil(["create", "-size", "4m", "-fs", "HFS+", "-volname", "GladeTest", image]),
+          hdiutil(["attach", "-nobrowse", "-noverify", "-mountpoint", mount, image]) else {
+      Issue.record("Couldn’t mount a disk image to test with")
+      return
+    }
+    defer { _ = hdiutil(["detach", mount, "-force"]) }
+    try makeApp(mount + "/Mounted.app", id: "com.example.mounted")
+    #expect(protection.verdict(forUninstalling: mount + "/Mounted.app") == .otherVolume)
+  }
+
+  @Test func cleanerUninstallsOnlyWhatStillPassesAndLeavesTheRest() async throws {
+    let apps = home + "/Applications"
+    let bundle = try makeApp(apps + "/Good.app", id: "com.example.good")
+    let data = home + "/Library/Application Support/com.example.good"
+    try FileManager.default.createDirectory(atPath: data, withIntermediateDirectories: true)
+    try Data(repeating: 2, count: 4096).write(to: URL(fileURLWithPath: data + "/state.db"))
+    try makeApp(apps + "/Other.app", id: "com.example.other")
+    try makeApp(apps + "/Glade.app", id: "io.github.dlev02.glade")
+    try FileManager.default.createSymbolicLink(atPath: apps + "/Link.app", withDestinationPath: bundle)
+
+    // Data paths that must stay where they are, whatever the finding says.
+    let protectedData = [
+      home + "/.ssh", home + "/Library/Application Support", home + "/Library",
+      home + "/Library/Caches/../../.ssh", home + "/proj", outside + "/victim",
+      home + "/Library/Caches/escape/victim", home + "/Library/Mobile Documents/com~apple~CloudDocs",
+    ]
+    let good = appFinding("good", [bundle, data] + protectedData, bundleID: "com.example.good")
+    let hostile = [
+      appFinding("running", [apps + "/Other.app"], bundleID: "com.example.other", blockers: [Blocker(.appRunning, "Other is open.")]),
+      appFinding("swapped", [apps + "/Other.app"], bundleID: "com.example.not-other"),
+      appFinding("glade", [apps + "/Glade.app"], bundleID: "io.github.dlev02.glade"),
+      appFinding("link", [apps + "/Link.app"], bundleID: "com.example.good"),
+      appFinding("outside", [outside + "/victim"], bundleID: "com.example.victim"),
+      appFinding("system", ["/System/Applications/Calculator.app"], bundleID: "com.apple.calculator"),
+      appFinding("vendor", [apps + "/Other.app"], bundleID: "com.example.other", blockers: [Blocker(.ownUninstaller, "Has its own uninstaller.")]),
+      appFinding("ssh-as-app", [home + "/.ssh"], bundleID: "com.example.ssh"),
+    ]
+    // Neither a clean level nor an assistant may ever pick an app.
+    #expect(!Planner.mayAutoSelect(good))
+    for level in CleanLevel.allCases { #expect(Planner.decide(good, level: level).0 == false) }
+
+    let result = scan([good] + hostile)
+    let running = RunningApps(bundleIDs: ["com.example.other"])
+    let dry = try await Cleaner.clean(ids: result.findings.map(\.id), from: result, config: GladeConfig(), options: CleanOptions(dryRun: true), protection: protection, running: running)
+    #expect(dry.entries.first { $0.id == "good" }?.outcome == .wouldRemove)
+    #expect(FileManager.default.fileExists(atPath: bundle))
+
+    let receipt = try await Cleaner.clean(ids: result.findings.map(\.id), from: result, config: GladeConfig(), options: CleanOptions(dryRun: false), protection: protection, running: running)
+    for entry in receipt.entries where entry.id != "good" {
+      if case .skipped = entry.outcome { continue }
+      Issue.record("\(entry.id) must be refused, got \(entry.outcome)")
+    }
+    let entry = try #require(receipt.entries.first { $0.id == "good" })
+    guard case .trashed(let locations) = entry.outcome else {
+      Issue.record("the app should go to the Trash, got \(entry.outcome)")
+      return
+    }
+    #expect(Set(locations.keys.map(Protection.clean)) == Set([bundle, data].map(Protection.clean)))
+    #expect(!FileManager.default.fileExists(atPath: bundle))
+    #expect(!FileManager.default.fileExists(atPath: data))
+    // Every protected data path is named in the receipt and is still there.
+    for path in protectedData where FileManager.default.fileExists(atPath: path) {
+      #expect(entry.leftInPlace?[path] != nil, "\(path) should be named as left in place")
+    }
+    for survivor in [".ssh/id_ed25519", "proj/.git/HEAD", "Library/Mobile Documents/com~apple~CloudDocs/thesis.pages"] {
+      #expect(exists(survivor), "\(survivor) must survive")
+    }
+    for app in ["Other.app", "Glade.app"] { #expect(FileManager.default.fileExists(atPath: apps + "/" + app)) }
+    #expect(FileManager.default.fileExists(atPath: outside + "/victim/file.txt"))
+
+    // Put Back brings the app and its data home.
+    let restored = Cleaner.restore(receipt)
+    #expect(restored.restored.count == 2)
+    #expect(FileManager.default.fileExists(atPath: bundle + "/Contents/Info.plist"))
+    #expect(FileManager.default.fileExists(atPath: data + "/state.db"))
+  }
+
+  @Test func appDataStaysWhenItIsProtectedOrAnotherAppClaimsIt() throws {
+    let library = home + "/Library"
+    let folders = [
+      "Containers/com.example.alpha", "Application Support/com.example.alpha.helper", "Caches/com.example.alpha",
+      "Group Containers/ABCDE12345.com.example.shared", "Caches/com.example.beta", "Application Support/Alpha",
+      "Application Support/Cursor", "Saved Application State/com.example.alpha.savedState",
+    ]
+    for folder in folders {
+      try FileManager.default.createDirectory(atPath: library + "/" + folder, withIntermediateDirectories: true)
+    }
+    let alpha = InstalledApp(
+      path: home + "/Applications/Alpha.app", bundleID: "com.example.alpha", name: "Alpha", isStandardLocation: true,
+      identifiers: ["com.example.alpha", "com.example.alpha.helper", "abcde12345.com.example.shared"], teamID: "ABCDE12345"
+    )
+    let beta = InstalledApp(
+      path: home + "/Applications/Beta.app", bundleID: "com.example.beta", name: "Beta", isStandardLocation: true,
+      identifiers: ["com.example.beta", "abcde12345.com.example.shared"], teamID: "ABCDE12345"
+    )
+    let cursor = InstalledApp(
+      path: home + "/Applications/Cursor.app", bundleID: "com.todesktop.cursor", name: "Cursor", isStandardLocation: true,
+      identifiers: ["com.todesktop.cursor"], teamID: nil
+    )
+    let listing = AppData.listing(home: home, protection: protection)
+    let result = AppData.folders(for: alpha, among: [alpha, beta, cursor], listing: listing, protection: protection)
+    let goes = Set(result.goes.map { Protection.clean($0.path) })
+    let stays = Set(result.stays.map { Protection.clean($0.path) })
+    func full(_ folder: String) -> String { Protection.clean(library + "/" + folder) }
+    for folder in ["Containers/com.example.alpha", "Application Support/com.example.alpha.helper", "Caches/com.example.alpha", "Application Support/Alpha", "Saved Application State/com.example.alpha.savedState"] {
+      #expect(goes.contains(full(folder)), "\(folder) should go with Alpha")
+    }
+    // The same developer’s other app shares the group container, so it stays.
+    #expect(stays.contains(full("Group Containers/ABCDE12345.com.example.shared")))
+    #expect(!goes.contains(full("Caches/com.example.beta")))
+    // A folder other things depend on stays, even for the app named after it.
+    let forCursor = AppData.folders(for: cursor, among: [alpha, beta, cursor], listing: listing, protection: protection)
+    #expect(!forCursor.goes.contains { Protection.clean($0.path) == full("Application Support/Cursor") })
+    #expect(forCursor.stays.contains { Protection.clean($0.path) == full("Application Support/Cursor") })
+  }
+
+  // MARK: Folders picked in the window
+
+  @Test func pickedFoldersAreOnlyWhatRemovalAllows() throws {
+    guard case .success(let picked) = PickedFolder.finding(for: home + "/Library/Caches/com.example.app", protection: protection) else {
+      Issue.record("an ordinary cache folder should be pickable")
+      return
+    }
+    #expect(picked.ruleID == PickedFolder.ruleID && picked.risk == .personal && picked.method == .trash && picked.recovery == .permanent)
+    #expect(picked.autoLevel == nil && !Planner.mayAutoSelect(picked))
+
+    let refused = [
+      home, home + "/.ssh", home + "/.ssh/id_ed25519", home + "/Library", home + "/Library/Application Support",
+      home + "/Library/Caches", home + "/Documents", home + "/proj", home + "/proj/.git", outside + "/victim",
+      home + "/Library/Caches/escape/victim", home + "/Library/Caches/../../.ssh", "/Applications", "/System/Library",
+      home + "/Library/Mobile Documents/com~apple~CloudDocs", home + "/.claude/projects/-Users-me-App/memory",
+      home + "/Library/Caches/com.example.withlibrary/Old.photoslibrary",
+    ]
+    for path in refused {
+      if case .success = PickedFolder.finding(for: path, protection: protection) { Issue.record("must refuse picking \(path)") }
+      #expect(PickedFolder.assess(path, protection: protection) != .allowed, "must refuse \(path)")
+    }
+
+    // A picked finding never reaches the saved scan, so nothing outside the window can
+    // remove it by identifier.
+    ScanEngine.save(scan([picked, finding("cache", home + "/Library/Caches/com.example.app")]))
+    let saved = try #require(ScanEngine.loadLast())
+    #expect(!saved.findings.contains { $0.ruleID == PickedFolder.ruleID })
+    #expect(saved.findings.contains { $0.id == "cache" })
+  }
 }

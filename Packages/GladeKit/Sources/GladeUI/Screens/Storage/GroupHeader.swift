@@ -72,7 +72,10 @@ struct GroupHeader: View {
 
   @ViewBuilder
   private var checkbox: some View {
-    if group.selectableIDs.isEmpty {
+    if group.category == .installedApps {
+      // Apps are chosen one at a time, never all at once.
+      Color.clear
+    } else if group.selectableIDs.isEmpty {
       Image(systemName: "lock.fill")
         .foregroundStyle(.tertiary)
         .help("Nothing here can be removed right now")

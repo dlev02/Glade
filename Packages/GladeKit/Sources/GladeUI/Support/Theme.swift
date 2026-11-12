@@ -143,7 +143,7 @@ extension StorageCategory {
     case .simulators, .emulators: .simulators
     case .agentHistory, .agentWorktrees: .agents
     case .aiModels: .models
-    case .appCaches, .browserCaches, .appLeftovers, .appCopies: .apps
+    case .installedApps, .appCaches, .browserCaches, .appLeftovers, .appCopies: .apps
     case .downloads, .mediaDownloads, .largeFiles, .duplicates, .games, .deviceBackups: .files
     case .temporaryFiles, .logs, .trash, .documentVersions: .system
     }
@@ -169,6 +169,7 @@ extension StorageCategory {
     case .agentHistory: "bubble.left.and.text.bubble.right"
     case .agentWorktrees: "arrow.trianglehead.branch"
     case .editorExtensions: "puzzlepiece"
+    case .installedApps: "square.grid.2x2"
     case .appLeftovers: "app.dashed"
     case .appCopies: "square.on.square"
     case .downloads: "arrow.down.circle"

@@ -46,7 +46,8 @@ struct Scan: AsyncParsableCommand {
   private func printSummary(_ result: ScanResult, shown: [Finding]) {
     let volume = result.volume
     print("\(volume.name): \(Format.bytes(volume.availableBytes)) available of \(Format.bytes(volume.totalBytes)) (\(Format.percent(volume.freeFraction)) free)")
-    print("Found \(Format.bytes(result.totalBytes)) across \(result.findings.count) items in \(String(format: "%.1f", result.finished.timeIntervalSince(result.started)))s\n")
+    let apps = result.findings.filter { !$0.category.countsAsReclaimable }.count
+    print("Found \(Format.bytes(result.totalBytes)) across \(result.findings.count - apps) items\(apps > 0 ? ", and \(apps) installed apps," : "") in \(String(format: "%.1f", result.finished.timeIntervalSince(result.started)))s\n")
 
     var totals: [StorageCategory: (bytes: Int64, count: Int)] = [:]
     for finding in result.findings {

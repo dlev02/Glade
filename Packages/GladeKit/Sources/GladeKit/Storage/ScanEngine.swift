@@ -212,6 +212,7 @@ public enum ScanEngine {
       AppLeftoverScanner(),
       LargeFileScanner(),
       DuplicateScanner(),
+      InstalledAppScanner(),
     ]
   }
 
@@ -242,7 +243,7 @@ public enum ScanEngine {
       for await (order, findings, id, title, seconds) in group {
         finished += 1
         collected.append((order, findings, id, seconds))
-        let bytes = findings.filter { $0.within == nil }.reduce(0) { $0 + $1.bytes }
+        let bytes = findings.filter { $0.within == nil && $0.category.countsAsReclaimable }.reduce(0) { $0 + $1.bytes }
         found += bytes
         Log.info(.scan, "Scanner \(id): \(findings.count) findings, \(Format.bytes(bytes)), \(String(format: "%.1f", seconds))s")
         progress(ScanProgress(scanner: id, message: title, finished: finished, total: active.count, foundBytes: found))
@@ -258,14 +259,18 @@ public enum ScanEngine {
           Log.error(.safety, "Dropped finding \(finding.ruleID) from \(batch.id): it points into a protected zone")
           continue
         }
-        guard finding.paths.allSatisfy({ claimed[$0] == nil }) else { continue }
-        for path in finding.paths { claimed[path] = finding.id }
+        // An app’s data folders may also be offered on their own (its cache, say), so
+        // only the app itself has to be unclaimed, and only it is claimed.
+        let owned = finding.category == .installedApps ? Array(finding.paths.prefix(1)) : finding.paths
+        guard owned.allSatisfy({ claimed[$0] == nil }) else { continue }
+        for path in owned { claimed[path] = finding.id }
         findings.append(finding)
       }
     }
     // A finding that sits inside another one (a worktree’s node_modules) is still
     // offered, but its space is already counted by the one that contains it.
-    let roots = findings.flatMap { finding in finding.paths.map { ($0 + "/", finding.id) } }
+    // An app isn’t a container: its cache stays counted as space to free.
+    let roots = findings.filter { $0.category != .installedApps }.flatMap { finding in finding.paths.map { ($0 + "/", finding.id) } }
     for index in findings.indices where !findings[index].paths.isEmpty {
       let finding = findings[index]
       let container = roots.first { root, owner in
@@ -291,8 +296,13 @@ public enum ScanEngine {
     return result
   }
 
-  /// Saves a result so a later `clean` can refer to findings by identifier.
+  /// Saves a result so a later `clean` can refer to findings by identifier. Folders
+  /// the person picked in the window are never saved, so nothing outside the window
+  /// (the command line, an agent) can remove one.
   public static func save(_ result: ScanResult) {
+    guard !result.id.hasPrefix(PickedFolder.scanPrefix) else { return }
+    var result = result
+    result.findings.removeAll { $0.ruleID == PickedFolder.ruleID }
     do {
       try JSONFiles.write(result, to: GladePaths.lastScan)
     } catch {
