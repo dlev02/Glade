@@ -70,7 +70,7 @@ struct Advise: AsyncParsableCommand {
 struct Ask: AsyncParsableCommand {
   static let configuration = CommandConfiguration(
     abstract: "Ask your AI a question about this Mac, e.g. \"why is it slow right now?\"",
-    discussion: "Glade gives the AI a snapshot of what’s running and what the last scan found. It answers in words and can’t take actions."
+    discussion: "Glade gives the AI a snapshot of what’s running and what the last scan found. It answers in words and can’t take actions. Asked to remove something (\"uninstall iMovie\"), it proposes items from the last scan, a second AI adds what you should know, and Glade prints the dry-run commands; nothing is removed."
   )
 
   @OptionGroup var output: OutputOptions
@@ -99,6 +99,11 @@ struct Ask: AsyncParsableCommand {
         awake: await AwakeReport.current(apps: apps, sampler: sampler), sleeps: await SleepLog.recent()
       )
     )
+    // Asked to remove something: a proposal to confirm, never a removal.
+    if RemovalRequest.wantsProposal(question, scan: scan) {
+      try await propose(description: description, hasScan: scan != nil)
+      return
+    }
     if showSnapshot {
       print(description)
       return
@@ -113,6 +118,83 @@ struct Ask: AsyncParsableCommand {
       print("\n— \(reply.provider)")
     }
   }
+}
+
+extension Ask {
+  /// Proposes what to remove for the request, with the second opinion, and prints the
+  /// dry-run commands that would act on it. Removes nothing.
+  private func propose(description: String, hasScan: Bool) async throws {
+    guard hasScan else {
+      let text = "Glade hasn’t scanned this Mac yet, so it doesn’t know what’s here to remove. Run `\(Brand.cli) scan` first, then ask again."
+      emit(ProposalReport(answer: text, provider: nil, model: nil, proposal: nil, commands: []), json: output.json) { print(text) }
+      return
+    }
+    // The apps as they are now, merged into the last scan so identifiers match.
+    let scan = await AppScans.current(rescan: false, quiet: output.json)
+    let config = ConfigStore.load()
+    if showSnapshot {
+      let found = RemovalRequest.candidates(for: question, scan: scan, limit: 40)
+      print(MacDescription.removalCandidates(found, characterBudget: 40_000).text + "\n\n" + description)
+      return
+    }
+    let proposal = try await Assistant.propose(question, scan: scan, snapshot: description, config: config, providers: AgentProviders.all)
+    let commands = Self.commands(for: proposal, scan: scan)
+    let report = ProposalReport(answer: proposal.answer, provider: proposal.provider, model: proposal.model, proposal: proposal, commands: commands)
+    emit(report, json: output.json) {
+      func name(_ id: String?) -> String { id.flatMap { AgentProviders.provider(id: $0)?.name } ?? id ?? "none" }
+      print(proposal.answer)
+      if !proposal.items.isEmpty {
+        print("\nProposed (nothing is removed until you confirm):")
+        for item in proposal.items {
+          print("  \(item.startsTicked ? "[x]" : "[ ]") \(item.title) · \(Format.bytes(item.bytes)) · id \(item.id)\(item.named ? "" : " · added by the AI")")
+          if !item.why.isEmpty { print("      \(item.why)") }
+          switch item.action {
+          case .remove: break
+          case .openUninstaller: print("      Has its own uninstaller: \(Brand.cli) uninstall \(Self.appArgument(item, scan)) --open-uninstaller")
+          case .showInFinder: print("      Needs your password: move it to the Trash in Finder.")
+          case .quitFirst: print("      Open now. Quit it first.")
+          case .listOnly: print("      Can’t be removed now: \(item.blocked ?? "blocked").")
+          }
+          if let review = item.review, review.verdict == .caution || !review.note.isEmpty {
+            print("      Second opinion: \(review.verdict == .caution ? "caution — " : "")\(review.note)")
+          }
+        }
+      }
+      for note in proposal.rejected { print("  ✗ refused \(note.id) — \(note.why)") }
+      if !commands.isEmpty {
+        print("\nDry runs for what’s ticked (add --confirm to do it):")
+        for command in commands { print("  \(command)") }
+      }
+      let second = proposal.reviewer.map { "second opinion: \(name($0))\(proposal.reviewerModel.map { " · \($0)" } ?? "")" }
+        ?? (proposal.items.isEmpty ? nil : "no second opinion was available")
+      print("\n— \(name(proposal.provider))\(proposal.model.map { " · \($0)" } ?? "")\(second.map { "; \($0)" } ?? "")")
+    }
+  }
+
+  /// One `uninstall` per ticked app and one `clean --ids` for the other ticked items,
+  /// all dry runs.
+  static func commands(for proposal: RemovalProposal, scan: ScanResult) -> [String] {
+    let ticked = proposal.items.filter(\.startsTicked)
+    var commands = ticked.filter(\.isApp).map { "\(Brand.cli) uninstall \(appArgument($0, scan))" }
+    let others = ticked.filter { !$0.isApp }.map(\.id)
+    if !others.isEmpty { commands.append("\(Brand.cli) clean --ids \(others.joined(separator: " "))") }
+    return commands
+  }
+
+  /// The app’s bundle identifier, which `uninstall` matches exactly.
+  static func appArgument(_ item: RemovalProposal.Item, _ scan: ScanResult) -> String {
+    let id = scan.finding(item.id)?.app?.bundleID ?? item.title
+    return id.contains(" ") ? "\"\(id)\"" : id
+  }
+}
+
+private struct ProposalReport: Encodable {
+  var answer: String
+  var provider: String?
+  var model: String?
+  var proposal: RemovalProposal?
+  /// Dry-run commands for the ticked items.
+  var commands: [String]
 }
 
 struct Runs: ParsableCommand {

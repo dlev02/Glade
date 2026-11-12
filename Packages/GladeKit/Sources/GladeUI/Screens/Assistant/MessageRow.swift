@@ -59,6 +59,10 @@ struct MessageRow: View {
         AdviceCard(advice: advice, isLive: isLiveAdvice)
           .padding(.top, Metrics.xs)
       }
+      if let proposal = message.proposal {
+        ProposalCard(message: message.id, state: proposal)
+          .padding(.top, Metrics.xs)
+      }
       actions
     }
     .onHover { hovering in

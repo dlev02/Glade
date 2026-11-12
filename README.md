@@ -95,6 +95,8 @@ The charge limit you set in System Settings › Battery shows here too. Glade ca
 
 Ask a question ("why is my Mac slow right now?") or have your AI refine a clean towards a goal ("free 30 GB"). The AI gets no tools: it can't see files, run commands or remove anything. It answers with the identifiers of findings, and Glade drops any suggestion that breaks the rules above, such as selecting a personal file or going past the level you chose. **History** keeps exactly what was sent and what came back.
 
+Ask it to remove something by name ("remove the Adobe apps", "uninstall iMovie") and the answer comes with a list of the matching apps and items, each with the AI's reason. A second AI looks the list over first and notes anything you should know, such as a subscription that keeps billing or files only that app opens. Only what you named starts ticked, and only if Glade can remove it: apps with their own uninstaller get **Open Uninstaller**, ones that need your password **Show in Finder**, and open ones say to quit them first. **Review and Remove…** opens the usual confirmation, and everything goes to the Trash, so **Put Back** undoes it. For this, the AI is shown the names, sizes and last-opened dates of the apps that match your request (see [PRIVACY.md](PRIVACY.md)).
+
 | AI | Status |
 | --- | --- |
 | Claude Code, Codex, OpenCode | Tested |
@@ -129,6 +131,7 @@ Every command accepts `--json`, and nothing is removed without `--confirm`.
 | `glade clean --level careful` | A dry run; add `--confirm` to remove. Also `--ids <id>…` for chosen findings. |
 | `glade installed` | Every app with its size, when it was last opened, where it came from and whether it has its own uninstaller. `--unused <days>`, `--sort size\|opened`. |
 | `glade uninstall "<app>"` | A dry run of what goes to the Trash and what stays; add `--confirm` to do it, or `--open-uninstaller` for apps with their own. |
+| `glade ask "<question>"` | Ask your AI about this Mac. Asked to remove something ("uninstall iMovie"), it lists what matches with a second opinion and the dry-run commands to act on it; it never removes anything itself. |
 | `glade undo` | Put back what the last clean moved to the Trash. |
 | `glade status`, `glade apps`, `glade suggest` | Processor, memory, graphics and disk; what each app is doing; what to quit. |
 | `glade relieve` | Free Up Memory: what Glade would quit and shut down in one go, and what it ticks. Add `--confirm` to do it; `--include`/`--exclude` change the ticks. |
