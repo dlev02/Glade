@@ -365,7 +365,10 @@ public final class AppModel {
       if let freed = await automaticClean(), freed > 0 { body += " Glade freed \(Format.bytes(freed)) of caches." }
     } else if alert.kind == .lowStorage, let scan {
       let plan = Planner.plan(scan: scan, level: config.level, config: config)
-      if plan.immediateBytes > 0 {
+      if let hint = Planner.bolderLevelHint(scan: scan, plan: plan, config: config) {
+        // Names this level's figure too, so it replaces the sentence below.
+        body += " \(hint)"
+      } else if plan.immediateBytes > 0 {
         body += " A \(config.level.title) clean would free \(Format.bytes(plan.immediateBytes))."
       } else if plan.selectedBytes > 0 {
         body += " A \(config.level.title) clean would move \(Format.bytes(plan.selectedBytes)) to the Trash."
