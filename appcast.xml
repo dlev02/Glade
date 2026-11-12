@@ -6,6 +6,33 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Glade</title>
         <item>
+            <title>0.2.2</title>
+            <pubDate>Thu, 12 Nov 2026 01:18:28 -0600</pubDate>
+            <link>https://github.com/dlev02/Glade/releases/tag/v0.2.2</link>
+            <sparkle:version>4</sparkle:version>
+            <sparkle:shortVersionString>0.2.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <description sparkle:format="markdown"><![CDATA[
+### See what "Other" is
+
+- On Overview, **Other** now opens a list of everything else on the disk, biggest first: your home folder, apps, macOS and the simulator systems and assets it downloads, system data and memory swap. Open any folder to see the biggest things inside it, and how much of it Storage already lists. It reads names and sizes only, and protected folders are never measured. `glade usage` shows the same from the command line.
+- Other sits with the rest of the key under the storage bar instead of on the heading's line.
+
+### Storage
+
+- An older version of a test browser is cleared after three days once a newer version beside it is the one being used, instead of waiting a month.
+- Hidden Xcode build folders inside projects (`.deriveddata` and the like, which scripts and agents make) are found and cleared like any other build data.
+- Aside's saved sessions older than two weeks are listed, and CleanShot's capture history is listed once it is a week old instead of a month. Both are yours to decide: Glade never ticks them, and they go to the Trash.
+- Free just the rows you highlight: Shift- or Command-click several, then right-click and choose **Free Up…** (or press Delete). What you ticked elsewhere stays as it was.
+
+### Fixed
+
+- Pointing at the storage bar on Overview shows the slice under the pointer. Before, every part of the bar answered as Other.
+- The key under the bar no longer flickers as the pointer moves from one entry to the next.
+]]></description>
+            <enclosure url="https://github.com/dlev02/Glade/releases/download/v0.2.2/Glade-0.2.2.zip" length="11128841" type="application/octet-stream" sparkle:edSignature="NU6siVHm1fC/R7dLwU05svgwC0ChodwkGlA7Ze7f+MVfkbfQLs5AkG3uQ9i2fJjw3MtKhP+Qb/kONiuL+nAyCQ=="/>
+        </item>
+        <item>
             <title>0.2.1</title>
             <pubDate>Wed, 11 Nov 2026 22:02:47 -0600</pubDate>
             <link>https://github.com/dlev02/Glade/releases/tag/v0.2.1</link>
@@ -98,65 +125,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
 ]]></description>
             <enclosure url="https://github.com/dlev02/Glade/releases/download/v0.2.0/Glade-0.2.0.zip" length="10366789" type="application/octet-stream" sparkle:edSignature="M/lyUiKQRIudLIyca4doN6xK84O0gYiDahXcZ613WEis9FsM2m0ZQd9LrGljsUG4oym2IWV9otkW3tKGNAVXDQ=="/>
         </item>
-        <item>
-            <title>0.1.0</title>
-            <pubDate>Wed, 11 Nov 2026 02:22:20 -0600</pubDate>
-            <link>https://github.com/dlev02/Glade/releases/tag/v0.1.0</link>
-            <sparkle:version>1</sparkle:version>
-            <sparkle:shortVersionString>0.1.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
-            <description sparkle:format="markdown"><![CDATA[
-The first version of Glade. It shows what is using your Mac's storage, memory, processors and graphics, and clears it safely.
-
-### Storage
-
-- A scan finds what can be cleared across 26 categories: app and browser caches, logs, Xcode build data, simulators and their runtimes, package caches, project dependencies and build output, toolkits, AI models, agent history and leftover worktrees, editor extensions, leftovers of removed apps, old installers, large and long-unused files, and more.
-- Scan Including Duplicates also finds identical files in your own folders.
-- Every finding says how it comes back: it rebuilds itself, downloads again, needs a reinstall, or is permanent.
-- Three levels choose what to clear: Careful, Balanced and Aggressive. Change any choice by hand before you clean.
-
-### Search
-
-- Optional and off by default: Glade can read what documents, PDFs and images contain, on this Mac only, so you can search by meaning (`glade search "the lease for the flat"`), find files like another, and find near-identical photos and documents.
-
-### Safety
-
-- Keys and credentials, Keychains and password managers, your AI agents' memory and settings, Photos and other libraries, Messages, Mail, Notes, iCloud Drive and other synced folders, browser profiles, backups and `.git` folders are never scanned, shown or removed. Add folders of your own.
-- Only things a scan found can be removed, and every path is checked again at the moment of removal.
-- Personal files are never chosen for you.
-- Things that rebuild are deleted; everything else goes to the Trash and can be put back.
-- Caches aren't offered while their app is open, and worktrees with uncommitted changes are never removed.
-
-### Performance
-
-- Live processor, memory, graphics, disk and thermal readings, and every app with its helpers grouped and what it is doing.
-- Suggestions for what to quit, which leave alone the app in front, anything playing or recording, and anything keeping the Mac awake.
-- Quit an app politely, or shut down idle simulators with their apps and data kept.
-- Alerts when free space runs low, memory is under pressure or the processor stays busy.
-
-### Your AI
-
-- Ask a question about your Mac, or have your AI refine a clean towards a goal such as "free 30 GB".
-- Works with Claude Code, Codex, OpenCode and Apple Intelligence. Gemini CLI, Cursor CLI, GitHub Copilot CLI, Qwen Code and Ollama are supported from their documentation and not yet tested.
-- The AI gets no tools and never sees what's inside your files. Glade drops any suggestion that breaks its rules, and keeps a record of what was asked and answered.
-
-### For coding agents
-
-- The `glade` command line does everything the app does, with JSON output and nothing removed without `--confirm`.
-- `glade guide` briefs Claude Code, Codex, Cursor and other agents on the safety rules and the commands.
-- `glade mcp` runs Glade as an MCP server.
-
-### Good to know
-
-- Glade needs macOS 26 or later. Give it Full Disk Access to measure everything.
-- It checks for updates once a day and installs an update the next time it quits. This can be turned off.
-- There is no account, analytics or server. Report a Problem saves a report to your Desktop for you to attach to an issue.
-]]></description>
-            <enclosure url="https://github.com/dlev02/Glade/releases/download/v0.1.0/Glade-0.1.0.zip" length="9086354" type="application/octet-stream" sparkle:edSignature="d9GV6ejLU/1ykTy6aBcbG8EMZ4aGnt23V1l3rss74nhT7Q60MriKoYrzszKASwEuWoqu5IDi+sH9yKogY9JyBQ=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: YbqqZVZXs1Eo7Go8tK+Lh7Ba4AkDn7nScaEQeGfNtXSJhL8UCGu5MfkHJa5XTZT40qjrlr9HwdyHCe1BjSKxBw==
-length: 15673
+edSignature: p+k8DbHjYsjXFbuFYjp2Xa4oB/dPMjv5W3HIZk7INAbzA1FZj4IsdkX3n6sT6aFbvR244ChLDyGZ2PFi6oQ3Cw==
+length: 13913
 -->
