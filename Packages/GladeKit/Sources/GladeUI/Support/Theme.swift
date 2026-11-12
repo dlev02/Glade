@@ -72,7 +72,13 @@ public enum Palette {
   /// The app’s own green: calmer and a touch cooler than the system green.
   public static let glade = Color(light: 0x1C9A68, dark: 0x3FD897)
   /// The surface cards sit on.
-  public static let card = Color(nsColor: .controlBackgroundColor)
+  /// In dark the system gives controls and windows the same colour, so the card is
+  /// lifted a little to stand out from the window it sits on.
+  public static let card = Color(nsColor: NSColor(name: nil) { appearance in
+    let base = NSColor.controlBackgroundColor
+    guard appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua else { return base }
+    return base.blended(withFraction: 0.07, of: .white) ?? base
+  })
   public static let hairline = Color(nsColor: .separatorColor)
   /// The empty part of a bar or gauge.
   public static let track = Color.primary.opacity(0.08)

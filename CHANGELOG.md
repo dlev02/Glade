@@ -37,6 +37,7 @@
 ### Fixed
 
 - In the menu bar, a suggestion's warning ("May be in use by Bitrig") and the memory reading ("Under pressure") are no longer cut off.
+- In dark mode, cards stand out from the window again instead of blending into it.
 
 ### Changed
 
