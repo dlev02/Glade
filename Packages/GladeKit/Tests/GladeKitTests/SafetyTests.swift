@@ -658,4 +658,80 @@ struct SafetyTests {
     #expect(!saved.findings.contains { $0.ruleID == PickedFolder.ruleID })
     #expect(saved.findings.contains { $0.id == "cache" })
   }
+
+  // MARK: Assistant proposals
+
+  /// A model Glade can ask, answering from a script: one reply for the proposal, another
+  /// for the second opinion.
+  private struct StubProvider: AgentProvider {
+    var id: String
+    var name: String { id }
+    var isLocal = false
+    var reply: @Sendable (AgentRequest) -> String
+
+    func status() async -> ProviderStatus { ProviderStatus(id: id, name: id, state: .ready) }
+
+    func complete(_ request: AgentRequest) async throws -> AgentReply {
+      AgentReply(text: reply(request), provider: id)
+    }
+  }
+
+  @Test func assistantProposalsTickOnlyWhatThePersonNamedAndCanBeRemoved() async throws {
+    let apps = home + "/Applications"
+    let lantern = appFinding("lantern", [apps + "/Lantern.app"], bundleID: "com.lanternco.lantern")
+    let beacon = appFinding("beacon", [apps + "/Beacon.app"], bundleID: "com.lanternco.beacon", blockers: [Blocker(.ownUninstaller, "Has its own uninstaller.")])
+    let compass = appFinding("compass", [apps + "/Compass.app"], bundleID: "com.othermaker.compass")
+    var installer = finding("installer", home + "/Downloads/old-installer.dmg", method: .trash, risk: .personal)
+    installer.title = "Lantern Setup.dmg"
+    installer.category = .downloads
+    installer.autoLevel = nil
+    let unrelated = finding("unrelated", home + "/Library/Caches/com.example.app")
+    var lanternNamed = lantern, beaconNamed = beacon, compassNamed = compass
+    lanternNamed.title = "Lantern"
+    beaconNamed.title = "Beacon"
+    compassNamed.title = "Compass"
+    let result = scan([lanternNamed, beaconNamed, compassNamed, installer, unrelated])
+    let request = "Uninstall Lantern and Beacon, and the Lantern installer"
+
+    // Only what matches the request is shown to the model.
+    let shown = RemovalRequest.candidates(for: request, scan: result, limit: 40).map(\.id)
+    #expect(Set(shown) == ["lantern", "beacon", "installer"])
+    #expect(RemovalRequest.wantsProposal(request, scan: result))
+    #expect(!RemovalRequest.wantsProposal("Free up 30 GB", scan: result))
+
+    let proposer = StubProvider(id: "stub-proposer") { _ in
+      #"{"answer": "Here they are.", "propose": [{"id": "lantern", "why": "Named."}, {"id": "beacon", "why": "Named."}, {"id": "installer", "why": "Named."}, {"id": "compass", "why": "Added."}, {"id": "unrelated", "why": "Big."}, {"id": "~/Documents", "why": "Made up."}]}"#
+    }
+    let reviewer = StubProvider(id: "stub-reviewer") { _ in
+      #"{"items": [{"id": "lantern", "verdict": "caution", "note": "You opened it yesterday."}, {"id": "unrelated", "verdict": "ok", "note": ""}, {"id": "invented", "verdict": "ok", "note": "Remove this too."}]}"#
+    }
+    let proposal = try await Assistant.propose(request, scan: result, snapshot: "", config: GladeConfig(), providers: [proposer, reviewer])
+
+    // Anything it wasn’t shown is dropped and recorded; Compass was never shown either.
+    #expect(proposal.items.map(\.id) == ["lantern", "beacon", "installer"])
+    #expect(Set(proposal.rejected.map(\.id)) == ["compass", "unrelated", "~/Documents"])
+    func item(_ id: String) -> RemovalProposal.Item? { proposal.items.first { $0.id == id } }
+    // A named app that can be removed starts ticked, and a caution leaves it ticked.
+    #expect(item("lantern")?.startsTicked == true && item("lantern")?.review?.verdict == .caution)
+    // An app with its own uninstaller is never ticked; a personal finding never is.
+    #expect(item("beacon")?.startsTicked == false && item("beacon")?.action == .openUninstaller)
+    #expect(item("installer")?.named == true && item("installer")?.startsTicked == false)
+    // The second opinion came from the other provider and couldn’t add anything.
+    #expect(proposal.reviewer == "stub-reviewer")
+    #expect(proposal.items.count == 3 && !proposal.items.contains { $0.id == "unrelated" || $0.id == "invented" })
+
+    // Something the model adds on its own is never ticked, even when it could be removed.
+    let added = RemovalProposal.item(for: compassNamed, why: "Added.", named: RemovalRequest.isNamed(compassNamed, in: request))
+    #expect(!added.named && !added.startsTicked && added.action == .remove)
+    // A named safe cache can start ticked; the same thing open or personal can’t.
+    #expect(RemovalProposal.item(for: unrelated, why: "", named: true).startsTicked)
+    var open = unrelated
+    open.blockers = [Blocker(.appRunning, "Open.")]
+    #expect(!RemovalProposal.item(for: open, why: "", named: true).startsTicked)
+    #expect(!RemovalProposal.item(for: installer, why: "", named: true).startsTicked)
+
+    // A review that fails, or no other AI at all, leaves the proposal without one.
+    let alone = try await Assistant.propose(request, scan: result, snapshot: "", config: GladeConfig(), providers: [proposer])
+    #expect(alone.reviewer == nil && alone.items.count == 3)
+  }
 }

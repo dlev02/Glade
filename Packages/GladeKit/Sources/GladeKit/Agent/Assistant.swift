@@ -199,7 +199,7 @@ public enum Assistant {
     throw AssistantError.noProvider(statuses)
   }
 
-  private static func deepChoice(config: GladeConfig, current: any AgentProvider, providers: [any AgentProvider]) -> (any AgentProvider, String?)? {
+  static func deepChoice(config: GladeConfig, current: any AgentProvider, providers: [any AgentProvider]) -> (any AgentProvider, String?)? {
     let deepProvider = config.assistant.deepProvider.flatMap { id in providers.first { $0.id == id } } ?? current
     let deepModel = config.assistant.deepModels[deepProvider.id]
     // Calling the same provider with the same model again would learn nothing.
@@ -272,7 +272,7 @@ public enum Assistant {
     for old in files.dropFirst(100) { try? FileManager.default.removeItem(at: old) }
   }
 
-  private static func amend(runID: String, _ change: (inout AssistantRun) -> Void) {
+  static func amend(runID: String, _ change: (inout AssistantRun) -> Void) {
     guard var record = runs(limit: 20).first(where: { $0.id == runID }) else { return }
     change(&record)
     try? JSONFiles.write(record, to: file(for: record))
@@ -317,7 +317,7 @@ public enum Assistant {
     }
   }
 
-  private static func clip(_ text: String) -> String {
+  static func clip(_ text: String) -> String {
     String(text.trimmingCharacters(in: .whitespacesAndNewlines).prefix(220))
   }
 }

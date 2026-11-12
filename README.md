@@ -121,6 +121,7 @@ Every command accepts `--json`, and nothing is removed without `--confirm`.
 | `glade clean --level careful` | A dry run; add `--confirm` to remove. Also `--ids <id>…` for chosen findings. |
 | `glade installed` | Every app with its size, when it was last opened, where it came from and whether it has its own uninstaller. `--unused <days>`, `--sort size\|opened`. |
 | `glade uninstall "<app>"` | A dry run of what goes to the Trash and what stays; add `--confirm` to do it, or `--open-uninstaller` for apps with their own. |
+| `glade ask "<question>"` | Ask your AI about this Mac. Asked to remove something ("uninstall iMovie"), it lists what matches with a second opinion and the dry-run commands to act on it; it never removes anything itself. |
 | `glade undo` | Put back what the last clean moved to the Trash. |
 | `glade status`, `glade apps`, `glade suggest` | Processor, memory, graphics and disk; what each app is doing; what to quit. |
 | `glade relieve` | Free Up Memory: what Glade would quit and shut down in one go, and what it ticks. Add `--confirm` to do it; `--include`/`--exclude` change the ticks. |
