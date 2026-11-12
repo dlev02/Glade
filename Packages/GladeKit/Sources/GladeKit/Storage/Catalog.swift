@@ -57,7 +57,7 @@ public enum Catalog {
         "com.openai.atlas", "at.studio.*", "com.duckduckgo.*", "pip", "pypoetry", "Yarn", "pnpm",
         "CocoaPods", "org.swift.swiftpm", "org.carthage.CarthageKit", "composer", "go-build",
         "ms-playwright", "ms-playwright-go", "electron", "Cypress", "typescript", "deno", "JetBrains",
-        "com.spotify.client", "node-gyp", "Glade", "io.github.dlev02.glade", "com.apple.dt.Xcode",
+        "com.spotify.client", "node-gyp", "Glade", "io.github.dlev02.glade", "io.github.dlev02.glade.dev", "com.apple.dt.Xcode",
         "SentryCrash", "bun", "uv", "huggingface", "turbo", "puppeteer", "camoufox*",
         // Named "cache" but not one: llama.cpp keeps the models you downloaded with
         // `-hf` here, Buzz its Whisper models and plugins, renv the R packages projects

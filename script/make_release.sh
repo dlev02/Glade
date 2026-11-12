@@ -44,7 +44,9 @@ notes() { awk -v heading="## $version " 'index($0, heading) == 1 { on = 1; next 
 # Everything that needs setting up on this Mac fails here, not after a long build.
 git diff --quiet HEAD -- || die "tracked files have changes: commit first, so the release is what's in the repository"
 [[ "$(setting MARKETING_VERSION)" == "$version" ]] || die "MARKETING_VERSION isn't $version"
-[[ "$(setting PRODUCT_BUNDLE_IDENTIFIER)" == "$bundle_id" ]] || die "PRODUCT_BUNDLE_IDENTIFIER isn't $bundle_id"
+# Development builds have their own identifier (…glade.dev), so that running one never
+# replaces the permissions people gave the released app. Releases must use the real one.
+[[ "$(setting 'PRODUCT_BUNDLE_IDENTIFIER\[config=Release\]')" == "$bundle_id" ]] || die "PRODUCT_BUNDLE_IDENTIFIER isn't $bundle_id"
 build=$(setting CURRENT_PROJECT_VERSION)
 [[ "$build" =~ '^[0-9]+$' ]] || die "the build number must be a whole number, not $build"
 print -r -- "$(notes)" | grep -q '[^[:space:]]' || die "CHANGELOG.md has no section for $version"
