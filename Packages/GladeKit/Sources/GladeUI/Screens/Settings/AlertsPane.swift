@@ -3,7 +3,7 @@ import GladeKit
 import SwiftUI
 
 /// When Glade speaks up: low storage, memory pressure, a busy processor or graphics
-/// chip, and how long it waits before repeating itself.
+/// chip, the battery, and how long it waits before repeating itself.
 struct AlertsPane: View {
   @Environment(AppModel.self) private var model
   @State private var askedForNotifications = false
@@ -76,6 +76,17 @@ struct AlertsPane: View {
           alertRow("Graphics above", isOn: $model.config.automation.gpuAlerts) {
             threshold("Graphics", percent: $model.config.automation.gpuPercent, minutes: $model.config.automation.gpuMinutes)
               .disabled(!automation.gpuAlerts)
+          }
+        }
+
+        if BatteryReader.hasBattery {
+          Section("Battery") {
+            alertRow("Charged past the limit", isOn: $model.config.automation.batteryPastLimitAlerts) { EmptyView() }
+            alertRow("Charge limit turned off", isOn: $model.config.automation.chargeLimitOffAlerts) { EmptyView() }
+            alertRow("Hot while charging", isOn: $model.config.automation.batteryHotAlerts) { EmptyView() }
+            alertRow("Health below 80%", isOn: $model.config.automation.batteryHealthAlerts) { EmptyView() }
+            alertRow("Kept awake on battery for an hour", isOn: $model.config.automation.awakeOnBatteryAlerts) { EmptyView() }
+            alertRow("Large drain while asleep", isOn: $model.config.automation.sleepDrainAlerts) { EmptyView() }
           }
         }
 

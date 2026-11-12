@@ -95,6 +95,18 @@ public struct AutomationSettings: Codable, Sendable, Equatable {
   public var gpuAlerts: Bool
   /// Minutes before the same alert can fire again.
   public var quietMinutes: Double
+  /// The battery charged past the limit set in System Settings.
+  public var batteryPastLimitAlerts: Bool
+  /// The charge limit was turned off.
+  public var chargeLimitOffAlerts: Bool
+  /// The battery stayed hot while plugged in.
+  public var batteryHotAlerts: Bool
+  /// Battery health fell below 80%. Said once.
+  public var batteryHealthAlerts: Bool
+  /// Something kept the Mac awake for a long time on battery.
+  public var awakeOnBatteryAlerts: Bool
+  /// The battery drained unusually while the Mac slept.
+  public var sleepDrainAlerts: Bool
 
   public init() {
     enabled = true
@@ -109,6 +121,12 @@ public struct AutomationSettings: Codable, Sendable, Equatable {
     gpuMinutes = 10
     gpuAlerts = false
     quietMinutes = 60
+    batteryPastLimitAlerts = true
+    chargeLimitOffAlerts = true
+    batteryHotAlerts = false
+    batteryHealthAlerts = true
+    awakeOnBatteryAlerts = false
+    sleepDrainAlerts = false
   }
 
   public init(from decoder: Decoder) throws {
@@ -126,6 +144,36 @@ public struct AutomationSettings: Codable, Sendable, Equatable {
     gpuMinutes = try c.decodeIfPresent(Double.self, forKey: .gpuMinutes) ?? gpuMinutes
     gpuAlerts = try c.decodeIfPresent(Bool.self, forKey: .gpuAlerts) ?? gpuAlerts
     quietMinutes = try c.decodeIfPresent(Double.self, forKey: .quietMinutes) ?? quietMinutes
+    batteryPastLimitAlerts = try c.decodeIfPresent(Bool.self, forKey: .batteryPastLimitAlerts) ?? batteryPastLimitAlerts
+    chargeLimitOffAlerts = try c.decodeIfPresent(Bool.self, forKey: .chargeLimitOffAlerts) ?? chargeLimitOffAlerts
+    batteryHotAlerts = try c.decodeIfPresent(Bool.self, forKey: .batteryHotAlerts) ?? batteryHotAlerts
+    batteryHealthAlerts = try c.decodeIfPresent(Bool.self, forKey: .batteryHealthAlerts) ?? batteryHealthAlerts
+    awakeOnBatteryAlerts = try c.decodeIfPresent(Bool.self, forKey: .awakeOnBatteryAlerts) ?? awakeOnBatteryAlerts
+    sleepDrainAlerts = try c.decodeIfPresent(Bool.self, forKey: .sleepDrainAlerts) ?? sleepDrainAlerts
+  }
+}
+
+public struct BatterySettings: Codable, Sendable, Equatable {
+  public enum Detail: String, Codable, Sendable, CaseIterable, Identifiable {
+    /// Sentences and percentages.
+    case simple
+    /// Adds milliamp-hours, watts, volts, cycles and the names macOS uses.
+    case technical
+
+    public var id: String { rawValue }
+    public var title: String { rawValue.capitalized }
+  }
+
+  public var detail: Detail
+
+  public init() {
+    detail = .simple
+  }
+
+  public init(from decoder: Decoder) throws {
+    self.init()
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    detail = try c.decodeIfPresent(Detail.self, forKey: .detail) ?? detail
   }
 }
 
@@ -173,6 +221,7 @@ public struct GladeConfig: Codable, Sendable, Equatable {
   public var assistant: AssistantSettings
   public var automation: AutomationSettings
   public var index: IndexSettings
+  public var battery: BatterySettings
 
   public init() {
     protectedPaths = []
@@ -185,6 +234,7 @@ public struct GladeConfig: Codable, Sendable, Equatable {
     assistant = AssistantSettings()
     automation = AutomationSettings()
     index = IndexSettings()
+    battery = BatterySettings()
   }
 
   public init(from decoder: Decoder) throws {
@@ -200,6 +250,7 @@ public struct GladeConfig: Codable, Sendable, Equatable {
     assistant = try c.decodeIfPresent(AssistantSettings.self, forKey: .assistant) ?? assistant
     automation = try c.decodeIfPresent(AutomationSettings.self, forKey: .automation) ?? automation
     index = try c.decodeIfPresent(IndexSettings.self, forKey: .index) ?? index
+    battery = try c.decodeIfPresent(BatterySettings.self, forKey: .battery) ?? battery
   }
 }
 

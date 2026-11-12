@@ -7,7 +7,7 @@ public enum Guide {
   public static let text = """
     # Glade: a briefing for agents
 
-    Glade shows what is using this Mac’s storage, memory, processors and graphics, and clears it safely. You drive it; it does the looking and the removing. You never need to run `rm`, `du`, `find`, `kill` or `ps` yourself, and you shouldn’t: Glade knows which locations are safe and enforces rules you can’t see from a shell.
+    Glade shows what is using this Mac’s storage, memory, processors, graphics and battery, and clears it safely. You drive it; it does the looking and the removing. You never need to run `rm`, `du`, `find`, `kill` or `ps` yourself, and you shouldn’t: Glade knows which locations are safe and enforces rules you can’t see from a shell.
 
     Every command prints JSON with `--json`. Nothing is removed without `--confirm`.
 
@@ -71,6 +71,23 @@ public enum Guide {
 
     `glade relieve` is the same judgement in one go, with the same cautions as `quit`: show the person the plan (the ticked actions, the memory they hold, any caveat) and get their go-ahead before `--confirm`. It ticks only confident, idle actions with no doubt attached; relaunches, hogs, anything with a caveat ("May be in use by Bitrig") and anything used in the last few minutes start unticked, and during a game or full-screen video nothing from the same maker is ticked. Use `--include`/`--exclude` to follow what the person chose, and `--only` to act on nothing else. Apps are asked to quit and may stay open to ask about unsaved work; that’s reported, never forced.
 
+    ## Battery and energy
+
+    ```
+    glade battery --json           # charge, charging or not (and why), time to full or left, charger, watts in/out, temperature, health, cycles, charge limit
+    glade battery history --days 7 # what the app recorded: charge every 5 min, health once a day
+    glade energy --period hour --json   # apps by energy: now, hour, 12h or unplugged
+    glade awake --json             # what is keeping the Mac or its screen awake, since when, and why
+    glade sleeps --json            # recent sleeps: how long, charge before and after, what woke it
+    glade battery limit            # the charge limit; --open opens System Settings to change it
+    ```
+
+    Answering “what is draining my battery”: start with `glade battery` (is it on battery, how fast is it draining), then `glade energy --period unplugged` (or `hour` on the charger) and `glade awake`. Energy is what macOS bills each process for the processor and neural engine; the screen, graphics chip and radios aren’t in it, so apps together are usually a fraction of what the whole Mac uses. Say that when the numbers don’t add up. Longer periods only cover the time the app was open.
+
+    Health is System Settings’ “Maximum Capacity”: below 80% Apple may recommend a service. The charge limit is set in System Settings › Battery › Battery Health; Glade can read it but can’t change it, and neither can you, so open the pane for the person with `glade battery limit --open` after asking. macOS charges to 100% now and then even with a limit, to keep its gauge accurate.
+
+    Something keeping the Mac awake follows the same rule as quitting: never stop it without asking, because it may be a download, an export or a call. Requests one process holds for another (coreaudiod for a simulator playing sound) are credited to the real one. Glade doesn’t stop command-line tools such as `caffeinate`; it names the app or terminal that started it so the person can stop it there. “Sleep is turned off for this whole Mac” means `pmset disablesleep` is on, usually set by an app that keeps Macs awake; turning it back on needs an administrator, so tell the person rather than trying.
+
     ## Asking Glade’s own assistant
 
     ```
@@ -82,7 +99,7 @@ public enum Guide {
     ## Showing the person
 
     ```
-    glade show storage      # open Glade’s window on overview, storage, performance, assistant or history
+    glade show storage      # open Glade’s window on overview, storage, performance, battery, assistant or history
     ```
 
     When you’ve found something worth a look, open the matching section so the person sees it in the app. This brings Glade in front of what they’re doing, so do it once, when there’s something to see; `--background` changes the section without coming forward.

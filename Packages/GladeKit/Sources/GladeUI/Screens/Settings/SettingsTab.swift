@@ -1,3 +1,4 @@
+import GladeKit
 import SwiftUI
 
 /// The tabs of the Settings window, each with its own fixed size so the window fits
@@ -33,10 +34,10 @@ enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
 
   var height: CGFloat {
     switch self {
-    case .general: 400
+    case .general: 452
     case .protection: 520
     case .assistant: 720
-    case .alerts: 540
+    case .alerts: BatteryReader.hasBattery ? 790 : 540
     case .search: 360
     case .advanced: 600
     }

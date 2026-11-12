@@ -6,10 +6,15 @@ struct ConversationStart: View {
   @Environment(AppModel.self) private var model
   @Environment(\.accentMark) private var accentMark
 
-  private static let suggestions: [[(symbol: String, question: String)]] = [
-    [("internaldrive", "Free up 30 GB"), ("gauge.with.dots.needle.67percent", "Why is my Mac slow?")],
-    [("memorychip", "What’s using memory?"), ("checkmark.shield", "What’s safe to remove?")],
-  ]
+  /// Two by two, with the battery question across the bottom on a Mac with a battery.
+  private static let suggestions: [[(symbol: String, question: String)]] = {
+    var rows: [[(symbol: String, question: String)]] = [
+      [("internaldrive", "Free up 30 GB"), ("gauge.with.dots.needle.67percent", "Why is my Mac slow?")],
+      [("memorychip", "What’s using memory?"), ("checkmark.shield", "What’s safe to remove?")],
+    ]
+    if BatteryReader.hasBattery { rows.append([("battery.50percent", "What’s draining my battery?")]) }
+    return rows
+  }()
 
   var body: some View {
     VStack(spacing: Metrics.xl) {
@@ -35,6 +40,7 @@ struct ConversationStart: View {
                 .floatingAction()
                 .controlSize(.large)
                 .accessibilityIdentifier("assistant.chip.\(row).\(Self.suggestions[row].firstIndex { $0.question == suggestion.question } ?? 0)")
+                .gridCellColumns(Self.suggestions[row].count == 1 ? 2 : 1)
               }
             }
           }

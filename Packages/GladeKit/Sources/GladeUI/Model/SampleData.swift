@@ -103,7 +103,7 @@ public struct SampleData: Sendable {
       case .shutDownIdleSimulator: kind = .shutDown
       case .relaunchHeavyApp: kind = .relaunch
       case .quitIdleApp, .memoryHog, .gpuHog: kind = .quit
-      case .runawayProcess: return nil
+      case .runawayProcess, .idleEnergyDrain, .forgottenAwakeHolder: return nil
       }
       let why = kind == .shutDown
         ? "Nothing is running in it. Its apps and data are kept."

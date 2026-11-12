@@ -22,12 +22,18 @@ public struct ProcessSample: Codable, Sendable, Identifiable, Hashable {
   public var gpuPercent: Double?
   /// Owned by another user (root, `_windowserver`), so usage can’t be read directly.
   public var isRestricted: Bool
+  /// Energy the kernel has billed to the process since it started, in nanojoules.
+  /// Counts the processor (and the neural engine); the graphics chip isn’t included.
+  public var energyNanojoules: UInt64?
+  /// Average power since the last listing, in watts. `nil` on the first listing.
+  public var energyWatts: Double?
 
   public var id: Int32 { pid }
 
   public init(
     pid: Int32, parentPID: Int32, name: String, executablePath: String?, userID: UInt32, isCurrentUser: Bool,
-    cpuPercent: Double?, memoryBytes: Int64?, threadCount: Int?, startTime: Date?, gpuPercent: Double?, isRestricted: Bool
+    cpuPercent: Double?, memoryBytes: Int64?, threadCount: Int?, startTime: Date?, gpuPercent: Double?, isRestricted: Bool,
+    energyNanojoules: UInt64? = nil, energyWatts: Double? = nil
   ) {
     self.pid = pid
     self.parentPID = parentPID
@@ -41,6 +47,8 @@ public struct ProcessSample: Codable, Sendable, Identifiable, Hashable {
     self.startTime = startTime
     self.gpuPercent = gpuPercent
     self.isRestricted = isRestricted
+    self.energyNanojoules = energyNanojoules
+    self.energyWatts = energyWatts
   }
 }
 
@@ -56,6 +64,7 @@ struct RawProcess: Sendable {
   var cpuNanos: UInt64?
   var footprint: UInt64?
   var threads: Int?
+  var energy: UInt64?
 }
 
 /// Path and name never change for a process, so they’re read once per pid.
@@ -109,9 +118,10 @@ enum ProcessTable {
       identities[pid] = identity
     }
 
-    var usage = rusage_info_v4()
+    // Version 6 adds the energy counter; the call costs the same as version 4.
+    var usage = rusage_info_v6()
     let usageResult = withUnsafeMutablePointer(to: &usage) { pointer in
-      pointer.withMemoryRebound(to: rusage_info_t?.self, capacity: 1) { proc_pid_rusage(pid, RUSAGE_INFO_V4, $0) }
+      pointer.withMemoryRebound(to: rusage_info_t?.self, capacity: 1) { proc_pid_rusage(pid, RUSAGE_INFO_V6, $0) }
     }
     let readable = usageResult == 0
     return RawProcess(
@@ -119,7 +129,8 @@ enum ProcessTable {
       startKey: startKey,
       cpuNanos: readable ? MachTime.nanos(fromTicks: usage.ri_user_time + usage.ri_system_time) : nil,
       footprint: readable ? usage.ri_phys_footprint : nil,
-      threads: threads
+      threads: threads,
+      energy: readable ? usage.ri_energy_nj : nil
     )
   }
 

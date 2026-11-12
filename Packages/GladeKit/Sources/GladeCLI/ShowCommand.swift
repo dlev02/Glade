@@ -7,13 +7,13 @@ import GladeUI
 /// Opens the app’s window on a section, starting the app if it isn’t running.
 struct Show: AsyncParsableCommand {
   static let configuration = CommandConfiguration(
-    abstract: "Open Glade’s window on overview, storage, performance, assistant or history."
+    abstract: "Open Glade’s window on overview, storage, performance, battery, assistant or history."
   )
 
   /// The app’s bundle identifier, for finding it when this isn’t the app’s own executable.
   static let bundleIdentifier = "io.github.dlev02.glade"
 
-  @Argument(help: "overview, storage, performance, assistant or history.")
+  @Argument(help: "overview, storage, performance, battery, assistant or history.")
   var section = "overview"
 
   @Flag(name: .long, help: "Leave whatever is in front where it is.")
@@ -30,7 +30,7 @@ struct Show: AsyncParsableCommand {
     let name = section.lowercased()
     let link: URL? = await MainActor.run { AppModel.Section(rawValue: name)?.link }
     guard let link else {
-      throw ValidationError("Choose overview, storage, performance, assistant or history.")
+      throw ValidationError("Choose overview, storage, performance, battery, assistant or history.")
     }
     guard let app = appURL() else {
       throw ValidationError("\(Brand.name) isn’t installed. Install the app first.")

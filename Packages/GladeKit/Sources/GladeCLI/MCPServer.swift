@@ -122,7 +122,7 @@ struct MCPServer {
 }
 
 enum MCPTools {
-  static var all: [MCPTool] { storage + apps + system }
+  static var all: [MCPTool] { storage + apps + system + battery }
 
   private static let noArguments = #"{"type":"object","properties":{},"additionalProperties":false}"#
 

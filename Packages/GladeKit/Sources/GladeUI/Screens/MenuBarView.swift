@@ -17,6 +17,20 @@ struct MenuBarView: View {
     VStack(alignment: .leading, spacing: Metrics.m) {
       freeSpace
       readings
+      if let line = model.batteryLine {
+        Button { showBattery() } label: {
+          Label(line.text, systemImage: line.symbol)
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, Metrics.m)
+        .help("Show \(model.batteryTitle)")
+        .accessibilityIdentifier("popover.battery")
+      }
       if let suggestion {
         SuggestionRow(suggestion, iconSize: 24, onGlass: true) { outcome = $0 }
           .padding(.horizontal, Metrics.m)
@@ -161,6 +175,11 @@ struct MenuBarView: View {
     model.section = .performance
     showWindow()
     model.openRelief()
+  }
+
+  private func showBattery() {
+    model.section = .battery
+    showWindow()
   }
 
   private func showStorage() {

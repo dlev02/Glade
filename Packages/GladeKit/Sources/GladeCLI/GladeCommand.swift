@@ -7,7 +7,7 @@ import GladeKit
 public struct GladeCommand: AsyncParsableCommand {
   public static let configuration = CommandConfiguration(
     commandName: Brand.cli,
-    abstract: "See what’s using your Mac’s storage, memory and processors, and clear it safely.",
+    abstract: "See what’s using your Mac’s storage, memory, processors and battery, and clear it safely.",
     discussion: """
       Every command accepts --json for machine-readable output. Nothing is removed \
       without --confirm, and protected areas (credentials, Photos, Mail, Messages, \
@@ -16,6 +16,7 @@ public struct GladeCommand: AsyncParsableCommand {
     version: Brand.version,
     subcommands: [Doctor.self, Scan.self, Usage.self, Plan.self, Clean.self, Installed.self, Uninstall.self, Undo.self, Receipts.self, Protect.self, Config.self, Categories.self, Logs.self, Report.self, MCP.self, Guidance.self,
       Status.self, Processes.self, Apps.self, Simulators.self, Context.self, Suggest.self, Relieve.self, Quit.self,
+      Battery.self, Energy.self, Awake.self, Sleeps.self,
       Advise.self, Ask.self, Runs.self, Providers.self, Prompt.self, Show.self, Snapshot.self,
       Index.self, Search.self, Similar.self, Lookalikes.self, ForgetLoginItem.self,
     ]

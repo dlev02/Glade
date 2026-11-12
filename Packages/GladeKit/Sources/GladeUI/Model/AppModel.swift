@@ -9,7 +9,7 @@ import SwiftUI
 @Observable
 public final class AppModel {
   public enum Section: String, CaseIterable, Identifiable, Sendable {
-    case overview, storage, performance, assistant, history
+    case overview, storage, performance, battery, assistant, history
 
     public var id: String { rawValue }
 
@@ -18,6 +18,8 @@ public final class AppModel {
       case .overview: "Overview"
       case .storage: "Storage"
       case .performance: "Performance"
+      // A Mac without a battery still has energy to show.
+      case .battery: BatteryReader.hasBattery ? "Battery" : "Energy"
       case .assistant: "Assistant"
       case .history: "History"
       }
@@ -28,6 +30,7 @@ public final class AppModel {
       case .overview: "gauge.with.dots.needle.33percent"
       case .storage: "internaldrive"
       case .performance: "waveform.path.ecg"
+      case .battery: BatteryReader.hasBattery ? "battery.75percent" : "bolt"
       case .assistant: "sparkles"
       case .history: "clock.arrow.trianglehead.counterclockwise.rotate.90"
       }
@@ -119,7 +122,14 @@ public final class AppModel {
   public private(set) var suggestions: [PerformanceSuggestion] = []
   /// Running simulators, each with the memory it holds.
   public private(set) var simulators: [SimulatorUsage] = []
-  public private(set) var alerts: [ThresholdAlert] = []
+  public internal(set) var alerts: [ThresholdAlert] = []
+
+  // MARK: Battery
+
+  /// The battery, its history, what keeps the Mac awake and recent sleeps; kept up to
+  /// date in AppModel+Battery.
+  public internal(set) var battery = BatteryState()
+  @ObservationIgnored let batteryWork = BatteryWork()
 
   // MARK: Free Up Memory
 
@@ -196,7 +206,7 @@ public final class AppModel {
 
   private let defaults = UserDefaults.standard
   private let sampler = SystemSampler()
-  private let monitor: ThresholdMonitor
+  let monitor: ThresholdMonitor
   private var samplingTask: Task<Void, Never>?
   private var scanCancel: CancelFlag?
   /// How many windows or popovers are showing live readings.
@@ -204,7 +214,7 @@ public final class AppModel {
   /// How many of them need the per-app breakdown, which costs more.
   private var detailWatchers = 0
   private var tick = 0
-  private var isLive = false
+  var isLive = false
   /// Showing made-up findings and suggestions (`-demo YES`). Acting on a sample
   /// suggestion changes nothing.
   public private(set) var isDemo = false
@@ -346,6 +356,7 @@ public final class AppModel {
     if detailWatchers > 0, tick % 2 == 0 || apps.isEmpty {
       await refreshApps()
     }
+    await sampleBattery()
     for alert in await monitor.ingest(reading) {
       alerts.insert(alert, at: 0)
       if alerts.count > 20 { alerts.removeLast() }
@@ -455,7 +466,8 @@ public final class AppModel {
       } else {
         await refreshApps()
         let description = MacDescription.build(
-          snapshot: snapshot, apps: apps, context: context, suggestions: suggestions, scan: scan, plan: plan
+          snapshot: snapshot, apps: apps, context: context, suggestions: suggestions, scan: scan, plan: plan,
+          battery: batteryBrief
         )
         let reply = try await Assistant.ask(
           "\(alert.title). \(alert.body) What is the cause, and what would you quit or shut down?",
@@ -769,8 +781,10 @@ public final class AppModel {
       return
     }
     await refreshApps()
+    await refreshBatteryForAssistant()
     let description = MacDescription.build(
-      snapshot: snapshot, apps: apps, context: context, suggestions: suggestions, scan: scan, plan: plan
+      snapshot: snapshot, apps: apps, context: context, suggestions: suggestions, scan: scan, plan: plan,
+      battery: batteryBrief
     )
     do {
       let reply = try await Assistant.ask(text, snapshot: description, config: config, providers: AgentProviders.all)
