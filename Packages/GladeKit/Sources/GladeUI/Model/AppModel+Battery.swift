@@ -225,3 +225,28 @@ extension AppModel {
   }
 }
 
+extension AppModel {
+  /// The one battery line the menu bar shows, only when it’s worth saying: on battery,
+  /// the time left and what uses the most; otherwise an app that has kept the Mac awake
+  /// for hours while in the background.
+  public var batteryLine: (text: String, symbol: String)? {
+    let top = apps.filter { !$0.isSystem && !$0.isGlade && ($0.energyWatts ?? 0) >= 0.05 }
+      .max { ($0.energyWatts ?? 0) < ($1.energyWatts ?? 0) }
+    if let status = battery.status, status.reading.state == .onBattery {
+      let left = status.estimates.minutesLeft.map { "\(BatteryFormat.timeLeft($0).replacingOccurrences(of: "about ", with: "")) left" }
+      let parts = [left, top.map { "biggest drain: \($0.name)" }].compactMap { $0 }
+      guard !parts.isEmpty else { return nil }
+      let text = parts.joined(separator: " · ")
+      return (text.prefix(1).uppercased() + text.dropFirst(), "battery.50percent")
+    }
+    let now = Date()
+    if let holder = apps.filter({ !$0.isSystem && !$0.isFrontmost && $0.kind == .app })
+      .compactMap({ app in app.preventingSleepSince.map { (app, now.timeIntervalSince($0)) } })
+      .filter({ $0.1 >= 2 * 3600 })
+      .max(by: { $0.1 < $1.1 })
+    {
+      return ("\(holder.0.name) has kept your Mac awake for \(BatteryFormat.duration(holder.1))", "cup.and.saucer")
+    }
+    return nil
+  }
+}

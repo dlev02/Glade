@@ -101,7 +101,7 @@ Each tool runs in an empty temporary folder with its own tools, plugins, MCP ser
 
 <img src="docs/images/menubar.png" width="320" alt="Glade's menu bar window: free space, memory pressure and the apps using the most">
 
-A leaf in the menu bar shows memory pressure at a glance, and can show free space beside it.
+A leaf in the menu bar shows memory pressure at a glance, and can show free space beside it. On battery, the menu bar window adds one line with the time left and the biggest drain; otherwise only an app that has kept the Mac awake for hours earns that line. Overview has a battery tile beside memory, processor and graphics.
 
 ## Command line and agents
 

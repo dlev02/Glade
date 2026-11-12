@@ -13,11 +13,14 @@ struct OverviewScreen: View {
       VStack(alignment: .leading, spacing: Metrics.l) {
         FullDiskAccessBanner()
         StorageSummary()
-        // Each tile opens Performance, sorted by what it shows.
+        // Each tile opens Performance, sorted by what it shows; the battery opens Battery.
         HStack(alignment: .top, spacing: Metrics.l) {
           TileLink(sort: KeyPathComparator(\UsageRow.memory, order: .reverse)) { memoryTile }
           TileLink(sort: KeyPathComparator(\UsageRow.processor, order: .reverse)) { processorTile }
           TileLink(sort: KeyPathComparator(\UsageRow.graphics, order: .reverse)) { graphicsTile }
+          if model.battery.status?.reading.hasBattery ?? BatteryReader.hasBattery {
+            TileLink(sort: KeyPathComparator(\UsageRow.memory, order: .reverse), opens: .battery) { batteryTile }
+          }
         }
         SuggestionList()
       }
@@ -81,6 +84,28 @@ struct OverviewScreen: View {
     )
   }
 
+  private var batteryTile: some View {
+    let status = model.battery.status
+    let reading = status?.reading
+    let caption: String =
+      switch reading?.state {
+      case .charging: status?.estimates.minutesToFull.map { "Full in \(BatteryFormat.minutes($0))" } ?? "Charging"
+      case .onBattery: status?.estimates.minutesLeft.map { "\(BatteryFormat.timeLeft($0).prefix(1).uppercased())\(BatteryFormat.timeLeft($0).dropFirst()) left" } ?? "On battery"
+      case .notCharging: "Not charging"
+      case .charged: "Charged"
+      case .noBattery, nil: "Measuring…"
+      }
+    let day = model.battery.history.samples(since: Date().addingTimeInterval(-86_400))
+    return MetricTile(
+      title: "Battery", symbol: "battery.75percent",
+      figure: reading?.percent.map { "\($0)%" } ?? "—",
+      caption: caption,
+      footnote: status?.sentence,
+      history: day.map { Double($0.percent) },
+      color: Palette.good
+    )
+  }
+
   private var graphicsTile: some View {
     let gpu = model.snapshot?.gpu
     let top = model.apps.max { ($0.gpuPercent ?? 0) < ($1.gpuPercent ?? 0) }
@@ -103,16 +128,17 @@ private struct TileLink<Tile: View>: View {
   @Environment(AppModel.self) private var model
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   var sort: KeyPathComparator<UsageRow>
+  var opens: AppModel.Section = .performance
   @ViewBuilder var tile: Tile
   @State private var isHovering = false
 
   var body: some View {
     Button {
       // Graphics sorts only when the table shows its column.
-      if sort.keyPath != \UsageRow.graphics || AppsTableMemory.columns.graphics {
+      if opens == .performance, sort.keyPath != \UsageRow.graphics || AppsTableMemory.columns.graphics {
         AppsTableMemory.sortOrder = [sort]
       }
-      model.section = .performance
+      model.section = opens
     } label: {
       tile
         .overlay {
@@ -126,7 +152,7 @@ private struct TileLink<Tile: View>: View {
     .onHover { hovering in
       withAnimation(reduceMotion ? nil : .snappy(duration: 0.12)) { isHovering = hovering }
     }
-    .accessibilityHint("Opens Performance")
+    .accessibilityHint("Opens \(opens.title)")
   }
 }
 

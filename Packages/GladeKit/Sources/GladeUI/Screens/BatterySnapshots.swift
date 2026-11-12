@@ -32,5 +32,15 @@ enum BatterySnapshots {
       model.loadBatterySample(SampleData.sampleBattery(.charging))
       return AnyView(NavigationStack { BatteryScreen(range: .week, period: .halfDay) })
     },
+    // The battery tile beside memory, processor and graphics; draw at --width 860 for
+    // the narrowest window.
+    "overview-battery": { model in
+      model.loadBatterySample(SampleData.sampleBattery(.onBattery))
+      return AnyView(NavigationStack { OverviewScreen() })
+    },
+    "popover-battery": { model in
+      model.loadBatterySample(SampleData.sampleBattery(.onBattery))
+      return AnyView(MenuBarView().environment(\.screenOverrides, ScreenOverrides(suggestions: [])))
+    },
   ]
 }
