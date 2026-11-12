@@ -6,6 +6,21 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Glade</title>
         <item>
+            <title>0.2.3</title>
+            <pubDate>Thu, 12 Nov 2026 01:45:41 -0600</pubDate>
+            <link>https://github.com/dlev02/Glade/releases/tag/v0.2.3</link>
+            <sparkle:version>5</sparkle:version>
+            <sparkle:shortVersionString>0.2.3</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <description sparkle:format="markdown"><![CDATA[
+### Fixed
+
+- In Storage, the group headings (Simulators, Agent Worktrees and so on) scroll along with their items. Before, the top one stuck to the window on a lighter strip with a gap beneath it, which stood out in dark mode.
+- Searching Storage for something that isn't there shows "No Results" across the whole list, with the Free Up bar at the bottom where it belongs, instead of a lighter band and the bar floating halfway up.
+]]></description>
+            <enclosure url="https://github.com/dlev02/Glade/releases/download/v0.2.3/Glade-0.2.3.zip" length="11134651" type="application/octet-stream" sparkle:edSignature="PWc5TOsOLz5DrB0H5b4nB/q67xL6Sn13O9cQKOHv4h49k9GMH8eEkDsO5MHxxplhFUylchJ1reqys3f6rhYVDw=="/>
+        </item>
+        <item>
             <title>0.2.2</title>
             <pubDate>Thu, 12 Nov 2026 01:18:28 -0600</pubDate>
             <link>https://github.com/dlev02/Glade/releases/tag/v0.2.2</link>
@@ -70,64 +85,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
 ]]></description>
             <enclosure url="https://github.com/dlev02/Glade/releases/download/v0.2.1/Glade-0.2.1.zip" length="10900315" type="application/octet-stream" sparkle:edSignature="mXMZ6JOC3KOfreFT2+Tni1RIp4NMcsTeInERtQTjeKbGcKuvuxqajPKlxe7aJmQjpS9rMMS/lEyljzMghdBDCg=="/>
         </item>
-        <item>
-            <title>0.2.0</title>
-            <pubDate>Wed, 11 Nov 2026 15:20:48 -0600</pubDate>
-            <link>https://github.com/dlev02/Glade/releases/tag/v0.2.0</link>
-            <sparkle:version>2</sparkle:version>
-            <sparkle:shortVersionString>0.2.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
-            <description sparkle:format="markdown"><![CDATA[
-### Honest about the Trash
-
-- Glade now says "freed" only for space that is free straight away. Things it moves to the Trash still take up space until you empty the Trash, so they're counted on their own everywhere: "102 GB ready to free · 12 GB to the Trash" on Overview and in Storage, and a clean that only moves things to the Trash asks "Move 18 items to the Trash?" and ends with "Moved 110 GB to the Trash. Space is freed when the Trash is emptied."
-- The confirmation lists every item with whole rows and a count, says up front how many can't be recreated, and its button says what will happen: "Free Up 102 GB" or "Move to Trash". The result shows free space before and after only as measured, warns when something was left in place, and says "Put back 18 items" once you've put them back.
-- After a clean that moved things to the Trash, Show Trash opens it in Finder. Putting things back says plainly when only some came back ("Put back 9 of 11 items") or none did.
-- The setting that sends things to the Trash is now called "Use the Trash where possible": simulators and worktrees are always removed by Xcode's and git's own tools.
-- When only some of the items removed straight away can't be recreated, the confirmation says the rest rebuild or download again and names the exceptions ("Can't be recreated: Archive – Lantern 2.3"), or counts them when there are more than three. Long names wrap instead of being cut short.
-- The clean levels say what they actually select: Careful takes things that rebuild themselves and haven't been used lately, Balanced adds old downloads, idle simulators and stale agent history, and Aggressive adds tools you'd reinstall and things used recently.
-- History keeps freed and moved-to-the-Trash apart in its total and in each clean, and groups a clean's items as "In the Trash", "Deleted" and "Left in place".
-- A folder inside another selected folder is counted once, and cleaned with it, so the number of items agrees from Storage to the result.
-
-### Look and feel
-
-- The accent colour you choose now colours the sidebar too.
-- The assistant's answers are shown with their formatting: bold, lists, small headings, code and tables, each labelled with the AI (and model, if you picked one) that wrote it. You can choose the model right in the chat.
-- The assistant's advice on Storage sits on the list's own grid, and its reasons always include something to review when there is one. Ask keeps its size while it works.
-- Pointing at Overview's storage bar shows each slice's name and size, and the key separates what Glade can clear from everything else on the disk.
-- Performance has one status style that agrees with each chart's colour, quieter empty cells, and a table that ends on a whole row; power and uptime sit under the title.
-- History rows highlight under the pointer and when chosen. The scan shows what it has checked and how much it has found so far.
-- Overview, Performance and History sit in the middle of a wide window, and History's rows are narrower so each size is near its name.
-- Click the advice's counts on Storage ("3 to review") to see which items they are and why; choosing one shows its row. The advice text keeps a comfortable line length, and the clean level now sits beside Free Up.
-- Performance hides the Graphics and Last Used columns when nothing in them has a reading, and its search field is narrower.
-- Settings uses shorter labels ("Ask AI at alert thresholds", "Daily limit", "Search file contents") and the same effort choices as the chat.
-- Simulators are named one way everywhere: "iPad Air 11-inch · iOS 27.2".
-- The chat's AI, model and effort menus open above the question box instead of over it, and every answer names its AI and model the same way.
-- The second opinion's AI and model sit together in one row of Settings, apart from each AI's everyday model. Setup and Settings use the same names ("Open at login", "Command line tool").
-- Overview's cards share one inner margin, and the storage key keeps one four-column layout at every window size.
-- The advice counts' lists show each item's size, and refused suggestions read "1 suggestion refused".
-- Checkboxes and the main button turn grey when Glade's window isn't the active one, like the rest of macOS. Warning colours sit on symbols, so the words beside them stay easy to read.
-- The Glade menu has Check for Updates… in an installed copy (0.1.0 left it out) and a new Open at Login item.
-- Calmer details throughout: plain recovery words ("Downloads again", "Needs reinstall", "Can't be undone"), one figure style, a shorter search prompt, wider inspectors, and tidier Settings, Setup and menu bar wording.
-
-### Storage
-
-- Some things that live in cache folders aren't caches, and Glade now treats them that way: Poetry's project environments, the local storage of Deno programs and R's renv packages are left alone; models downloaded with llama.cpp or Buzz count as AI models; Yarn's Plug'n'Play packages and the browsers Playwright, Puppeteer and Cypress run say they need reinstalling and wait for a bolder level; and the Maven repository is flagged because it can hold your own `mvn install` builds.
-- JetBrains caches wait for Balanced, since reindexing a project takes a while.
-- Finds tool versions installed with mise, Bundler's and RubyGems' download caches, and the installer downloads pyenv and rbenv keep.
-- Finds old Claude Code and Cursor Agent versions those tools keep after updating themselves, often hundreds of megabytes each. The version the command runs, a newer one waiting to switch over and the one before it always stay, and nothing is offered while an older version is still running.
-
-### Safety
-
-- Caches of Chromium-based apps such as Slack, Discord, VS Code and Docker Desktop are left alone while that app is open, even when they haven't changed for days, and a toolkit or runtime that a running program was started from is never removed. Both are checked again at the moment of removal.
-- Codex's synced plugins, bundled marketplace and backups, and Antigravity's knowledge, skills and conversations, are no longer mistaken for scratch files. Gemini CLI's own skills, agents, commands and hooks are protected like other agents' memory, and Codex's tool runtimes aren't offered while Codex is running.
-- Endpoint security, VPN and device management software (CrowdStrike, SentinelOne, ESET, Jamf, GlobalProtect, Cisco Secure Client and others) is now a protected area: removing its files can set off tamper alarms your organisation sees.
-]]></description>
-            <enclosure url="https://github.com/dlev02/Glade/releases/download/v0.2.0/Glade-0.2.0.zip" length="10366789" type="application/octet-stream" sparkle:edSignature="M/lyUiKQRIudLIyca4doN6xK84O0gYiDahXcZ613WEis9FsM2m0ZQd9LrGljsUG4oym2IWV9otkW3tKGNAVXDQ=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: p+k8DbHjYsjXFbuFYjp2Xa4oB/dPMjv5W3HIZk7INAbzA1FZj4IsdkX3n6sT6aFbvR244ChLDyGZ2PFi6oQ3Cw==
-length: 13913
+edSignature: GHT05nYT+4ZM0RRaxOV//si3QGGzoExrb9SuKXPq+AKbp2oF2w9HLZgdn1zZ/3iK1oYN8nYSpvgcbuqyng6zAA==
+length: 7813
 -->
