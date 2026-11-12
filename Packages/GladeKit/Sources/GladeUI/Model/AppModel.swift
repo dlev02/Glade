@@ -151,6 +151,11 @@ public final class AppModel {
   private var overrides: [String: Bool] = [:] {
     didSet { selectionRevision += 1 }
   }
+  /// Set while the clean sheet works through only the rows the person picked in the
+  /// list, whatever is ticked. The ticks themselves are left as they were.
+  public private(set) var cleanFocus: Set<String>? {
+    didSet { selectionRevision += 1 }
+  }
   /// The plan's items and the scan's findings by identifier, so a row asking whether
   /// it is selected costs a lookup rather than a walk through hundreds of items.
   @ObservationIgnored private var planItems: [String: PlanItem] = [:]
@@ -160,6 +165,20 @@ public final class AppModel {
   /// screen that shows them.
   private var selectionRevision = 0
   @ObservationIgnored private var cachedSelection: (revision: Int, summary: SelectionSummary)?
+
+  // MARK: Disk usage
+
+  public enum UsageState: Equatable, Sendable {
+    case idle
+    case measuring(done: Int, total: Int)
+  }
+
+  /// What the whole disk holds, folder by folder, from the last time it was measured.
+  public internal(set) var usage: DiskUsage?
+  public internal(set) var usageState: UsageState = .idle
+  /// The places measured so far, while a measurement runs.
+  public internal(set) var usagePartial: [UsageNode] = []
+  @ObservationIgnored var usageCancel: CancelFlag?
 
   // MARK: Assistant
 
@@ -560,6 +579,17 @@ public final class AppModel {
     for id in ids { setSelected(id, selected) }
   }
 
+  /// Makes the next clean about these findings only, for freeing the rows picked in
+  /// the list without changing what is ticked. Ones that can’t be removed are left out.
+  public func focusClean(on ids: [String]) {
+    cleanFocus = Set(ids.filter { findingsByID[$0].map { !$0.isBlocked } ?? false })
+  }
+
+  /// Goes back to cleaning what is ticked.
+  public func endCleanFocus() {
+    if cleanFocus != nil { cleanFocus = nil }
+  }
+
   /// Drops hand-made choices and goes back to what the level selects.
   public func resetSelection() {
     overrides = [:]
@@ -585,7 +615,8 @@ public final class AppModel {
   private var selection: SelectionSummary {
     let revision = selectionRevision
     if let cachedSelection, cachedSelection.revision == revision { return cachedSelection.summary }
-    let summary = SelectionSummary(scan: scan, plan: plan, config: config, isSelected: isSelected)
+    let focus = cleanFocus
+    let summary = SelectionSummary(scan: scan, plan: plan, config: config) { focus?.contains($0) ?? isSelected($0) }
     cachedSelection = (revision, summary)
     return summary
   }
@@ -622,7 +653,8 @@ public final class AppModel {
       let remaining = scan.removing(receipt)
       ScanEngine.save(remaining)
       self.scan = remaining
-      overrides = [:]
+      // A clean of picked rows leaves the ticks on everything else as they were.
+      if cleanFocus == nil { overrides = [:] }
       rebuildPlan()
       receipts = Cleaner.receipts()
       cleanState = .finished(receiptID: receipt.id)
@@ -656,7 +688,7 @@ public final class AppModel {
     )
     self.scan = scan.removing(receipt)
     receipts.insert(receipt, at: 0)
-    resetSelection()
+    if cleanFocus == nil { resetSelection() }
     cleanState = .finished(receiptID: receipt.id)
   }
 

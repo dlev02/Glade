@@ -65,7 +65,7 @@ struct StorageScreen: View {
         .inspectorBackground()
         .inspectorColumnWidth(min: 300, ideal: 320, max: 420)
       }
-      .sheet(isPresented: $showsCleanSheet) {
+      .sheet(isPresented: $showsCleanSheet, onDismiss: model.endCleanFocus) {
         CleanSheet { showsCleanSheet = false }
       }
       .task {
@@ -209,6 +209,8 @@ struct StorageScreen: View {
         toggleChecks(state.highlighted)
         return .handled
       }
+      // Delete asks about freeing the highlighted rows, as the menu does.
+      .onDeleteCommand { freeUp(state.highlighted) }
       }
     }
   }
@@ -305,6 +307,16 @@ struct StorageScreen: View {
     if selectable.contains(where: { model.isSelected($0.id) }) {
       Button("Deselect", systemImage: "circle") { model.setSelected(selectable.map(\.id), false) }
     }
+    if !selectable.isEmpty {
+      // Frees just these rows, whatever else is ticked; the sheet asks first.
+      let trashOnly = selectable.allSatisfy { $0.goesToTrash(model.config) }
+      let verb = trashOnly ? "Move to Trash" : "Free Up"
+      Button(
+        selectable.count == 1 ? "\(verb)…" : "\(verb) \(selectable.count) Items…",
+        systemImage: trashOnly ? "trash" : "bolt"
+      ) { freeUp(ids) }
+      .disabled(model.isScanning || model.isCleaning)
+    }
     let paths = chosen.flatMap(\.paths)
     if !paths.isEmpty {
       Divider()
@@ -319,6 +331,14 @@ struct StorageScreen: View {
         Button("Protect This Folder", systemImage: "lock.shield") { protect(path) }
       }
     }
+  }
+
+  /// Opens the clean sheet for these rows only, leaving the ticks as they are.
+  private func freeUp(_ ids: Set<String>) {
+    let removable = ids.compactMap(state.list.finding).filter { !$0.isBlocked }.map(\.id)
+    guard !removable.isEmpty, !model.isScanning, !model.isCleaning else { return }
+    model.focusClean(on: removable)
+    showsCleanSheet = true
   }
 
   /// Space ticks the highlighted rows, or clears them when they’re all ticked already.
