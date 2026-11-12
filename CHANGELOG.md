@@ -1,5 +1,47 @@
 # Changelog
 
+## Unreleased
+
+### Battery
+
+- A new **Battery** section (called Energy on a Mac without a battery) shows the charge with one plain sentence, such as "On battery, about 6½ hours left", and a chart of the last 24 hours, 7 days or 30 days with time on the charger and asleep shaded.
+- **Health**, **Power** and **Temperature** each get a panel: how much of its original capacity the battery still holds, how hard the Mac is working, and how warm the battery is.
+- **Using the most power** lists apps by the energy they've used now, over the last hour, the last 12 hours or since you unplugged, with Quit on the row. It counts processor work only; the screen and graphics chip aren't split between apps.
+- **Keeping your Mac awake** names what is stopping it sleeping and for how long, including tools like `caffeinate` and simulators playing sound, with Quit or Shut Down beside each.
+- **While it slept** lists recent sleeps with the charge lost and how often the Mac woke; open one to see why.
+- The **charge limit** you set in System Settings is shown, with a shortcut to change it there. macOS doesn't let other apps change it.
+- Six alerts in **Settings > Alerts**: charged past the limit, limit turned off and health below 80% are on; hot while charging, kept awake on battery and a large drain while asleep are off until you switch them on.
+- **Settings > General > Battery detail**: Simple shows sentences and percentages; Technical adds watts, volts, mAh and cycle counts.
+- On battery, the menu bar shows the time left and what is using the most power, and Overview has a Battery tile.
+- Ask the Assistant "What's draining my battery?".
+
+### Uninstall apps
+
+- Storage has an **Apps** section: every app with its size, when you last opened it and where it came from, with big and long-unused ones first. Nothing is ever ticked for you.
+- Uninstalling moves the app and its own settings, caches and data to the Trash, and **Put Back** returns it all. The inspector shows what goes and what stays, such as data another app shares.
+- Apps that come with their own uninstaller (Adobe's, for example) get **Open Uninstaller**, because it removes parts Glade can't reach. Apps macOS asks for your password to remove get **Show in Finder**.
+- In **What's on This Disk**, each folder in your Library says which app uses it, or that no installed app does. From a row you can move a folder to the Trash, uninstall an app or find it in Storage.
+
+### Ask the Assistant to remove things
+
+- Ask it to remove apps by name ("remove the Adobe apps", "uninstall iMovie"). It lists what matches with a reason for each, and a second AI notes what to know first: a subscription that keeps billing, files only that app opens, other apps from the same developer.
+- Only what you named, and what Glade can remove, starts ticked. **Review and Remove…** opens the usual confirmation; everything goes to the Trash and the card offers **Put Back**.
+- For this, the AI you chose is sent the names, sizes and last-opened dates of the matching apps. [PRIVACY.md](PRIVACY.md) has the full list.
+
+### Command line and AI agents
+
+- New commands: `glade battery`, `glade energy`, `glade awake`, `glade sleeps`, `glade installed` and `glade uninstall` (a dry run unless you add `--confirm`), with matching tools for agents connected to Glade.
+- `glade ask` lists what it proposes removing and prints the commands to do it. It never removes anything itself.
+- `glade show <section> --background` changes the window's section without bringing Glade in front of what you're doing.
+
+### Fixed
+
+- In the menu bar, a suggestion's warning ("May be in use by Bitrig") and the memory reading ("Under pressure") are no longer cut off.
+
+### Changed
+
+- With Battery in the sidebar, Assistant is ⌘5 and History is ⌘6.
+
 ## 0.2.3 — 2026-11-12
 
 ### Fixed
