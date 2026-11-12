@@ -46,8 +46,8 @@ extension CleanLevel {
   /// confirm sheet say so); Aggressive adds installed toolkits and stops waiting.
   public var consequence: String {
     switch self {
-    case .careful: "Things that rebuild themselves and haven’t been used lately"
-    case .balanced: "Adds old downloads, idle simulators and stale agent history"
+    case .careful: "Things that rebuild themselves, unused for a week or more"
+    case .balanced: "Sooner, plus old downloads, idle simulators and agent history"
     case .aggressive: "Adds tools you’d reinstall and things used recently"
     }
   }
