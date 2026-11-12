@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1 — unreleased
+
+### Quicker
+
+- Storage and Performance open straight away when you switch to them, even with hundreds of items found and dozens of apps running. Overview, the clean bar and the menu bar also add up your selection once instead of every time they're drawn.
+
 ## 0.2.0 — 2026-11-11
 
 ### Honest about the Trash

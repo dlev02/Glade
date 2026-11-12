@@ -8,6 +8,8 @@ public struct RootView: View {
   /// The storage list and how it’s being viewed, kept here so switching back to
   /// Storage shows it straight away rather than building it again.
   @State private var storage: StorageViewState
+  /// The sections built once and kept while others show.
+  @State private var kept: Set<AppModel.Section> = []
 
   public init() {
     _storage = State(initialValue: StorageViewState())
@@ -27,12 +29,27 @@ public struct RootView: View {
         SidebarFooter()
       }
     } detail: {
-      switch model.section {
-      case .overview: OverviewScreen()
-      case .storage: StorageScreen(state: storage)
-      case .performance: PerformanceScreen()
-      case .assistant: AssistantScreen()
-      case .history: HistoryScreen()
+      let section = model.section
+      // Storage and Performance take longest to build (hundreds of rows, a full
+      // toolbar), so once opened they stay built behind the other sections.
+      ZStack {
+        switch section {
+        case .overview: OverviewScreen()
+        case .assistant: AssistantScreen()
+        case .history: HistoryScreen()
+        case .storage, .performance: EmptyView()
+        }
+        if section == .storage || kept.contains(.storage) {
+          StorageScreen(state: storage)
+            .keptPage(showing: section == .storage)
+        }
+        if section == .performance || kept.contains(.performance) {
+          PerformanceScreen()
+            .keptPage(showing: section == .performance)
+        }
+      }
+      .onChange(of: section, initial: true) {
+        if section == .storage || section == .performance { kept.insert(section) }
       }
     }
     // Wide enough that Storage’s toolbar (scope, Scan, Ask, search, inspector) never

@@ -7,6 +7,7 @@ import SwiftUI
 struct CleanBar: View {
   @Environment(AppModel.self) private var model
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @Environment(\.isPageShowing) private var isShowing
   var freeUp: () -> Void
 
   var body: some View {
@@ -36,7 +37,7 @@ struct CleanBar: View {
       Button(free > 0 ? "Free Up \(Format.bytes(free))" : trash > 0 ? "Move to Trash" : "Free Up", action: freeUp)
         .filledAction()
         .monospacedDigit()
-        .keyboardShortcut(.return, modifiers: .command)
+        .keyboardShortcut(isShowing ? KeyboardShortcut(.return, modifiers: .command) : nil)
         .disabled(count == 0 || model.isScanning || model.isCleaning)
         .help("Review and clean the selected items (⌘Return)")
         .accessibilityIdentifier("cleanBar.freeUp")

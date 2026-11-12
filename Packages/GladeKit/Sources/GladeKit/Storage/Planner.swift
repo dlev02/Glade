@@ -80,7 +80,9 @@ public enum Planner {
   /// inside another chosen one goes with it, so it is neither counted nor removed on
   /// its own. Every total and every count of items uses this one rule.
   public static func topLevel(_ ids: [String], in scan: ScanResult) -> [Finding] {
-    let chosen = ids.compactMap { scan.finding($0) }
+    // Looked up by identifier once, rather than searching the scan for each one.
+    let byID = Dictionary(scan.findings.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+    let chosen = ids.compactMap { byID[$0] }
     let roots = chosen.flatMap { finding in finding.paths.map { ($0 + "/", finding.id) } }
     return chosen.filter { finding in
       let nested = !finding.paths.isEmpty && finding.paths.allSatisfy { path in

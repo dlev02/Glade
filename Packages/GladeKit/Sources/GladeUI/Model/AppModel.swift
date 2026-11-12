@@ -74,6 +74,7 @@ public final class AppModel {
   public var config: GladeConfig {
     didSet {
       guard config != oldValue else { return }
+      selectionRevision += 1
       // Sample data never writes the person’s own settings.
       if !isDemo { ConfigStore.save(config) }
       if config.level != oldValue.level || config.trashEverything != oldValue.trashEverything { rebuildPlan() }
@@ -122,15 +123,36 @@ public final class AppModel {
 
   // MARK: Storage
 
-  public private(set) var scan: ScanResult?
+  public private(set) var scan: ScanResult? {
+    didSet {
+      findingsByID = Dictionary((scan?.findings ?? []).map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+      selectionRevision += 1
+    }
+  }
   public private(set) var scanState: ScanState = .idle
   /// While scanning: what was just looked at, and how much has been found so far.
   public private(set) var scanActivity: (title: String, found: Int64)?
-  public private(set) var plan: CleanPlan?
+  public private(set) var plan: CleanPlan? {
+    didSet {
+      planItems = Dictionary((plan?.items ?? []).map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+      selectionRevision += 1
+    }
+  }
   public private(set) var cleanState: CleanState = .idle
   public private(set) var receipts: [Receipt] = []
   /// Choices the person made by hand, which win over the plan.
-  private var overrides: [String: Bool] = [:]
+  private var overrides: [String: Bool] = [:] {
+    didSet { selectionRevision += 1 }
+  }
+  /// The plan's items and the scan's findings by identifier, so a row asking whether
+  /// it is selected costs a lookup rather than a walk through hundreds of items.
+  @ObservationIgnored private var planItems: [String: PlanItem] = [:]
+  @ObservationIgnored private var findingsByID: [String: Finding] = [:]
+  /// Bumped whenever the scan, plan, hand-made choices or settings change, so the
+  /// selection's items and totals are worked out once per change rather than on every
+  /// screen that shows them.
+  private var selectionRevision = 0
+  @ObservationIgnored private var cachedSelection: (revision: Int, summary: SelectionSummary)?
 
   // MARK: Assistant
 
@@ -485,18 +507,21 @@ public final class AppModel {
 
   public func isSelected(_ id: String) -> Bool {
     if let choice = overrides[id] { return choice }
-    return plan?.items.first { $0.id == id }?.selected ?? false
+    // Read so a row showing this redraws when the plan changes; the lookup is untracked.
+    _ = plan
+    return planItems[id]?.selected ?? false
   }
 
   /// Why the plan did or didn’t select a finding.
   public func reason(for id: String) -> String? {
     if overrides[id] != nil { return "You chose this." }
-    return plan?.items.first { $0.id == id }?.reason
+    _ = plan
+    return planItems[id]?.reason
   }
 
   /// Selects or deselects a finding by hand. Blocked findings can’t be selected.
   public func setSelected(_ id: String, _ selected: Bool) {
-    guard let finding = scan?.finding(id), !(selected && finding.isBlocked) else { return }
+    guard let finding = findingsByID[id], !(selected && finding.isBlocked) else { return }
     overrides[id] = selected
   }
 
@@ -511,34 +536,27 @@ public final class AppModel {
 
   public var hasManualChoices: Bool { !overrides.isEmpty }
 
-  public var selectedIDs: [String] {
-    scan?.findings.map(\.id).filter { isSelected($0) } ?? []
-  }
+  public var selectedIDs: [String] { selection.ids }
 
   /// What a clean of the selection works through, biggest first: each finding once,
   /// leaving out any inside another selected one (it goes with it). Every count of
   /// items, in the clean bar, the inspector, the confirmation and the result, is this.
-  public var cleanItems: [Finding] {
-    guard let scan else { return [] }
-    return Planner.topLevel(selectedIDs, in: scan).sorted { $0.bytes > $1.bytes }
-  }
+  public var cleanItems: [Finding] { selection.items }
 
   /// The selection’s total, with nested folders counted once.
-  public var selectedBytes: Int64 { totals.selected }
+  public var selectedBytes: Int64 { selection.selected }
   /// How much of it is freed straight away.
-  public var immediateBytes: Int64 { totals.immediate }
+  public var immediateBytes: Int64 { selection.immediate }
   /// How much of it goes to the Trash, which frees nothing until it is emptied.
-  public var trashBytes: Int64 {
-    let totals = totals
-    return max(0, totals.selected - totals.immediate)
-  }
+  public var trashBytes: Int64 { max(0, selection.selected - selection.immediate) }
 
-  private var totals: (selected: Int64, immediate: Int64) {
-    guard let scan, var copy = plan else { return (0, 0) }
-    let chosen = Set(selectedIDs)
-    copy.items = scan.findings.map { PlanItem(id: $0.id, selected: chosen.contains($0.id), reason: "") }
-    Planner.total(&copy, scan: scan, config: config)
-    return (copy.selectedBytes, copy.immediateBytes)
+  /// The selection worked out once per change of scan, plan, choices or settings.
+  private var selection: SelectionSummary {
+    let revision = selectionRevision
+    if let cachedSelection, cachedSelection.revision == revision { return cachedSelection.summary }
+    let summary = SelectionSummary(scan: scan, plan: plan, config: config, isSelected: isSelected)
+    cachedSelection = (revision, summary)
+    return summary
   }
 
   // MARK: Cleaning

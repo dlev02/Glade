@@ -13,8 +13,8 @@ public struct AppIconView: View {
 
   public var body: some View {
     Group {
-      if let path, FileManager.default.fileExists(atPath: path) {
-        Image(nsImage: NSWorkspace.shared.icon(forFile: path))
+      if let path, let icon = AppIcons.icon(for: path) {
+        Image(nsImage: icon)
           .resizable()
           .interpolation(.high)
       } else {
@@ -27,5 +27,29 @@ public struct AppIconView: View {
     }
     .frame(width: size, height: size)
     .accessibilityHidden(true)
+  }
+}
+
+/// Icons looked up once per app rather than on every redraw: asking Launch Services
+/// for an icon takes about a millisecond, and the apps table redraws every reading.
+enum AppIcons {
+  private static let cache: NSCache<NSString, NSImage> = {
+    let cache = NSCache<NSString, NSImage>()
+    cache.countLimit = 400
+    return cache
+  }()
+  /// Paths with nothing there, so a missing app isn’t looked for again on every redraw.
+  private static var missing: Set<String> = []
+
+  static func icon(for path: String) -> NSImage? {
+    if let icon = cache.object(forKey: path as NSString) { return icon }
+    if missing.contains(path) { return nil }
+    guard FileManager.default.fileExists(atPath: path) else {
+      missing.insert(path)
+      return nil
+    }
+    let icon = NSWorkspace.shared.icon(forFile: path)
+    cache.setObject(icon, forKey: path as NSString)
+    return icon
   }
 }

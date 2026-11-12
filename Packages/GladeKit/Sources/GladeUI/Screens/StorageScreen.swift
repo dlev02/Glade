@@ -16,6 +16,8 @@ struct StorageScreen: View {
 
   @Environment(AppModel.self) private var model
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  /// False while another section shows; the screen stays built behind it.
+  @Environment(\.isPageShowing) private var isShowing
   /// Kept by the window, so it outlives a visit to another section.
   @Bindable var state: StorageViewState
   @State private var showsCleanSheet = false
@@ -38,15 +40,20 @@ struct StorageScreen: View {
 
   var body: some View {
     content
-      .navigationTitle("Storage")
-      .toolbar { toolbar }
-      .background {
-        // ⌘F puts the cursor in the toolbar’s search field.
-        Button("Find") { searchFocus += 1 }
-          .keyboardShortcut("f")
-          .hidden()
+      .toolbar {
+        if isShowing { toolbar }
       }
-      .inspector(isPresented: $state.showsInspector) {
+      .background {
+        // The title and ⌘F belong to the section on screen, so they’re left out
+        // while another one shows. ⌘F puts the cursor in the toolbar’s search field.
+        if isShowing {
+          Button("Find") { searchFocus += 1 }
+            .keyboardShortcut("f")
+            .hidden()
+            .navigationTitle("Storage")
+        }
+      }
+      .inspector(isPresented: isShowing ? $state.showsInspector : .constant(false)) {
         Group {
           if model.isScanning {
             // The last scan’s totals would be out of date by the time it finishes.

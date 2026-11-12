@@ -6,6 +6,8 @@ import SwiftUI
 struct PerformanceScreen: View {
   @Environment(AppModel.self) private var model
   @Environment(\.colorScheme) private var colorScheme
+  /// False while another section shows; the screen stays built behind it.
+  @Environment(\.isPageShowing) private var isShowing
   @State private var filter: AppFilter
   @State private var search = ""
   @State private var selection: AppUsage.ID?
@@ -14,6 +16,11 @@ struct PerformanceScreen: View {
   @State private var size: CGSize = .zero
   @State private var tableSpace: CGFloat = 0
   @State private var searchFocus = 0
+  /// What was showing when another section took over. Hidden, the screen draws this
+  /// rather than following every reading.
+  @State private var frozen: PerformanceReadings?
+  /// Whether this screen counts as watching live readings.
+  @State private var isWatching = false
 
   /// For snapshots: picks a row to show selected.
   private let preselect: (@MainActor (AppModel) -> AppUsage.ID?)?
@@ -32,7 +39,7 @@ struct PerformanceScreen: View {
   }
 
   var body: some View {
-    let readings = readingsOverride?(model) ?? PerformanceReadings(model: model)
+    let readings = readingsOverride?(model) ?? (isShowing ? nil : frozen) ?? PerformanceReadings(model: model)
     VStack(alignment: .leading, spacing: Metrics.l) {
       LivePanels(readings: readings, columns: size.width > 0 && size.width < 642 ? 2 : 3)
       if !readings.suggestions.isEmpty {
@@ -53,22 +60,35 @@ struct PerformanceScreen: View {
     .padding(.bottom, Metrics.l)
     .frame(maxWidth: .infinity)
     .onChange(of: filter) { AppsTableMemory.filter = filter }
-    .navigationTitle("Performance")
-    .navigationSubtitle(StatusLine.text(readings.snapshot))
     .background {
-      // ⌘F puts the cursor in the search field.
-      Button("Find") { searchFocus += 1 }
-        .keyboardShortcut("f")
-        .hidden()
+      // The title and ⌘F belong to the section on screen, so they’re left out while
+      // another one shows. ⌘F puts the cursor in the search field.
+      if isShowing {
+        Button("Find") { searchFocus += 1 }
+          .keyboardShortcut("f")
+          .hidden()
+          .navigationTitle("Performance")
+          .navigationSubtitle(StatusLine.text(readings.snapshot))
+      }
     }
     .onAppear {
-      model.surfaceAppeared(detail: true)
       if let preselect { selection = preselect(model) }
     }
+    .onChange(of: isShowing, initial: true) {
+      frozen = isShowing ? nil : PerformanceReadings(model: model)
+      watch(isShowing)
+    }
     .onDisappear {
-      model.surfaceDisappeared(detail: true)
+      watch(false)
       noticeTask?.cancel()
     }
+  }
+
+  /// Counts this screen among those showing live readings, once.
+  private func watch(_ on: Bool) {
+    guard on != isWatching else { return }
+    isWatching = on
+    if on { model.surfaceAppeared(detail: true) } else { model.surfaceDisappeared(detail: true) }
   }
 
   /// A table row’s height and the header’s, as AppKit draws them, for snapping.

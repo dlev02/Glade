@@ -10,6 +10,7 @@ import SwiftUI
 /// doesn’t slide out from under a click; figures keep updating in place.
 struct AppsTable: View {
   @Environment(AppModel.self) private var model
+  @Environment(\.isPageShowing) private var isShowing
   var apps: [AppUsage]
   var logicalCores: Int
   @Binding var filter: AppFilter
@@ -113,30 +114,7 @@ struct AppsTable: View {
     .scrollContentBackground(.hidden)
     .background(Palette.card)
     .toolbar {
-      ToolbarItem(placement: .principal) {
-        Picker("Show", selection: $filter) {
-          ForEach(AppFilter.allCases) { filter in
-            Text(filter.title)
-              .help(filter.help)
-              .tag(filter)
-          }
-        }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .accessibilityIdentifier("performance.filter")
-      }
-      ToolbarItem(placement: .primaryAction) {
-        actionsMenu
-      }
-      // A plain toolbar search field rather than `.searchable`, so it stays no wider
-      // than app names need, at the far end after Actions.
-      ToolbarSpacer(.fixed, placement: .primaryAction)
-      ToolbarItem(placement: .primaryAction) {
-        ToolbarSearchField(
-          text: $search, prompt: "Search", focusRequest: searchFocus,
-          identifier: "performance.search", help: "Search apps by name", minWidth: 160, maxWidth: 240
-        )
-      }
+      if isShowing { toolbarItems }
     }
     .confirmationDialog(
       forceQuitTarget.map { "Force quit \($0.name)?" } ?? "",
@@ -148,6 +126,35 @@ struct AppsTable: View {
       Button("Cancel", role: .cancel) {}
     } message: { row in
       Text("\(row.name) closes at once, without saving. Any unsaved changes are lost.")
+    }
+  }
+
+  /// The filter, actions and search, shown only while Performance is on screen.
+  @ToolbarContentBuilder
+  private var toolbarItems: some ToolbarContent {
+    ToolbarItem(placement: .principal) {
+      Picker("Show", selection: $filter) {
+        ForEach(AppFilter.allCases) { filter in
+          Text(filter.title)
+            .help(filter.help)
+            .tag(filter)
+        }
+      }
+      .pickerStyle(.segmented)
+      .labelsHidden()
+      .accessibilityIdentifier("performance.filter")
+    }
+    ToolbarItem(placement: .primaryAction) {
+      actionsMenu
+    }
+    // A plain toolbar search field rather than `.searchable`, so it stays no wider
+    // than app names need, at the far end after Actions.
+    ToolbarSpacer(.fixed, placement: .primaryAction)
+    ToolbarItem(placement: .primaryAction) {
+      ToolbarSearchField(
+        text: $search, prompt: "Search", focusRequest: searchFocus,
+        identifier: "performance.search", help: "Search apps by name", minWidth: 160, maxWidth: 240
+      )
     }
   }
 
