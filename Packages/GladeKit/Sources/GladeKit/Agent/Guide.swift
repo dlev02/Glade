@@ -37,6 +37,18 @@ public enum Guide {
 
     Good practice: run `plan` first and tell the person the total and the three or four biggest items before using `--confirm`. If they named an amount ("free 30 GB"), pick the lowest level that reaches it. For `personal` findings (old downloads, large files, duplicates), list the best candidates and let them choose; pass the chosen ids to `clean --ids`.
 
+    ## Apps
+
+    ```
+    glade installed --json                  # every app: size with its data, last opened, where it came from, own uninstaller
+    glade installed --unused 180 --sort opened --json
+    glade uninstall "<app name>"            # dry run: exactly what goes to the Trash, what stays and why
+    glade uninstall "<app name>" --confirm
+    glade uninstall "<app name>" --open-uninstaller   # for apps with their own uninstaller
+    ```
+
+    Apps are never selected for the person, at any level and whatever you suggest: list candidates (big, long unused) and let them choose by name. Uninstalling moves the app and the data it keeps in the home folder to the Trash, never deletes it, so `glade undo` puts everything back; the space is freed when the Trash is emptied. Data another installed app shares stays, and the dry run says why. Some apps (Adobe’s above all) spread parts across the system that only their own uninstaller removes: Glade won’t remove those, and you must use the vendor’s uninstaller (`--open-uninstaller`), then scan again so App Leftovers lists what it left. Apps that belong to the system account (most App Store apps) can only be moved to the Trash in Finder, which asks for the person’s password; Glade never asks for it. Glade itself and macOS’s own apps are never offered. Apps appear in `scan`, `findings` and `plan` as the `installedApps` category, unselected.
+
     ## Memory, processor and graphics
 
     ```

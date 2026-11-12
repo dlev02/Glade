@@ -19,7 +19,8 @@ enum StorageScope: String, CaseIterable, Identifiable {
     switch self {
     case .ready: !finding.isBlocked && finding.risk != .personal
     case .everything: true
-    case .review: !finding.isBlocked && (finding.risk == .personal || finding.autoLevel == nil)
+    // Every app is the person’s to decide on, including ones removed another way.
+    case .review: finding.category == .installedApps || (!finding.isBlocked && (finding.risk == .personal || finding.autoLevel == nil))
     }
   }
 }

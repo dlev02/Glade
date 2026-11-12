@@ -20,6 +20,7 @@ extension Finding {
   func goesToTrash(_ config: GladeConfig) -> Bool {
     switch method {
     case .delete, .trash: method == .trash || config.trashEverything || risk == .personal
+    case .uninstallApp: true
     default: false
     }
   }
@@ -33,6 +34,8 @@ extension Finding {
       "Removed by git; its branch and commits stay"
     case .emptyTrash:
       "Emptied from the Trash for good"
+    case .uninstallApp:
+      "The app and its data go to the Trash; you can put them back"
     case .delete, .trash:
       goesToTrash(config) ? "Moved to the Trash; you can put it back" : "Removed straight away"
     }
@@ -43,6 +46,7 @@ extension Finding {
     case .simulatorDevice, .simulatorErase, .unavailableSimulators, .simulatorSet, .simulatorRuntime: "hammer"
     case .gitWorktree: "arrow.trianglehead.branch"
     case .emptyTrash: "trash.slash"
+    case .uninstallApp: "trash"
     case .delete, .trash: goesToTrash(config) ? "trash" : "bolt"
     }
   }

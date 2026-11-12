@@ -48,9 +48,11 @@ public enum MacDescription {
     if let scan {
       lines.append("")
       lines.append("STORAGE (scanned \(Format.age(scan.finished)))")
-      lines.append("Reclaimable: \(Format.bytes(scan.totalBytes)) in \(scan.findings.count) findings")
+      // Installed apps aren't described: they're the person's alone to choose.
+      let findings = scan.findings.filter(\.category.countsAsReclaimable)
+      lines.append("Reclaimable: \(Format.bytes(scan.totalBytes)) in \(findings.count) findings")
       var totals: [StorageCategory: Int64] = [:]
-      for finding in scan.findings where finding.within == nil { totals[finding.category, default: 0] += finding.bytes }
+      for finding in findings where finding.within == nil { totals[finding.category, default: 0] += finding.bytes }
       for (category, bytes) in totals.sorted(by: { $0.value > $1.value }).prefix(12) {
         lines.append("\(category.title): \(Format.bytes(bytes))")
       }

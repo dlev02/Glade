@@ -17,6 +17,14 @@ public enum Verdict: Sendable, Equatable {
   case otherVolume
   /// Reached through a symbolic link that leads somewhere else.
   case escapesViaLink
+  /// Asked to uninstall something that isn’t an app bundle.
+  case notAnApp
+  /// An app outside the Applications folders (or more than one folder down in one).
+  case outsideApplications
+  /// Part of macOS, or an app macOS won’t let go of.
+  case partOfMacOS
+  /// Glade itself.
+  case isGlade
 
   public var isAllowed: Bool { self == .allowed }
 
@@ -30,6 +38,10 @@ public enum Verdict: Sendable, Equatable {
     case .containsProtected(_, let title): "Contains protected items (\(title))"
     case .otherVolume: "On another disk"
     case .escapesViaLink: "A link that leads outside the allowed area"
+    case .notAnApp: "Not an app"
+    case .outsideApplications: "Not in an Applications folder"
+    case .partOfMacOS: "Part of macOS"
+    case .isGlade: "Glade itself"
     }
   }
 }

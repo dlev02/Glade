@@ -205,14 +205,23 @@ struct CleanSummary: View {
       ScrollView {
         VStack(alignment: .leading, spacing: Metrics.s) {
           ForEach(problems) { entry in
-            line(symbol: "exclamationmark.triangle", tint: Palette.warning) {
-              Text(entry.title.keepingDashWithName)
-                .lineLimit(1)
-                .truncationMode(.middle)
-              Text(reason(entry.outcome))
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            HStack(alignment: .firstTextBaseline, spacing: Metrics.s) {
+              line(symbol: "exclamationmark.triangle", tint: Palette.warning) {
+                Text(entry.title.keepingDashWithName)
+                  .lineLimit(1)
+                  .truncationMode(.middle)
+                Text(reason(entry))
+                  .font(.callout)
+                  .foregroundStyle(.secondary)
+                  .fixedSize(horizontal: false, vertical: true)
+              }
+              Spacer(minLength: 0)
+              // An app macOS wouldn’t let go of is removed in Finder, with a password.
+              if entry.category == .installedApps, !entry.outcome.freedSpace, !isTrashed(entry), let path = entry.paths.first {
+                Button("Show in Finder") { model.showInFinder(path) }
+                  .buttonStyle(.bordered)
+                  .controlSize(.small)
+              }
             }
           }
         }
@@ -223,19 +232,28 @@ struct CleanSummary: View {
     }
   }
 
+  /// What didn’t go: whole items, and folders an uninstalled app left in place.
   private var problems: [ReceiptEntry] {
     receipt.entries.filter {
       switch $0.outcome {
       case .failed, .skipped: true
-      default: false
+      default: !($0.leftInPlace ?? [:]).isEmpty
       }
     }
   }
 
-  private func reason(_ outcome: RemovalOutcome) -> String {
-    switch outcome {
-    case .failed(let reason), .skipped(let reason): reason
-    default: ""
+  private func isTrashed(_ entry: ReceiptEntry) -> Bool {
+    if case .trashed = entry.outcome { return true }
+    return false
+  }
+
+  private func reason(_ entry: ReceiptEntry) -> String {
+    switch entry.outcome {
+    case .failed(let reason), .skipped(let reason): return reason
+    default:
+      let left = (entry.leftInPlace ?? [:]).sorted { $0.key < $1.key }
+      let names = left.map { "\(($0.key as NSString).lastPathComponent) (\($0.value))" }
+      return left.count == 1 ? "Kept \(names[0])" : "Kept \(left.count) folders: \(names.joined(separator: ", "))"
     }
   }
 }

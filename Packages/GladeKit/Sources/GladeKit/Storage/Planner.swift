@@ -68,6 +68,7 @@ public enum Planner {
       let trashed: Bool
       switch finding.method {
       case .delete, .trash: trashed = finding.method == .trash || config.trashEverything || finding.risk == .personal
+      case .uninstallApp: trashed = true
       default: trashed = false
       }
       if !trashed { immediate += finding.bytes }
@@ -84,9 +85,13 @@ public enum Planner {
     let byID = Dictionary(scan.findings.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
     let chosen = ids.compactMap { byID[$0] }
     let roots = chosen.flatMap { finding in finding.paths.map { ($0 + "/", finding.id) } }
+    // An app takes its data folders with it, so one of them chosen as well (its cache)
+    // goes with the app rather than on its own.
+    let appFolders = chosen.filter { $0.category == .installedApps }.flatMap { app in app.paths.dropFirst().map { ($0, app.id) } }
     return chosen.filter { finding in
       let nested = !finding.paths.isEmpty && finding.paths.allSatisfy { path in
         roots.contains { root, owner in owner != finding.id && path.hasPrefix(root) }
+          || appFolders.contains { folder, owner in owner != finding.id && path == folder }
       }
       return !nested
     }
@@ -100,6 +105,7 @@ public enum Planner {
 
   public static func decide(_ finding: Finding, level: CleanLevel, now: Date = Date()) -> (Bool, String) {
     if let blocker = finding.blockers.first { return (false, blocker.detail) }
+    if finding.category == .installedApps { return (false, "Apps are only removed when you choose one.") }
     if finding.risk == .personal { return (false, "Yours to decide. Glade never selects personal files.") }
     guard let autoLevel = finding.autoLevel else { return (false, "Can’t be recreated, so it’s left for you to choose.") }
     guard autoLevel <= level else { return (false, "Included from \(autoLevel.title) up.") }

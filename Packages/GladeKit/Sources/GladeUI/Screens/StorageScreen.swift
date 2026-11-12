@@ -316,12 +316,16 @@ struct StorageScreen: View {
     if !selectable.isEmpty {
       // Frees just these rows, whatever else is ticked; the sheet asks first.
       let trashOnly = selectable.allSatisfy { $0.goesToTrash(model.config) }
-      let verb = trashOnly ? "Move to Trash" : "Free Up"
+      let apps = selectable.allSatisfy(\.isApp)
+      let verb = apps ? "Uninstall" : trashOnly ? "Move to Trash" : "Free Up"
       Button(
-        selectable.count == 1 ? "\(verb)…" : "\(verb) \(selectable.count) Items…",
+        selectable.count == 1 ? "\(verb)…" : "\(verb) \(selectable.count) \(apps ? "Apps" : "Items")…",
         systemImage: trashOnly ? "trash" : "bolt"
       ) { freeUp(ids) }
       .disabled(model.isScanning || model.isCleaning)
+    }
+    if chosen.count == 1, let app = chosen.first, app.hasOwnUninstaller, app.app?.uninstaller != nil {
+      Button("Open Uninstaller", systemImage: Symbols.uninstaller) { model.openUninstaller(app) }
     }
     let paths = chosen.flatMap(\.paths)
     if !paths.isEmpty {

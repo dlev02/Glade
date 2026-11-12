@@ -70,7 +70,8 @@ public enum StoragePrompt {
     var omittedBytes: Int64 = 0
     let compact = characterBudget < 20_000
 
-    for finding in scan.findings.sorted(by: { $0.bytes > $1.bytes }) {
+    // Installed apps are the person’s alone to choose, and the list of them isn’t sent.
+    for finding in scan.findings.sorted(by: { $0.bytes > $1.bytes }) where finding.category.countsAsReclaimable {
       let item = reasons[finding.id]
       var flags: [String] = []
       if finding.isBlocked { flags.append("blocked") }

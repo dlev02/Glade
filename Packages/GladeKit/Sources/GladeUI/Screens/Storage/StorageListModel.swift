@@ -38,7 +38,7 @@ final class StorageListModel {
     for finding in visible { byCategory[finding.category, default: []].append(finding) }
 
     groups = byCategory.map { category, findings in
-      FindingGroup(category: category, entries: Self.ordered(findings))
+      FindingGroup(category: category, entries: Self.ordered(findings, apps: category == .installedApps))
     }
     .sorted { $0.totalBytes != $1.totalBytes ? $0.totalBytes > $1.totalBytes : $0.category.title < $1.category.title }
     visibleCount = visible.count
@@ -46,9 +46,16 @@ final class StorageListModel {
 
   /// Largest first, with anything that sits inside another finding placed straight
   /// after its container and indented.
-  private static func ordered(_ findings: [Finding]) -> [FindingEntry] {
+  /// Apps go big and long unused first, rather than by size alone.
+  private static func ordered(_ findings: [Finding], apps: Bool = false) -> [FindingEntry] {
     let ids = Set(findings.map(\.id))
-    let bySize: (Finding, Finding) -> Bool = { $0.bytes != $1.bytes ? $0.bytes > $1.bytes : $0.title < $1.title }
+    let bySize: (Finding, Finding) -> Bool = { a, b in
+      if apps {
+        let first = a.appPriority, second = b.appPriority
+        return first != second ? first > second : a.title < b.title
+      }
+      return a.bytes != b.bytes ? a.bytes > b.bytes : a.title < b.title
+    }
     var children: [String: [Finding]] = [:]
     var tops: [Finding] = []
     for finding in findings {

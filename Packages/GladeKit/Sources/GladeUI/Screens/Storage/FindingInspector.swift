@@ -14,7 +14,9 @@ struct FindingInspector: View {
   var body: some View {
     ScrollView {
       Group {
-        if let finding {
+        if let finding, finding.isApp {
+          AppInspector(finding: finding)
+        } else if let finding {
           content(finding)
         } else if highlightedFindings.count > 1 {
           SelectionTotals(title: "\(highlightedFindings.count) Items", findings: highlightedFindings)

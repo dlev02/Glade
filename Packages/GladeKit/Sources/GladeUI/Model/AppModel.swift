@@ -863,7 +863,7 @@ public final class AppModel {
     var reclaimable: Int64 = 0
     if let scan {
       var totals: [CategoryFamily: Int64] = [:]
-      for finding in scan.findings where finding.within == nil {
+      for finding in scan.findings where finding.within == nil && finding.category.countsAsReclaimable {
         totals[finding.category.family, default: 0] += finding.bytes
       }
       for family in CategoryFamily.allCases {

@@ -28,7 +28,7 @@ struct CleanConfirmation: View {
     let trash = model.trashBytes
     let permanent = items.filter { $0.recovery == .permanent }
     VStack(alignment: .leading, spacing: Metrics.l) {
-      Text(title(items: items.count, immediate: immediate, trash: trash))
+      Text(title(items: items, immediate: immediate, trash: trash))
         .font(.title2.weight(.semibold))
         .fixedSize(horizontal: false, vertical: true)
 
@@ -40,9 +40,13 @@ struct CleanConfirmation: View {
           )
         }
         if trash > 0 {
+          // Apps go to the Trash whole, with their data, and can be put back.
           outcome(
             "\(Format.bytes(trash)) to the Trash",
-            symbol: "trash", detail: "Space is freed when the Trash is emptied"
+            symbol: "trash",
+            detail: items.contains(where: \.isApp)
+              ? "You can put \(items.filter(\.isApp).count == 1 ? "the app" : "the apps") back; space is freed when the Trash is emptied"
+              : "Space is freed when the Trash is emptied"
           )
         }
       }
@@ -94,7 +98,11 @@ struct CleanConfirmation: View {
     .padding(Metrics.xl)
   }
 
-  private func title(items: Int, immediate: Int64, trash: Int64) -> String {
+  private func title(items list: [Finding], immediate: Int64, trash: Int64) -> String {
+    let items = list.count
+    if !list.isEmpty, list.allSatisfy(\.isApp) {
+      return items == 1 ? "Uninstall \(list[0].title)?" : "Uninstall \(items) apps?"
+    }
     if immediate == 0 {
       return items == 1 ? "Move 1 item to the Trash?" : "Move \(items) items to the Trash?"
     }
@@ -183,7 +191,11 @@ struct CleanConfirmation: View {
 
   private func row(_ finding: Finding) -> some View {
     HStack(spacing: Metrics.s) {
-      CategoryIcon(finding.category, size: 20)
+      if finding.isApp {
+        AppIconView(path: finding.paths.first, size: 20)
+      } else {
+        CategoryIcon(finding.category, size: 20)
+      }
       Text(finding.title.keepingDashWithName)
         .lineLimit(2)
         .truncationMode(.middle)
