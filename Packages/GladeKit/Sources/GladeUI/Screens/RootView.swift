@@ -68,6 +68,10 @@ public struct RootView: View {
       SetupView()
         .accent(model.tint)
     }
+    .sheet(isPresented: $model.showsRelief, onDismiss: model.reliefDismissed) {
+      ReliefSheet()
+        .accent(model.tint)
+    }
   }
 }
 

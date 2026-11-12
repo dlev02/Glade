@@ -12,6 +12,12 @@ extension AppModel.Section {
     URL(string: "\(Self.linkScheme)://show/\(rawValue)")!
   }
 
+  /// Opens Performance with Free Up Memory showing, as clicking a memory notification
+  /// does.
+  public var reliefLink: URL {
+    URL(string: "\(Self.linkScheme)://show/\(rawValue)?relieve=1")!
+  }
+
   /// The section a link asks for, or `nil` when it isn’t one of Glade’s.
   public init?(link: URL) {
     guard link.scheme?.lowercased() == Self.linkScheme, link.host()?.lowercased() == "show" else { return nil }
@@ -28,8 +34,10 @@ extension AppModel {
       Log.warning(.app, "Ignored a link Glade doesn’t understand: \(link.scheme ?? "")://\(link.host() ?? "")")
       return false
     }
-    Log.info(.app, "Opened on \(wanted.rawValue) from a link")
+    let relieve = URLComponents(url: link, resolvingAgainstBaseURL: false)?.queryItems?.contains { $0.name == "relieve" } ?? false
+    Log.info(.app, "Opened on \(wanted.rawValue) from a link\(relieve ? ", with Free Up Memory" : "")")
     section = wanted
+    if relieve { Task { await openReliefWithFreshReadings() } }
     return true
   }
 }

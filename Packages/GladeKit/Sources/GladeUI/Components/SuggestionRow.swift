@@ -69,7 +69,10 @@ public struct SuggestionRow: View {
         .background(color.opacity(0.14), in: .rect(cornerRadius: iconSize * 0.24))
         .accessibilityHidden(true)
     } else {
-      AppIconView(path: model.apps.first { $0.id == suggestion.appID }?.bundlePath, size: iconSize)
+      AppIconView(
+        path: model.apps.first { $0.id == suggestion.appID }?.bundlePath ?? AppIcons.path(forAppID: suggestion.appID),
+        size: iconSize
+      )
     }
   }
 

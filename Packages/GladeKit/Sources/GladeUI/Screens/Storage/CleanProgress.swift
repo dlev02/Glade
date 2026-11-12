@@ -1,14 +1,16 @@
 import SwiftUI
 
-/// The clean while it runs: how far along it is and what it’s removing now.
+/// The clean while it runs: how far along it is and what it’s removing now. Free Up
+/// Memory uses it too, with its own heading.
 struct CleanProgress: View {
+  var heading = "Freeing up space…"
   var done: Int
   var total: Int
   var title: String
 
   var body: some View {
     VStack(alignment: .leading, spacing: Metrics.m) {
-      Text("Freeing up space…")
+      Text(heading)
         .font(.title2.weight(.semibold))
       ProgressView(value: Double(min(done, total)), total: Double(max(total, 1)))
         .accessibilityLabel("Progress")

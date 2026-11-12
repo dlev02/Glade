@@ -55,27 +55,72 @@ public struct SampleData: Sendable {
   /// suggestion people meet most. The app is the largest real one running, so its icon
   /// draws; acting on either in demo mode changes nothing.
   public static func sampleSuggestions(apps: [AppUsage]) -> [PerformanceSuggestion] {
-    var entries: [[String: Any]] = [[
-      "id": "shutDownIdleSimulator:simulator:sample", "kind": "shutDownIdleSimulator", "appID": "simulator:sample",
-      "appName": "iPad Pro 13-inch (M5)", "title": "Shut down iPad Pro 13-inch (M5)",
-      "reason": "iPad Pro 13-inch (M5) · iOS 27.2 has been idle since it started 31 hours ago and is using 10.3 GB. Bitrig is open and may be showing it; Glade can’t tell which simulator Bitrig shows.",
-      "frees": ["memoryBytes": 10_300_000_000, "cpuPercent": 0.2], "confidence": "low", "actionable": true,
-      "simulatorUDID": "sample", "facts": "Idle 31 h · 10.3 GB", "caveat": "May be in use by Bitrig",
-    ]]
-    let candidates = apps.filter { $0.kind == .app && !$0.isSystem && !$0.isGlade && !$0.isFrontmost }
-    if let app = candidates.max(by: { $0.memoryBytes < $1.memoryBytes }) {
-      let bytes = max(app.memoryBytes, 1_200_000_000)
-      entries.append([
-        "id": "quitIdleApp:\(app.id)", "kind": "quitIdleApp", "appID": app.id, "appName": app.name,
-        "title": "Quit \(app.name)",
-        "reason": "\(app.name) is using \(Format.bytes(bytes)) and hasn’t been used for 3 hours.",
-        "frees": ["memoryBytes": bytes, "cpuPercent": 0.4], "confidence": "high", "actionable": true,
-        "facts": "Idle 3 h · \(Format.bytes(bytes))",
-      ])
+    func simulator(_ udid: String, _ name: String, idle hours: Double, _ bytes: Int64, confidence: String, caveat: String? = nil) -> [String: Any] {
+      var entry: [String: Any] = [
+        "id": "shutDownIdleSimulator:simulator:\(udid)", "kind": "shutDownIdleSimulator", "appID": "simulator:\(udid)",
+        "appName": name, "title": "Shut down \(name)",
+        "reason": "\(name) · iOS 27.2 has been idle for \(Int(hours)) hours and is using \(Format.bytes(bytes)).",
+        "frees": ["memoryBytes": bytes, "cpuPercent": 0.2], "confidence": confidence, "actionable": true,
+        "simulatorUDID": udid, "facts": "Idle \(Int(hours)) h · \(Format.bytes(bytes))", "idleSeconds": hours * 3600,
+      ]
+      if let caveat {
+        entry["caveat"] = caveat
+        entry["reason"] = "\(name) · iOS 27.2 has been idle since it started \(Int(hours)) hours ago and is using \(Format.bytes(bytes)). Bitrig is open and may be showing it; Glade can’t tell which simulator Bitrig shows."
+      }
+      return entry
     }
+    func app(_ bundleID: String, _ name: String, idle minutes: Double, _ bytes: Int64, confidence: String) -> [String: Any] {
+      let idle = minutes >= 90 ? "\(Int(minutes / 60)) h" : "\(Int(minutes)) min"
+      let phrase = minutes >= 90 ? "\(Int(minutes / 60)) hours" : "\(Int(minutes)) minutes"
+      return [
+        "id": "quitIdleApp:\(bundleID)", "kind": "quitIdleApp", "appID": bundleID, "appName": name, "title": "Quit \(name)",
+        "reason": "\(name) is using \(Format.bytes(bytes)) and hasn’t been used for \(phrase).",
+        "frees": ["memoryBytes": bytes, "cpuPercent": 0.3], "confidence": confidence, "actionable": true,
+        "facts": "Idle \(idle) · \(Format.bytes(bytes))", "idleSeconds": minutes * 60,
+      ]
+    }
+    // Well-known apps and made-up simulators, largest first as the advisor ranks them.
+    let entries: [[String: Any]] = [
+      simulator("sample", "iPad Pro 13-inch (M5)", idle: 31, 10_300_000_000, confidence: "low", caveat: "May be in use by Bitrig"),
+      simulator("sample-phone", "iPhone 17 Pro", idle: 5, 3_210_000_000, confidence: "high"),
+      app("com.apple.Photos", "Photos", idle: 360, 1_840_000_000, confidence: "high"),
+      app("com.apple.mail", "Mail", idle: 180, 1_210_000_000, confidence: "high"),
+      simulator("sample-watch", "Apple Watch Series 11 (46mm)", idle: 2, 1_120_000_000, confidence: "high"),
+      app("com.apple.Preview", "Preview", idle: 40, 612_000_000, confidence: "medium"),
+    ]
     // The engine’s initialiser isn’t public, so build them the way they arrive from disk.
     guard let data = try? JSONSerialization.data(withJSONObject: entries) else { return [] }
     return (try? JSONDecoder().decode([PerformanceSuggestion].self, from: data)) ?? []
+  }
+
+  /// Free Up Memory over the sample suggestions, ticked by the plan’s own rules: the
+  /// confident ones with nothing in doubt. Built here because the live plan checks
+  /// each app against what’s really running.
+  public static func sampleRelief(suggestions: [PerformanceSuggestion]) -> ReliefPlan {
+    let actions = suggestions.filter(\.actionable).compactMap { suggestion -> ReliefPlan.Action? in
+      let kind: ReliefPlan.Action.Kind
+      switch suggestion.kind {
+      case .shutDownIdleSimulator: kind = .shutDown
+      case .relaunchHeavyApp: kind = .relaunch
+      case .quitIdleApp, .memoryHog, .gpuHog: kind = .quit
+      case .runawayProcess: return nil
+      }
+      let why = kind == .shutDown
+        ? "Nothing is running in it. Its apps and data are kept."
+        : "Not used for \(suggestion.facts?.split(separator: "·").first.map { $0.replacingOccurrences(of: "Idle ", with: "").trimmingCharacters(in: .whitespaces) } ?? "a while") and not playing sound. It can ask about unsaved work before it quits."
+      return ReliefPlan.Action(
+        id: suggestion.id, kind: kind, suggestionKind: suggestion.kind, appID: suggestion.appID, name: suggestion.appName,
+        bundlePath: AppIcons.path(forAppID: suggestion.appID), simulatorUDID: suggestion.simulatorUDID,
+        memoryBytes: suggestion.frees.memoryBytes, cpuPercent: suggestion.frees.cpuPercent,
+        facts: suggestion.facts ?? suggestion.reason, why: why, caveat: suggestion.caveat,
+        selectedByDefault: suggestion.kind != .relaunchHeavyApp && suggestion.confidence == .high && suggestion.caveat == nil
+      )
+    }
+    return ReliefPlan(actions: actions, leftAlone: [
+      .init(name: "Safari", memoryBytes: 4_100_000_000, reason: "in use"),
+      .init(name: "Xcode", memoryBytes: 3_600_000_000, reason: "in use"),
+      .init(name: "Music", memoryBytes: 410_000_000, reason: "in use"),
+    ])
   }
 
   /// Advice as a storage run returns it, after Glade’s checks: additions, things left

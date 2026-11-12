@@ -69,6 +69,35 @@ extension MCPTools {
       return JSONFiles.string(result)
     },
     MCPTool(
+      name: "glade_relieve",
+      description: "Free Up Memory in one go: the apps Glade would quit and simulators it would shut down, each with the memory it holds, why it’s safe, any doubt, and whether Glade ticks it by itself (only confident, idle, unused-for-minutes ones). A dry run unless `confirm` is true; then the ticked apps are asked to quit (they can ask about unsaved work; nothing is force quit), the ticked simulators shut down (apps and data kept), and memory is measured again. The app in front, anything playing or recording sound, keeping the Mac awake or on the keep-running list is never touched. Show the person the plan and get their go-ahead before confirming, as with glade_quit.",
+      schema: #"{"type":"object","properties":{"confirm":{"type":"boolean","description":"Carry out the ticked actions. Default false: a dry run."},"include":{"type":"array","items":{"type":"string"},"description":"Names, app ids or simulator UDIDs to tick. An app the rules didn’t offer is added if it may be quit."},"exclude":{"type":"array","items":{"type":"string"},"description":"Names, app ids or simulator UDIDs to untick."},"only":{"type":"boolean","description":"Tick only what include names."}},"additionalProperties":false}"#,
+      readOnly: false
+    ) { arguments in
+      let config = ConfigStore.load()
+      var (plan, apps, _) = await ReliefPlan.current(config: config)
+      let include = arguments["include"]?.strings ?? []
+      let only = arguments["only"]?.bool ?? false
+      if only && include.isEmpty { throw MCPFailure(message: "only needs at least one name in include.") }
+      let (chosen, refused) = plan.choose(include: include, exclude: arguments["exclude"]?.strings ?? [], only: only, apps: apps, config: config)
+      struct Report: Encodable {
+        var dryRun: Bool
+        var plan: ReliefPlan
+        var selected: [String]
+        var expectedBytes: Int64
+        var leftAlone: String?
+        var refused: [String]
+        var result: ReliefResult?
+      }
+      let confirm = arguments["confirm"]?.bool ?? false
+      let selected = plan.actions(chosen)
+      let result = confirm && !selected.isEmpty ? await ReliefResult.perform(selected, config: config) : nil
+      return JSONFiles.string(Report(
+        dryRun: !confirm, plan: plan, selected: selected.map(\.id), expectedBytes: plan.memoryBytes(of: chosen),
+        leftAlone: plan.leftAloneSummary, refused: refused, result: result
+      ))
+    },
+    MCPTool(
       name: "glade_shutdown_simulator",
       description: "Shut down one simulator by name or identifier, like turning a phone off: its apps stop and its data stays. Refused when the simulator looks in use unless `force` is true.",
       schema: #"{"type":"object","properties":{"simulator":{"type":"string","description":"The simulator’s name or UDID from glade_simulators."},"force":{"type":"boolean"}},"required":["simulator"],"additionalProperties":false}"#,

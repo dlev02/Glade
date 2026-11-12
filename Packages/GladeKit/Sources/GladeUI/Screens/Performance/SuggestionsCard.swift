@@ -12,7 +12,11 @@ struct SuggestionsCard: View {
   var body: some View {
     // Headed and divided like Overview’s suggestions.
     VStack(alignment: .leading, spacing: Metrics.s) {
-      SectionTitle("Suggestions")
+      HStack(alignment: .firstTextBaseline) {
+        SectionTitle("Suggestions")
+        Spacer(minLength: Metrics.s)
+        FreeUpMemoryButton(style: .principal, identifier: "performance.freeUpMemory")
+      }
       card
     }
   }

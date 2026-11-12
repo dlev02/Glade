@@ -41,6 +41,20 @@ enum AppIcons {
   /// Paths with nothing there, so a missing app isn’t looked for again on every redraw.
   private static var missing: Set<String> = []
 
+  /// Where an app lives, from an `AppUsage.id`: a bundle identifier or `path:<path>`.
+  /// For showing the icon of an app that isn’t running (sample data, or one that has
+  /// just quit).
+  static func path(forAppID id: String) -> String? {
+    if id.hasPrefix("path:") { return String(id.dropFirst(5)) }
+    guard id.contains("."), !id.contains(":") else { return nil }
+    if let known = bundlePaths[id] { return known }
+    let path = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)?.path
+    bundlePaths[id] = path
+    return path
+  }
+
+  private static var bundlePaths: [String: String?] = [:]
+
   static func icon(for path: String) -> NSImage? {
     if let icon = cache.object(forKey: path as NSString) { return icon }
     if missing.contains(path) { return nil }

@@ -28,6 +28,17 @@ public enum Notifier {
     }
   }
 
+  /// Kept here because the notification centre holds its delegate weakly.
+  private static var clicks: ClickHandler?
+
+  /// Calls `open` with a notification’s kind when the person clicks it.
+  public static func handleClicks(_ open: @escaping @MainActor @Sendable (String) -> Void) {
+    guard isAvailable else { return }
+    let handler = ClickHandler(open: open)
+    clicks = handler
+    UNUserNotificationCenter.current().delegate = handler
+  }
+
   /// - Parameter kind: Groups repeats of the same alert so a new one replaces the old.
   public static func post(title: String, body: String, kind: String) async {
     guard await isAllowed() else { return }
@@ -41,5 +52,24 @@ public enum Notifier {
     } catch {
       Log.warning(.app, "Posting a notification failed: \(error.localizedDescription)")
     }
+  }
+}
+
+/// Hears clicks on Glade’s notifications. Leaves how they’re shown to the system.
+private final class ClickHandler: NSObject, UNUserNotificationCenterDelegate {
+  nonisolated let open: @MainActor @Sendable (String) -> Void
+
+  init(open: @escaping @MainActor @Sendable (String) -> Void) {
+    self.open = open
+  }
+
+  nonisolated func userNotificationCenter(
+    _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
+    withCompletionHandler completionHandler: @escaping () -> Void
+  ) {
+    let kind = response.notification.request.content.threadIdentifier
+    let open = open
+    Task { @MainActor in open(kind) }
+    completionHandler()
   }
 }

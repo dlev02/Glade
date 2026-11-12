@@ -11,7 +11,11 @@
 
 ### Free Up Memory
 
+- One button to lighten the load, the way Free Up does for storage. On Performance (⌘Return), on Overview and from the menu bar, Free Up Memory shows every app it would quit and simulator it would shut down, with how long each has sat idle and the memory it holds, and asks "Quit 2 apps and shut down 2 simulators?". It ticks only the ones it's sure nobody is using; anything with a doubt ("May be in use by Bitrig"), anything you used in the last few minutes and anything that goes with a game or full-screen video in front starts unticked. What's in front, playing or recording sound, keeping the Mac awake or on your keep-running list is never on it, and it says what it's leaving alone ("Leaving Safari, Xcode and Music: in use").
+- Apps are asked to quit, never forced, so one with unsaved work can ask you first; the result says so ("Still open: it may be asking about unsaved changes") and shows memory in use before and after, as measured.
+- The memory pressure alert says how much Free Up Memory would give back, and clicking it opens the list.
 - Big apps left unused for half an hour or more are suggested even when they do a little in the background, as a browser with open tabs does, and menu bar apps or moving wallpapers keeping the graphics chip busy are named as such, with Quit offered when nobody has used them for a while.
+- `glade relieve` does the same from the command line and for AI agents: a dry run by default, `--confirm` to do it.
 
 ### Storage
 

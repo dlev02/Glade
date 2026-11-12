@@ -21,6 +21,17 @@ struct MenuBarView: View {
         SuggestionRow(suggestion, iconSize: 24, onGlass: true) { outcome = $0 }
           .padding(.horizontal, Metrics.m)
           .suggestionTransition(reduceMotion: reduceMotion)
+        // More than one thing to do: the whole plan is a click away.
+        let plan = model.reliefPlan
+        if plan.actions.count > 1 {
+          Button(model.reliefButtonTitle(plan)) { showRelief() }
+            .buttonStyle(PopoverFooterButtonStyle())
+            .monospacedDigit()
+            .accessibilityIdentifier("popover.freeUpMemory")
+            // The words sit on the row’s text edge, under the name.
+            .padding(.leading, Metrics.m + 24 + Metrics.m - Metrics.s)
+            .padding(.top, -Metrics.s)
+        }
       } else if let outcome {
         Text(outcome)
           .font(.callout)
@@ -144,6 +155,12 @@ struct MenuBarView: View {
   private func showWindow() {
     openWindow(id: "main")
     NSApp.activate()
+  }
+
+  private func showRelief() {
+    model.section = .performance
+    showWindow()
+    model.openRelief()
   }
 
   private func showStorage() {

@@ -331,6 +331,68 @@ struct SafetyTests {
     }
   }
 
+  /// Free Up Memory ticks only confident, undoubted, idle actions, and never shows an
+  /// app that is in front, playing, recording, keeping the Mac awake or kept running.
+  @Test func freeUpMemoryTicksOnlyWhatIsSafelyIdle() throws {
+    let now = Date()
+    func app(_ id: String, _ extra: [String: Any] = [:]) throws -> AppUsage {
+      var fields: [String: Any] = [
+        "id": id, "kind": "app", "name": id, "bundleIdentifier": id, "pids": [1], "cpuPercent": 0.5,
+        "memoryBytes": 2_000_000_000, "threadCount": 10, "busiestCPUPercent": 0.5, "isFrontmost": false, "isHidden": false,
+        "activationPolicy": "regular", "isPlayingAudio": false, "isCapturingAudio": false, "windowCount": 1,
+        "isFullScreen": false, "isGame": false, "isSystem": false, "isGlade": false, "hasRestrictedMembers": false,
+      ]
+      fields.merge(extra) { $1 }
+      return try JSONDecoder().decode(AppUsage.self, from: JSONSerialization.data(withJSONObject: fields))
+    }
+    func idle(_ id: String, confidence: PerformanceSuggestion.Confidence = .high, caveat: String? = nil, idleFor: Double = 3 * 3600) -> PerformanceSuggestion {
+      PerformanceSuggestion(
+        id: "quitIdleApp:\(id)", kind: .quitIdleApp, appID: id, appName: id, pid: nil, title: "Quit \(id)", reason: "",
+        frees: .init(memoryBytes: 2_000_000_000, cpuPercent: 0.5, gpuPercent: nil), confidence: confidence, actionable: true,
+        facts: "Idle", caveat: caveat, idleSeconds: idleFor
+      )
+    }
+    let apps = [
+      try app("com.example.idle"), try app("com.example.unsure"), try app("com.example.doubt"),
+      try app("com.example.recent", ["lastActive": now.addingTimeInterval(-60).timeIntervalSinceReferenceDate]),
+      try app("com.example.front", ["isFrontmost": true]), try app("com.example.music", ["isPlayingAudio": true]),
+      try app("com.example.call", ["isCapturingAudio": true]), try app("com.example.export", ["preventingSleep": "Exporting"]),
+      try app("com.example.kept"), try app("com.game.studio"), try app("com.game.launcher"),
+    ]
+    let suggestions = [
+      idle("com.example.idle"), idle("com.example.unsure", confidence: .medium), idle("com.example.doubt", caveat: "May be in use"),
+      idle("com.example.recent"), idle("com.example.front"), idle("com.example.music"), idle("com.example.call"),
+      idle("com.example.export"), idle("com.example.kept"), idle("com.game.launcher"),
+      PerformanceSuggestion(
+        id: "relaunchHeavyApp:com.example.idle", kind: .relaunchHeavyApp, appID: "com.example.idle", appName: "idle", pid: nil,
+        title: "", reason: "", frees: .init(memoryBytes: 1, cpuPercent: 0, gpuPercent: nil), confidence: .high, actionable: true
+      ),
+      PerformanceSuggestion(
+        id: "runawayProcess:com.example.unsure", kind: .runawayProcess, appID: "com.example.unsure", appName: "unsure", pid: nil,
+        title: "", reason: "", frees: .init(memoryBytes: 1, cpuPercent: 100, gpuPercent: nil), confidence: .high, actionable: false
+      ),
+    ]
+    var config = GladeConfig()
+    config.keepRunning = ["com.example.kept"]
+    let plan = ReliefPlan.make(suggestions: suggestions, apps: apps, context: nil, config: config, now: now)
+    let shown = Set(plan.actions.map(\.appID))
+    for never in ["com.example.front", "com.example.music", "com.example.call", "com.example.export", "com.example.kept"] {
+      #expect(!shown.contains(never), "\(never) must not appear")
+    }
+    #expect(!plan.actions.contains { $0.suggestionKind == .runawayProcess }, "a runaway is only for looking at")
+    #expect(plan.defaultSelection == ["quitIdleApp:com.example.idle", "quitIdleApp:com.game.launcher"], "ticked: \(plan.defaultSelection)")
+
+    // During a game, nothing from its maker is ticked.
+    let context = try JSONDecoder().decode(ActivityContext.self, from: JSONSerialization.data(withJSONObject: [
+      "date": now.timeIntervalSinceReferenceDate, "secondsSinceInput": 1, "onBattery": false, "lowPowerMode": false,
+      "isGaming": true, "signals": [],
+      "frontmostApp": ["id": "com.game.play", "name": "Game", "bundleIdentifier": "com.game.play", "isFullScreen": true],
+    ] as [String: Any]))
+    let gaming = ReliefPlan.make(suggestions: suggestions, apps: apps, context: context, config: config, now: now)
+    #expect(!gaming.defaultSelection.contains("quitIdleApp:com.game.launcher"), "the game’s launcher was ticked")
+    #expect(gaming.defaultSelection.contains("quitIdleApp:com.example.idle"))
+  }
+
   /// Old agent versions: the one the command runs, any newer download and the one
   /// before it must stay, and nothing is offered when the live one is unknown.
   @Test func oldAgentVersionsKeepTheLiveOnes() throws {

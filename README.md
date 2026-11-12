@@ -69,6 +69,8 @@ This is the part to read.
 
 Glade lists apps with their helper processes grouped, and what each is doing: in front, playing audio, using the microphone, keeping the Mac awake, idle for hours. It suggests what to quit and why, never the app in front, anything playing or recording, anything holding the Mac awake or anything busy right now. Quitting asks the app politely, as its Quit menu item would, so it can ask about unsaved work. Booted simulators are listed with the memory they hold, and idle ones can be shut down with their apps and data kept.
 
+**Free Up Memory** does it all in one go, the way a clean does for storage: it lists every app it would quit and simulator it would shut down, with what each holds and any doubt, ticks only the ones it's confident nobody is using, and leaves anything you used in the last few minutes, and anything that goes with a game or full-screen video in front, for you to tick. Afterwards it shows what happened to each and memory in use before and after, as measured; an app asking about unsaved work stays open and is reported. The memory pressure alert says how much it would give back, and clicking the alert opens it.
+
 ### Assistant
 
 ![The Assistant section: a question about the Mac and the answer, and a storage plan the AI refined with its reasons](docs/images/assistant.png)
@@ -108,6 +110,7 @@ Every command accepts `--json`, and nothing is removed without `--confirm`.
 | `glade clean --level careful` | A dry run; add `--confirm` to remove. Also `--ids <id>…` for chosen findings. |
 | `glade undo` | Put back what the last clean moved to the Trash. |
 | `glade status`, `glade apps`, `glade suggest` | Processor, memory, graphics and disk; what each app is doing; what to quit. |
+| `glade relieve` | Free Up Memory: what Glade would quit and shut down in one go, and what it ticks. Add `--confirm` to do it; `--include`/`--exclude` change the ticks. |
 | `glade quit "<app>"` | Ask an app to quit. |
 | `glade protect check <path>` | Why a path is or isn't off limits. |
 | `glade doctor` | Permissions and what Glade can't see; when space is low, what a clean would free. |

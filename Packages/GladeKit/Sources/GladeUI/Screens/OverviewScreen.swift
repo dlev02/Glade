@@ -321,7 +321,12 @@ private struct SuggestionList: View {
     let suggestions = Array(model.suggestions.prefix(4))
     VStack(alignment: .leading, spacing: Metrics.s) {
       if !suggestions.isEmpty {
-        SectionTitle("Suggestions")
+        HStack(alignment: .firstTextBaseline) {
+          SectionTitle("Suggestions")
+          Spacer(minLength: Metrics.s)
+          // Review is Overview’s main action, so this one is quiet.
+          FreeUpMemoryButton(style: .secondary, identifier: "overview.freeUpMemory")
+        }
         Card(padding: 0) {
           VStack(spacing: 0) {
             ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, suggestion in

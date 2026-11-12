@@ -67,6 +67,10 @@ struct PerformanceScreen: View {
         Button("Find") { searchFocus += 1 }
           .keyboardShortcut("f")
           .hidden()
+        // ⌘Return opens Free Up Memory when there’s something to free.
+        Button("Free Up Memory") { model.openRelief() }
+          .keyboardShortcut(.return, modifiers: .command)
+          .hidden()
           .navigationTitle("Performance")
           .navigationSubtitle(StatusLine.text(readings.snapshot))
       }

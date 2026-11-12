@@ -121,6 +121,13 @@ public final class AppModel {
   public private(set) var simulators: [SimulatorUsage] = []
   public private(set) var alerts: [ThresholdAlert] = []
 
+  // MARK: Free Up Memory
+
+  /// The Free Up Memory sheet is showing.
+  public var showsRelief = false
+  /// What the sheet shows; set while it’s open.
+  public internal(set) var relief: ReliefSession?
+
   // MARK: Storage
 
   public private(set) var scan: ScanResult? {
@@ -239,6 +246,12 @@ public final class AppModel {
         if DemoState.value("demoAsking") != nil { assistantState = .thinking("Looking at what’s safe to clear…") }
         // `-demoScan YES` starts a (made-up) scan straight away.
         if DemoState.value("demoScan") != nil { startScan() }
+        // `-demoRelief confirm|result|partial` opens Free Up Memory at that step;
+        // `partial` ends with one app still open.
+        if let step = DemoState.value("demoRelief") {
+          openRelief()
+          if step != "confirm" { await performRelief() }
+        }
         // `-demoAdvice short|long` starts with the assistant’s advice showing.
         if let length = defaults.string(forKey: "demoAdvice"), let scan {
           applySampleAdvice(SampleData.sampleAdvice(scan: scan, short: length == "short"))
@@ -250,6 +263,11 @@ public final class AppModel {
       return
     }
     guard isLive, samplingTask == nil else { return }
+    // Clicking a notification opens the window where it can be acted on.
+    Notifier.handleClicks { kind in
+      Log.info(.app, "Opened from a \(kind) notification")
+      NSWorkspace.shared.open(Self.link(forNotification: kind))
+    }
     Log.info(.app, "\(Brand.name) \(Brand.version) (\(Brand.build)) started; Full Disk Access \(hasFullDiskAccess ? "on" : "off")")
     if let last = ScanEngine.loadLast(), Date().timeIntervalSince(last.finished) < Cleaner.maximumScanAge {
       scan = last
@@ -373,7 +391,17 @@ public final class AppModel {
       } else if plan.selectedBytes > 0 {
         body += " A \(config.level.title) clean would move \(Format.bytes(plan.selectedBytes)) to the Trash."
       }
-    } else if alert.kind == .memoryPressure || alert.kind == .sustainedCPU {
+    } else if alert.kind == .memoryPressure {
+      await refreshApps()
+      // Names what Free Up Memory would give back; clicking the notification opens it.
+      let plan = reliefPlan
+      let bytes = plan.memoryBytes(of: plan.defaultSelection)
+      if bytes > 0 {
+        body += " Free Up Memory would give back about \(Format.bytes(bytes))."
+      } else if let top = suggestions.first(where: \.actionable) {
+        body += " \(top.title)."
+      }
+    } else if alert.kind == .sustainedCPU {
       await refreshApps()
       if let top = suggestions.first(where: \.actionable) { body += " \(top.title)." }
     }
