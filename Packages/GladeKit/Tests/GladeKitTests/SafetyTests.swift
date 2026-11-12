@@ -629,6 +629,21 @@ struct SafetyTests {
     #expect(forCursor.stays.contains { Protection.clean($0.path) == full("Application Support/Cursor") })
   }
 
+  /// A cask only vouches for an app’s data while its app is still there.
+  @Test func caskCountsOnlyWhileItsAppIsThere() throws {
+    let caskroom = outside + "/Caskroom"
+    let manager = FileManager.default
+    try manager.createDirectory(atPath: home + "/Applications/Here.app", withIntermediateDirectories: true)
+    for (cask, link) in [("here", home + "/Applications/Here.app"), ("gone", home + "/Applications/Gone.app")] {
+      try manager.createDirectory(atPath: "\(caskroom)/\(cask)/1.0", withIntermediateDirectories: true)
+      try manager.createSymbolicLink(atPath: "\(caskroom)/\(cask)/1.0/\(cask.capitalized).app", withDestinationPath: link)
+    }
+    try manager.createDirectory(atPath: caskroom + "/font-example/2.0", withIntermediateDirectories: true)
+    #expect(InstalledApps.caskIsInstalled(caskroom + "/here"))
+    #expect(InstalledApps.caskIsInstalled(caskroom + "/font-example"), "a cask without an app always counts")
+    #expect(!InstalledApps.caskIsInstalled(caskroom + "/gone"), "a cask whose app was deleted doesn’t count")
+  }
+
   // MARK: Folders picked in the window
 
   @Test func pickedFoldersAreOnlyWhatRemovalAllows() throws {

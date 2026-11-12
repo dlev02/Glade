@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- An app you deleted by hand but installed with Homebrew no longer keeps its leftovers hidden from App Leftovers.
+
 ## 0.3.0 — 2026-11-12
 
 ### Battery
