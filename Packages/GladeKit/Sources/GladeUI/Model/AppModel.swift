@@ -130,7 +130,7 @@ public final class AppModel {
 
   // MARK: Storage
 
-  public private(set) var scan: ScanResult? {
+  public internal(set) var scan: ScanResult? {
     didSet {
       findingsByID = Dictionary((scan?.findings ?? []).map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
       selectionRevision += 1
@@ -546,7 +546,7 @@ public final class AppModel {
     set { config.level = newValue }
   }
 
-  private func rebuildPlan() {
+  func rebuildPlan() {
     guard let scan else {
       plan = nil
       return

@@ -49,6 +49,8 @@ public enum Guide {
 
     Apps are never selected for the person, at any level and whatever you suggest: list candidates (big, long unused) and let them choose by name. Uninstalling moves the app and the data it keeps in the home folder to the Trash, never deletes it, so `glade undo` puts everything back; the space is freed when the Trash is emptied. Data another installed app shares stays, and the dry run says why. Some apps (Adobe’s above all) spread parts across the system that only their own uninstaller removes: Glade won’t remove those, and you must use the vendor’s uninstaller (`--open-uninstaller`), then scan again so App Leftovers lists what it left. Apps that belong to the system account (most App Store apps) can only be moved to the Trash in Finder, which asks for the person’s password; Glade never asks for it. Glade itself and macOS’s own apps are never offered. Apps appear in `scan`, `findings` and `plan` as the `installedApps` category, unselected.
 
+    Folders the person picks in Glade’s window can be removed there, but there is no command for it: you can’t name a path for Glade to remove.
+
     ## Memory, processor and graphics
 
     ```

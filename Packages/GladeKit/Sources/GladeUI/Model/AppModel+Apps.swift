@@ -21,3 +21,32 @@ extension AppModel {
     NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
   }
 }
+
+extension AppModel {
+  /// Opens Storage on one finding, as the whole-disk sheet’s Show in Storage does.
+  public func revealInStorage(_ id: String) {
+    section = .storage
+    StorageReveal.request(id)
+  }
+}
+
+/// A finding Storage should show, asked for from elsewhere in the window. Kept until
+/// Storage takes it, in case Storage hasn’t been drawn yet.
+@MainActor
+enum StorageReveal {
+  private(set) static var pending: String?
+
+  static func request(_ id: String) {
+    pending = id
+    NotificationCenter.default.post(name: .gladeRevealFinding, object: nil)
+  }
+
+  static func take() -> String? {
+    defer { pending = nil }
+    return pending
+  }
+}
+
+extension Notification.Name {
+  static let gladeRevealFinding = Notification.Name("gladeRevealFinding")
+}

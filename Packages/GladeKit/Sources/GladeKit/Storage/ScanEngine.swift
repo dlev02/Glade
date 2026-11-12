@@ -296,8 +296,13 @@ public enum ScanEngine {
     return result
   }
 
-  /// Saves a result so a later `clean` can refer to findings by identifier.
+  /// Saves a result so a later `clean` can refer to findings by identifier. Folders
+  /// the person picked in the window are never saved, so nothing outside the window
+  /// (the command line, an agent) can remove one.
   public static func save(_ result: ScanResult) {
+    guard !result.id.hasPrefix(PickedFolder.scanPrefix) else { return }
+    var result = result
+    result.findings.removeAll { $0.ruleID == PickedFolder.ruleID }
     do {
       try JSONFiles.write(result, to: GladePaths.lastScan)
     } catch {

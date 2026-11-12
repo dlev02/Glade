@@ -23,6 +23,8 @@ struct StorageScreen: View {
   @State private var showsCleanSheet = false
   @State private var protectedPath: String?
   @State private var searchFocus = 0
+  /// A finding asked for from elsewhere (the whole-disk sheet), to scroll to.
+  @State private var scrollTarget: String?
   /// The list is too narrow for words in the recovery column.
   @State private var isCompact = false
   /// Advice to show instead of the model’s, for drawing the screen in snapshots.
@@ -101,6 +103,21 @@ struct StorageScreen: View {
       .onChange(of: inputs, initial: true) {
         state.refresh(scan: model.scan)
       }
+      .onReceive(NotificationCenter.default.publisher(for: .gladeRevealFinding)) { _ in takeReveal() }
+      .onAppear { takeReveal() }
+  }
+
+  /// Shows a finding another part of the window asked for.
+  private func takeReveal() {
+    guard let id = StorageReveal.take(), let finding = model.scan?.finding(id) else { return }
+    if !state.scope.includes(finding) {
+      state.scope = StorageScope.review.includes(finding) ? .review : .everything
+    }
+    if !state.query.isEmpty { state.query = "" }
+    state.collapsed.remove(finding.category)
+    state.refresh(scan: model.scan)
+    state.highlighted = [id]
+    scrollTarget = id
   }
 
   private var inputs: ListInputs {
@@ -213,6 +230,14 @@ struct StorageScreen: View {
       }
       // Delete asks about freeing the highlighted rows, as the menu does.
       .onDeleteCommand { freeUp(state.highlighted) }
+      .onChange(of: scrollTarget) {
+        guard let id = scrollTarget else { return }
+        scrollTarget = nil
+        Task {
+          await Task.yield()
+          withAnimation(reduceMotion ? nil : .smooth) { proxy.scrollTo(id, anchor: .center) }
+        }
+      }
       }
     }
   }

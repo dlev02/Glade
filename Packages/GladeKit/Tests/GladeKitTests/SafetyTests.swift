@@ -628,4 +628,34 @@ struct SafetyTests {
     #expect(!forCursor.goes.contains { Protection.clean($0.path) == full("Application Support/Cursor") })
     #expect(forCursor.stays.contains { Protection.clean($0.path) == full("Application Support/Cursor") })
   }
+
+  // MARK: Folders picked in the window
+
+  @Test func pickedFoldersAreOnlyWhatRemovalAllows() throws {
+    guard case .success(let picked) = PickedFolder.finding(for: home + "/Library/Caches/com.example.app", protection: protection) else {
+      Issue.record("an ordinary cache folder should be pickable")
+      return
+    }
+    #expect(picked.ruleID == PickedFolder.ruleID && picked.risk == .personal && picked.method == .trash && picked.recovery == .permanent)
+    #expect(picked.autoLevel == nil && !Planner.mayAutoSelect(picked))
+
+    let refused = [
+      home, home + "/.ssh", home + "/.ssh/id_ed25519", home + "/Library", home + "/Library/Application Support",
+      home + "/Library/Caches", home + "/Documents", home + "/proj", home + "/proj/.git", outside + "/victim",
+      home + "/Library/Caches/escape/victim", home + "/Library/Caches/../../.ssh", "/Applications", "/System/Library",
+      home + "/Library/Mobile Documents/com~apple~CloudDocs", home + "/.claude/projects/-Users-me-App/memory",
+      home + "/Library/Caches/com.example.withlibrary/Old.photoslibrary",
+    ]
+    for path in refused {
+      if case .success = PickedFolder.finding(for: path, protection: protection) { Issue.record("must refuse picking \(path)") }
+      #expect(PickedFolder.assess(path, protection: protection) != .allowed, "must refuse \(path)")
+    }
+
+    // A picked finding never reaches the saved scan, so nothing outside the window can
+    // remove it by identifier.
+    ScanEngine.save(scan([picked, finding("cache", home + "/Library/Caches/com.example.app")]))
+    let saved = try #require(ScanEngine.loadLast())
+    #expect(!saved.findings.contains { $0.ruleID == PickedFolder.ruleID })
+    #expect(saved.findings.contains { $0.id == "cache" })
+  }
 }

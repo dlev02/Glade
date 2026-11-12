@@ -61,7 +61,7 @@ To free only some rows, highlight them (Shift- or Command-click), then right-cli
 
 Some apps, Adobe's above all, put parts across the system that only their own uninstaller removes. For those Glade shows **Open Uninstaller** instead of a tick box; scan again afterwards and App Leftovers lists anything it left. Apps that belong to the system account, which includes most App Store apps, need your password to move, and Glade never asks for it: **Show in Finder** takes you there to drag it to the Trash. Glade itself and macOS's own apps aren't listed.
 
-On Overview, **Other** opens a list of everything else on the disk, folder by folder: your home folder, apps, macOS and its downloads, system data. It reads names and sizes only and never measures protected folders.
+On Overview, **Other** opens a list of everything else on the disk, folder by folder: your home folder, apps, macOS and its downloads, system data. It reads names and sizes only and never measures protected folders. A folder in your Library that belongs to an app says whose it is, or that no installed app uses it. Right-click a row, or use the button that appears when you point at it, to **Move to Trash…** (when it's yours to remove; otherwise the menu says why not), **Uninstall…** an app, or **Show in Storage**. This works in the window only: there is no command for it, so an agent can never name a folder for Glade to remove.
 
 ### What Glade never touches
 

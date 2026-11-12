@@ -2,8 +2,9 @@ import Foundation
 import GladeKit
 import SwiftUI
 
-/// Installed apps, drawn with `glade snapshot <name>`. Panels are 300 wide; sheets
-/// take `--width 440`.
+/// Installed apps and removing what the whole-disk view shows, drawn with
+/// `glade snapshot <name>`. Panels are 300 wide; sheets take `--width 440`, and the
+/// disk sheet `--width 560 --height 620`.
 enum AppSnapshots {
   static var all: [String: (AppModel) -> AnyView] {
     StorageScreen.drawsOffscreen = true
@@ -27,6 +28,17 @@ enum AppSnapshots {
     "storage-uninstall-confirm-several": { model in
       model.focusClean(on: ["Final Cut Pro", "iMovie", "Minecraft"].compactMap { app(model, $0)?.id })
       return sheet(CleanConfirmation(cancel: {}, confirm: {}))
+    },
+    // The whole-disk sheet opened down to Application Support, with one folder picked.
+    "overview-usage-actions": { model in
+      model.usage = AppModel.sampleUsage(volume: model.snapshot?.disk ?? .current())
+      return AnyView(
+        DiskUsageSheet(
+          close: {}, expanded: DiskUsageSheet.sampleExpanded, picked: DiskUsageSheet.samplePicked,
+          apps: InstalledApps.index(from: model.scan?.findings ?? [])
+        )
+          .background(Color(nsColor: .windowBackgroundColor))
+      )
     },
   ]
 
