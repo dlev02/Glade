@@ -892,6 +892,8 @@ public final class AppModel {
     hasFullDiskAccess = true
     notificationsAllowed = true
     showsSetup = false
+    // Sample suggestions get their buttons, and pressing one changes nothing.
+    isDemo = true
     rebuildPlan()
   }
 }

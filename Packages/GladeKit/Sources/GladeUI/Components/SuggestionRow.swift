@@ -26,35 +26,39 @@ public struct SuggestionRow: View {
   }
 
   public var body: some View {
-    HStack(spacing: Metrics.m) {
-      icon
-      VStack(alignment: .leading, spacing: 1) {
-        Text(suggestion.appName)
-          .lineLimit(1)
-        Text(suggestion.facts ?? suggestion.reason)
-          .font(.callout)
-          .foregroundStyle(.secondary)
-          .monospacedDigit()
-          .lineLimit(1)
-        if let caveat = suggestion.caveat {
-          Label {
-            Text(caveat)
-          } icon: {
-            Image(systemName: "exclamationmark.circle.fill")
-              .foregroundStyle(Palette.warning)
-          }
-          .labelStyle(.titleAndIcon)
-          .font(.caption)
-          .foregroundStyle(.secondary)
-          .lineLimit(1)
+    VStack(alignment: .leading, spacing: 1) {
+      HStack(spacing: Metrics.m) {
+        icon
+        VStack(alignment: .leading, spacing: 1) {
+          Text(suggestion.appName)
+            .lineLimit(1)
+          Text(suggestion.facts ?? suggestion.reason)
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .monospacedDigit()
+            .lineLimit(1)
+        }
+        Spacer(minLength: Metrics.s)
+        if let title = model.actionTitle(for: suggestion) {
+          action(title)
         }
       }
-      .accessibilityElement(children: .combine)
-      Spacer(minLength: Metrics.s)
-      if let title = model.actionTitle(for: suggestion) {
-        action(title)
+      // Under the text, and as wide as the row, so the button never cuts it short.
+      if let caveat = suggestion.caveat {
+        Label {
+          Text(caveat)
+        } icon: {
+          Image(systemName: "exclamationmark.circle.fill")
+            .foregroundStyle(Palette.warning)
+        }
+        .labelStyle(.titleAndIcon)
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
+        .padding(.leading, iconSize + Metrics.m)
       }
     }
+    .accessibilityElement(children: .contain)
     .contentShape(.rect)
     .help(suggestion.reason)
   }

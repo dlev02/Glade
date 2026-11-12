@@ -24,6 +24,8 @@ struct MenuReading: View {
         .font(.caption)
         .foregroundStyle(.secondary)
         .lineLimit(1)
+        // “Under pressure” is a little wider than a third of the popover.
+        .minimumScaleFactor(0.8)
       Sparkline(values: history, ceiling: 100, color: color)
         .frame(height: 18)
         .padding(.top, Metrics.xs)
