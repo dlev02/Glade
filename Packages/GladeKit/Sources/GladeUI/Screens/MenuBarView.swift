@@ -19,11 +19,26 @@ struct MenuBarView: View {
       readings
       if let line = model.batteryLine {
         Button { showBattery() } label: {
-          Label(line.text, systemImage: line.symbol)
-            .font(.callout)
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .frame(maxWidth: .infinity, alignment: .leading)
+          HStack(spacing: Metrics.m) {
+            Image(systemName: line.symbol)
+              .font(.system(size: 12, weight: .medium))
+              .foregroundStyle(.secondary)
+              .frame(width: 24, height: 24)
+              .background(.fill.opacity(0.5), in: .rect(cornerRadius: 6))
+              .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 1) {
+              Text(line.text)
+                .lineLimit(1)
+              if let detail = line.detail {
+                Text(detail)
+                  .font(.callout)
+                  .foregroundStyle(.secondary)
+                  .lineLimit(1)
+              }
+            }
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .accessibilityElement(children: .combine)
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
