@@ -14,13 +14,15 @@ extension Assistant {
   /// - Parameters:
   ///   - snapshot: The usual description of this Mac (`MacDescription.build`), sent
   ///     after the candidates as far as the budget allows.
+  ///   - reviewing: Told the second opinion’s provider name as it is asked.
   public static func propose(
     _ request: String,
     scan: ScanResult,
     snapshot: String,
     config: GladeConfig = ConfigStore.load(),
     providers: [any AgentProvider],
-    now: Date = Date()
+    now: Date = Date(),
+    reviewing: (@Sendable (String) -> Void)? = nil
   ) async throws -> RemovalProposal {
     let provider = try await pick(config: config, providers: providers, proactive: false)
     let model = config.assistant.models[provider.id]
@@ -48,7 +50,7 @@ extension Assistant {
     let ticked = proposal.items.filter(\.startsTicked).count
     Log.info(.agent, "Proposal from \(provider.name): \(proposal.items.count) items, \(proposal.items.filter(\.named).count) named, \(ticked) ticked, \(proposal.rejected.count) rejected, from \(candidates.ids.count) candidates")
     if !proposal.items.isEmpty {
-      await review(&proposal, scan: scan, proposer: provider, proposerModel: model, config: config, providers: providers, now: now)
+      await review(&proposal, scan: scan, proposer: provider, config: config, providers: providers, now: now, reviewing: reviewing)
     }
     return proposal
   }
@@ -98,13 +100,14 @@ extension Assistant {
   /// Adds the second opinion’s notes to each item. It can’t add items, tick or untick
   /// anything; a failure leaves the proposal without one.
   static func review(
-    _ proposal: inout RemovalProposal, scan: ScanResult, proposer: any AgentProvider, proposerModel: String?,
-    config: GladeConfig, providers: [any AgentProvider], now: Date
+    _ proposal: inout RemovalProposal, scan: ScanResult, proposer: any AgentProvider,
+    config: GladeConfig, providers: [any AgentProvider], now: Date, reviewing: (@Sendable (String) -> Void)?
   ) async {
     guard let (reviewer, model) = await reviewer(config: config, proposer: proposer, providers: providers) else {
       Log.info(.agent, "No second opinion: no other AI is ready")
       return
     }
+    reviewing?(reviewer.name)
     Log.info(.agent, "Second opinion from \(reviewer.name) (\(model ?? "default model")) on \(proposal.items.count) items")
     let findings = proposal.items.compactMap { scan.finding($0.id) }
     let prompt = StoragePrompt.reviewPrompt(

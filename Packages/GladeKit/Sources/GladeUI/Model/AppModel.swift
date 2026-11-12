@@ -67,6 +67,8 @@ public final class AppModel {
     public var model: String?
     /// Set when the answer changed the storage plan.
     public var advice: StorageAdvice?
+    /// Set when the answer proposed things to remove.
+    public var proposal: ProposalState?
   }
 
   // MARK: Settings
@@ -145,7 +147,11 @@ public final class AppModel {
       selectionRevision += 1
     }
   }
-  public private(set) var cleanState: CleanState = .idle
+  public private(set) var cleanState: CleanState = .idle {
+    didSet {
+      if case .finished(let id) = cleanState, oldValue != cleanState { proposalCleanFinished(id) }
+    }
+  }
   public private(set) var receipts: [Receipt] = []
   /// Choices the person made by hand, which win over the plan.
   private var overrides: [String: Bool] = [:] {
@@ -183,9 +189,9 @@ public final class AppModel {
   // MARK: Assistant
 
   public private(set) var providers: [ProviderStatus] = []
-  public private(set) var assistantState: AssistantState = .idle
+  public internal(set) var assistantState: AssistantState = .idle
   public private(set) var advice: StorageAdvice?
-  public private(set) var messages: [Message] = []
+  public internal(set) var messages: [Message] = []
 
   // MARK: Permissions
 
@@ -755,6 +761,11 @@ public final class AppModel {
     let text = question.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !text.isEmpty else { return }
     messages.append(Message(role: .person, text: text))
+    // Removing something named gets a proposal to confirm, not a plan.
+    if RemovalRequest.wantsProposal(text, scan: scan) {
+      await proposeRemoval(text)
+      return
+    }
     let lowered = text.lowercased()
     let wantsSpace = ["free", "clean", "clear", "space", "storage", " gb", "delete", "remove"].contains { lowered.contains($0) }
     if wantsSpace, scan != nil {

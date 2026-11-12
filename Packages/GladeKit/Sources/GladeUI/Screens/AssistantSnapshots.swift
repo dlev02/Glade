@@ -28,6 +28,27 @@ enum AssistantSnapshots {
         AssistantScreen(preview: AssistantPreview(messages: adviceConversation(model), adviceIsLive: false))
       })
     },
+    // A request to remove apps by name: one ticked, one added by the AI, one with its
+    // own uninstaller, and the second opinion’s notes.
+    "assistant-proposal": { model in proposalScreen(model, reviewed: true) },
+    "assistant-proposal-noreview": { model in proposalScreen(model, reviewed: false) },
+    "assistant-proposal-done": { model in proposalScreen(model, reviewed: true, cleaned: true) },
+    // Review and Remove… with iMovie ticked as well: the usual confirmation, for the
+    // card’s ticked apps only.
+    "assistant-proposal-confirm": { model in
+      guard let scan = model.scan else { return AnyView(EmptyView()) }
+      let card = ProposalState(SampleData.sampleProposal(scan: scan))
+      let message = AppModel.Message(role: .assistant, text: card.proposal.answer, proposal: card)
+      model.messages.append(message)
+      if let imovie = card.proposal.items.first(where: { $0.title == "iMovie" }) { model.setTicked(true, item: imovie.id, in: message.id) }
+      _ = model.reviewRemoval(in: message.id)
+      return AnyView(
+        CleanConfirmation(cancel: {}, confirm: {})
+          .frame(width: 440)
+          .background(Color(nsColor: .windowBackgroundColor))
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+      )
+    },
     "assistant-sent": { _ in AnyView(RunSheet(run: sampleRuns()[0])) },
     "assistant-details": { _ in AnyView(RunsInspector(runs: sampleRuns()) { _ in }.frame(width: 300)) },
     "assistant-problem": { model in
@@ -90,6 +111,27 @@ enum AssistantSnapshots {
       AppModel.Message(role: .person, text: "Free up 30 GB"),
       AppModel.Message(role: .assistant, text: advice?.summary ?? "", provider: "claude", advice: advice),
     ]
+  }
+
+  /// The sample removal request and its proposal; `cleaned` shows the card after the
+  /// ticked app went to the Trash.
+  private static func proposalScreen(_ model: AppModel, reviewed: Bool, cleaned: Bool = false) -> AnyView {
+    guard let scan = model.scan else { return AnyView(EmptyView()) }
+    let proposal = SampleData.sampleProposal(scan: scan, reviewed: reviewed)
+    var state = ProposalState(proposal)
+    if cleaned {
+      let gone = state.ticks
+      state.outcome = ProposalState.Outcome(
+        receiptID: "sample", removed: Dictionary(uniqueKeysWithValues: gone.map { ($0, true) }), stayed: [:],
+        bytes: proposal.items.filter { gone.contains($0.id) }.reduce(0) { $0 + $1.bytes }
+      )
+      state.ticks = []
+    }
+    let messages = [
+      AppModel.Message(role: .person, text: proposal.request),
+      AppModel.Message(role: .assistant, text: proposal.answer, provider: proposal.provider, model: proposal.model, proposal: state),
+    ]
+    return AnyView(NavigationStack { AssistantScreen(preview: AssistantPreview(messages: messages)) })
   }
 
   /// A storage plan, a question that failed and an older plan, as the records of

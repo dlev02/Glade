@@ -87,6 +87,8 @@ Glade lists apps with their helper processes grouped, and what each is doing: in
 
 Ask a question ("why is my Mac slow right now?") or have your AI refine a clean towards a goal ("free 30 GB"). The AI gets no tools: it can't see files, run commands or remove anything. It answers with the identifiers of findings, and Glade drops any suggestion that breaks the rules above, such as selecting a personal file or going past the level you chose. **History** keeps exactly what was sent and what came back.
 
+Ask it to remove something by name ("remove the Adobe apps", "uninstall iMovie") and the answer comes with a list of the matching apps and items, each with the AI's reason. A second AI looks the list over first and notes anything you should know, such as a subscription that keeps billing or files only that app opens. Only what you named starts ticked, and only if Glade can remove it: apps with their own uninstaller get **Open Uninstaller**, ones that need your password **Show in Finder**, and open ones say to quit them first. **Review and Remove…** opens the usual confirmation, and everything goes to the Trash, so **Put Back** undoes it. For this, the AI is shown the names, sizes and last-opened dates of the apps that match your request (see [PRIVACY.md](PRIVACY.md)).
+
 | AI | Status |
 | --- | --- |
 | Claude Code, Codex, OpenCode | Tested |

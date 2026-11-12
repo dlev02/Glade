@@ -12,6 +12,8 @@ struct AssistantScreen: View {
   @State private var runs: [AssistantRun]?
   /// The run shown in full in a sheet.
   @State private var shownRun: AssistantRun?
+  /// The confirmation for a proposal’s ticked items is showing.
+  @State private var showsCleanSheet = false
 
   init(preview: AssistantPreview? = nil, showsDetails: Bool = false) {
     self.preview = preview
@@ -55,6 +57,12 @@ struct AssistantScreen: View {
       }
       .sheet(item: $shownRun) { run in
         RunSheet(run: run)
+      }
+      .sheet(isPresented: $showsCleanSheet, onDismiss: model.endRemovalReview) {
+        CleanSheet { showsCleanSheet = false }
+      }
+      .environment(\.reviewRemoval) { message in
+        if model.reviewRemoval(in: message) { showsCleanSheet = true }
       }
       .task(id: messages.count) {
         guard preview?.runs == nil else { return }
@@ -108,6 +116,7 @@ struct AssistantScreen: View {
     await loadRuns()
     let runs = runs ?? []
     let run = message.advice.flatMap { advice in runs.first { $0.id == advice.runID } }
+      ?? message.proposal.flatMap { card in runs.first { $0.id == card.proposal.runID } }
       ?? runs.first { $0.date <= message.date }
     if let run {
       shownRun = run
