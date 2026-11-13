@@ -26,6 +26,7 @@ Glade's own network use is Sparkle's update check and the network checks the per
 - The engine: `glade doctor`, `glade scan --category <c>`, `glade plan --level careful --all`, `glade clean --level careful` (a dry run), `glade logs --problems`.
 - Never pull Glade in front of what the person is doing. Check screens with `glade snapshot`, not `glade show` (use `glade show <section> --background` if the running app must change section), and start a build with `open -g`.
 - Only one copy of the app runs at a time; quit the installed one first. A copy outside an Applications folder never starts the updater.
+- New or changed commands or MCP tools: before calling them done, have a cheap model that has never seen Glade (DeepSeek V4.1 Flash on OpenCode works) answer five to seven questions a person would ask, using only `glade guide`, `--help` and the commands, and list every point of confusion with the text that caused it. Give it a copy of the binary so rebuilds don't break its run, and forbid `--confirm`. Fix what confused it, then update `Guide.swift` and the commands' help. The first run found a real bug and ten misleading outputs.
 
 ## Rules that aren't negotiable
 
