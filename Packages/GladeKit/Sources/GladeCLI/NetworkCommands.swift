@@ -12,7 +12,7 @@ struct Network: AsyncParsableCommand {
       (a few kilobytes) and reads the router’s status page if Glade knows it. A speed test runs only \
       with `\(Brand.cli) network test --confirm`.
       """,
-    subcommands: [NetworkNow.self, NetworkWatchCommand.self, NetworkApps.self, NetworkUsage.self, NetworkTest.self, NetworkRouter.self, NetworkCheck.self],
+    subcommands: [NetworkNow.self, NetworkWatchCommand.self, NetworkApps.self, NetworkUsage.self, NetworkTest.self, NetworkRouter.self, NetworkRouterAccess.self, NetworkCheck.self],
     defaultSubcommand: NetworkNow.self
   )
 }
@@ -239,6 +239,7 @@ struct NetworkRouter: AsyncParsableCommand {
     if !all { shown.devices = report.online }
     emit(shown, json: output.json) {
       print(report.title + (report.firmware.map { " (firmware \($0))" } ?? ""))
+      print("Access code: \(RouterReader.hasAccess(report, host: router) ? "saved in the Keychain" : "not saved (\(Brand.cli) network router-access)")")
       if let line = report.line {
         print("Line: \(line.connected == true ? "up" : line.connected == false ? "DOWN" : "unknown")\(line.source.map { ", \($0)" } ?? "")\(line.portMbps.map { " at \($0) Mbps" } ?? "")")
         if let received = line.received, let sent = line.sent { print("Since the router started: ↓ \(Format.bytes(Int64(clamping: received))) ↑ \(Format.bytes(Int64(clamping: sent)))") }
@@ -251,6 +252,44 @@ struct NetworkRouter: AsyncParsableCommand {
         let bars = device.signalBars.map { " · \($0) bars" } ?? ""
         print("  \((device.name ?? "Unnamed").padding(toLength: 30, withPad: " ", startingAt: 0)) \(device.connection)\(bars)\(device.online ? "" : " · off")")
       }
+    }
+  }
+}
+
+struct NetworkRouterAccess: AsyncParsableCommand {
+  static let configuration = CommandConfiguration(
+    commandName: "router-access",
+    abstract: "Save your router's admin code (an AT&T gateway's Device Access Code) in the Keychain, check it, or forget it.",
+    discussion: "The code is typed at a hidden prompt, checked by signing in, and kept in your Keychain. It is never shown to an AI, written to the log, or printed."
+  )
+
+  @Flag(name: .long, help: "Check the saved code still works.") var check = false
+  @Flag(name: .long, help: "Remove the saved code.") var forget = false
+
+  func run() async throws {
+    let path = await NetworkPath.current()
+    guard let host = path.router, let report = await RouterReader.read(router: host, maximumAge: 0) else {
+      throw ValidationError("Glade can’t read this router. AT&T gateways are supported so far.")
+    }
+    if forget {
+      RouterReader.forgetAccess(report, host: host)
+      print("Forgot the code for \(report.title).")
+      return
+    }
+    if check {
+      guard RouterReader.hasAccess(report, host: host) else { throw ValidationError("No code saved for \(report.title). Run this without --check to add one.") }
+      print(await RouterReader.checkAccess(report, host: host) ? "The saved code works." : "The saved code didn’t work. Run this again to replace it.")
+      return
+    }
+    // Typed at a hidden prompt, never as an argument, so it stays out of shell history.
+    guard let typed = getpass("Device Access Code for \(report.title) (hidden): "), case let code = String(cString: typed), !code.isEmpty else {
+      throw ValidationError("No code entered.")
+    }
+    do {
+      try await RouterReader.saveAccess(code, router: host)
+      print("Signed in and saved to your Keychain.")
+    } catch {
+      throw ValidationError(error.localizedDescription)
     }
   }
 }

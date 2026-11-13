@@ -31,7 +31,7 @@ struct NetworkScreen: View {
         panels(network, stats: stats)
         HStack(alignment: .top, spacing: Metrics.l) {
           NetworkAppsCard(traffic: network.traffic, today: network.history.byApp(since: Calendar.current.startOfDay(for: Date())))
-          RouterCard(report: network.status?.router, loading: network.loadingRouter)
+          RouterCard(report: network.status?.router, host: network.status?.path.router, loading: network.loadingRouter)
             .frame(width: size.width > 0 ? min(320, size.width * 0.36) : 300)
         }
         DataUsedCard(history: network.history)

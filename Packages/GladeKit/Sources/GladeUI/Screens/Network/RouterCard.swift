@@ -5,8 +5,11 @@ import SwiftUI
 /// connect, with the ones on a weak signal counted. The list opens on request.
 struct RouterCard: View {
   var report: RouterReport?
+  var host: String?
   var loading: Bool
   @State private var showsDevices = false
+  @State private var addsCode = false
+  @State private var accessRevision = 0
 
   var body: some View {
     Card {
@@ -20,6 +23,7 @@ struct RouterCard: View {
           if let line = report.line {
             PanelFact("Internet line", lineText(line), dot: line.connected == false ? Palette.critical : Palette.good)
           }
+          if let host, report.kind == "AT&T gateway" { accessRow(report, host: host) }
           if report.devices != nil {
             PanelFact("Devices online", "\(report.online.count)")
             ForEach(report.onlineByConnection, id: \.connection) { group in
@@ -51,6 +55,29 @@ struct RouterCard: View {
         }
       }
       .font(.subheadline)
+    }
+  }
+
+  /// Whether Glade holds the gateway’s Device Access Code, with Add or Forget.
+  private func accessRow(_ report: RouterReport, host: String) -> some View {
+    let saved = accessRevision >= 0 && RouterReader.hasAccess(report, host: host)
+    return HStack {
+      Text("Access code").foregroundStyle(.secondary)
+      Spacer()
+      if saved {
+        Text("In your Keychain")
+        Button("Forget") {
+          RouterReader.forgetAccess(report, host: host)
+          accessRevision += 1
+        }
+        .buttonStyle(.link)
+      } else {
+        Button("Add…") { addsCode = true }
+          .buttonStyle(.link)
+      }
+    }
+    .sheet(isPresented: $addsCode, onDismiss: { accessRevision += 1 }) {
+      RouterAccessSheet(title: report.title, host: host)
     }
   }
 
