@@ -772,6 +772,7 @@ public final class AppModel {
   public func ask(_ question: String) async {
     let text = question.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !text.isEmpty else { return }
+    let earlier = conversationSoFar
     messages.append(Message(role: .person, text: text))
     // Removing something named gets a proposal to confirm, not a plan.
     if RemovalRequest.wantsProposal(text, scan: scan) {
@@ -798,7 +799,7 @@ public final class AppModel {
       battery: batteryBrief
     )
     do {
-      let reply = try await Assistant.ask(text, snapshot: description, config: config, providers: AgentProviders.all)
+      let reply = try await Assistant.ask(text, snapshot: description, earlier: earlier, config: config, providers: AgentProviders.all)
       messages.append(Message(role: .assistant, text: reply.answer, provider: reply.provider, model: reply.model))
       assistantState = .idle
     } catch {
@@ -820,6 +821,18 @@ public final class AppModel {
     answer.summary = answer.summary.replacingOccurrences(of: "{total}", with: Format.bytes(immediateBytes))
     advice = answer
     messages.append(Message(role: .assistant, text: answer.summary, provider: answer.provider, model: answer.model, advice: answer))
+  }
+
+  /// The conversation on screen as the Assistant sees it: what was asked and answered,
+  /// without problems Glade reported.
+  var conversationSoFar: [ConversationTurn] {
+    messages.compactMap { message in
+      switch message.role {
+      case .person: ConversationTurn(role: .person, text: message.text)
+      case .assistant: ConversationTurn(role: .assistant, text: message.text)
+      case .problem: nil
+      }
+    }
   }
 
   public func clearConversation() {

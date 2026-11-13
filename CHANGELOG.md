@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Assistant
+
+- The Assistant now follows the conversation, so a follow-up like "and the other one?" or "is it safe to quit that?" is answered in the light of what came before. **New Conversation** starts afresh. On the command line, `glade ask --continue` follows on from your last question.
+
 ## 0.3.0 — 2026-11-12
 
 ### Battery

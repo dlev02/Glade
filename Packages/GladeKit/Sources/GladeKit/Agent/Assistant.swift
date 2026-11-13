@@ -43,6 +43,10 @@ public struct AssistantRun: Codable, Sendable, Identifiable {
   public var rejected: [String]
   /// Started by Glade itself (a threshold tripped) and not by a person.
   public var proactive: Bool
+  /// For a question: what was asked, and the conversation before it, so a follow-up
+  /// from the command line can carry on where it left off.
+  public var question: String?
+  public var earlier: [ConversationTurn]?
 }
 
 public enum AssistantError: Error, LocalizedError {
@@ -163,19 +167,27 @@ public enum Assistant {
 
   /// Answers a question about this Mac using a snapshot Glade prepared. The answer is
   /// text for the person; it can’t cause any action.
+  /// - Parameter earlier: The conversation so far, oldest first, so a follow-up such as
+  ///   “and the other one?” makes sense. Empty for a new conversation.
   public static func ask(
     _ question: String,
     snapshot: String,
+    earlier: [ConversationTurn] = [],
     config: GladeConfig = ConfigStore.load(),
     proactive: Bool = false,
     providers: [any AgentProvider]
   ) async throws -> (answer: String, provider: String, model: String?, runID: String) {
     let provider = try await pick(config: config, providers: providers, proactive: proactive)
     let budget = provider.isLocal ? 9_000 : 60_000
-    let prompt = "QUESTION\n\(question)\n\nWHAT GLADE SEES\n\(snapshot.prefix(budget))"
+    var prompt = ""
+    if let history = Conversation.render(earlier, budget: provider.isLocal ? 2_500 : 16_000, local: provider.isLocal) {
+      prompt += history + "\n\n"
+    }
+    prompt += "QUESTION\n\(question)\n\nWHAT GLADE SEES\n\(snapshot.prefix(budget))"
     let (reply, runID) = try await run(
       provider: provider, purpose: "question", system: StoragePrompt.questionSystem, prompt: prompt,
-      model: config.assistant.models[provider.id], config: config, proactive: proactive, schema: nil
+      model: config.assistant.models[provider.id], config: config, proactive: proactive, schema: nil,
+      question: question, earlier: earlier
     )
     return (reply.text.trimmingCharacters(in: .whitespacesAndNewlines), reply.provider, reply.model ?? config.assistant.models[provider.id], runID)
   }
@@ -209,12 +221,14 @@ public enum Assistant {
 
   static func run(
     provider: any AgentProvider, purpose: String, system: String, prompt: String, model: String?,
-    config: GladeConfig, proactive: Bool, schema: String? = StoragePrompt.schema
+    config: GladeConfig, proactive: Bool, schema: String? = StoragePrompt.schema,
+    question: String? = nil, earlier: [ConversationTurn]? = nil
   ) async throws -> (AgentReply, String) {
     var record = AssistantRun(
       id: UUID().uuidString, date: Date(), purpose: purpose, provider: provider.id, model: model,
       system: system, prompt: prompt, reply: nil, error: nil, duration: 0, inputTokens: nil,
-      outputTokens: nil, costUSD: nil, rejected: [], proactive: proactive
+      outputTokens: nil, costUSD: nil, rejected: [], proactive: proactive,
+      question: question, earlier: earlier?.isEmpty == true ? nil : earlier
     )
     let started = Date()
     Log.info(.agent, "Asking \(provider.name) (\(model ?? "default model"), effort \(config.assistant.effort.rawValue)) for: \(purpose); prompt \(prompt.count) characters")

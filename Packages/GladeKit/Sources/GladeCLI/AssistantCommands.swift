@@ -81,6 +81,9 @@ struct Ask: AsyncParsableCommand {
   @Flag(name: .long, help: "Print the snapshot the AI would be given, and stop.")
   var showSnapshot = false
 
+  @Flag(name: .customLong("continue"), help: "Follow on from the last question (asked within six hours), so “and the other one?” makes sense.")
+  var continues = false
+
   func run() async throws {
     let sampler = SystemSampler()
     let snapshot = await sampler.snapshot()
@@ -108,7 +111,14 @@ struct Ask: AsyncParsableCommand {
       print(description)
       return
     }
-    let reply = try await Assistant.ask(question, snapshot: description, providers: AgentProviders.all)
+    var earlier: [ConversationTurn] = []
+    if continues {
+      guard let previous = Conversation.continuing(from: Assistant.runs(limit: 30)) else {
+        throw ValidationError("There’s no question from the last six hours to follow on from. Ask without --continue.")
+      }
+      earlier = previous
+    }
+    let reply = try await Assistant.ask(question, snapshot: description, earlier: earlier, providers: AgentProviders.all)
     struct Answer: Encodable {
       var answer: String
       var provider: String
