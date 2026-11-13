@@ -31,6 +31,7 @@ struct AppsTable: View {
   @State private var columns = OptionalColumns.memory
 
   private static let processorHelp = "Share of the whole Mac’s processor, across all its cores."
+  private static let networkHelp = "Received and sent together, each second."
 
   var body: some View {
     Table(rows, selection: $selection, sortOrder: $sortOrder) {
@@ -64,6 +65,15 @@ struct AppsTable: View {
           figure(row.graphics < 0 ? "—" : PerformanceFormat.percent(row.graphics), row, quiet: row.graphics <= 0)
         }
         .width(min: 64, ideal: 78)
+        .alignment(.numeric)
+      }
+
+      if columns.network {
+        TableColumn("Network", value: \.network) { row in
+          figure(NetworkFormat.rate(row.network), row, quiet: row.network < 1_000)
+            .help(Self.networkHelp)
+        }
+        .width(min: 72, ideal: 88)
         .alignment(.numeric)
       }
 
@@ -102,6 +112,7 @@ struct AppsTable: View {
     }
     .onChange(of: apps, initial: true) { rebuild(resort: false) }
     .onChange(of: logicalCores) { rebuild(resort: false) }
+    .onChange(of: model.network.traffic) { rebuild(resort: false) }
     .onChange(of: sortOrder) {
       AppsTableMemory.sortOrder = sortOrder
       rebuild(resort: true)
@@ -248,11 +259,15 @@ struct AppsTable: View {
   // MARK: Rows
 
   /// - Parameter resort: Apply the sort order even while the pointer is over the table.
+  private var traffic: [String: AppTraffic] {
+    Dictionary(model.network.traffic.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+  }
+
   private func rebuild(resort: Bool) {
     let query = search.trimmingCharacters(in: .whitespaces)
     let fresh = apps
       .filter { filter.includes($0) && (query.isEmpty || $0.name.localizedStandardContains(query)) }
-      .map { UsageRow($0, logicalCores: logicalCores) }
+      .map { UsageRow($0, logicalCores: logicalCores, traffic: traffic[$0.id]) }
 
     if !resort, isHovering, !rows.isEmpty {
       // Keep the order on screen; anything new goes at the end.

@@ -4,6 +4,13 @@
 
 ### Network
 
+- A new **Network** section answers "is it my Wi-Fi, my internet or the service?" It draws your connection from this Mac to your router, your provider and the internet, each with its latency, so a slow hop stands out, and leads with a plain verdict such as "Uploads are making everything wait" or "Your Wi-Fi signal is weak here".
+- **Latency** updates every second while the section is open, like the ping graph in a call app. **Wi-Fi** shows the signal, band, channel and link rate.
+- **Test Speed** runs macOS's own speed test when you ask. It says how much data it will use first, and afterwards how much slower the line gets when busy and whether it's good for calls, 4K and game streaming.
+- **Using the Network** lists apps by what they're sending and receiving now and today, and Performance has a Network column.
+- **Data Used** shows what this Mac used today, this week and this month, by day, app and network, counted while Glade is open.
+- On an AT&T gateway, **Your Network** shows whether the line is up and lists the devices on your network with their signal, without a password.
+- **Settings > Network** turns the section off, changes the host latency is measured against and sets how long a speed test runs.
 - `glade network` says whether your connection is healthy and, if not, where the problem is: your Wi-Fi, your internet line or further out. It measures latency to your router, your provider and the internet separately, reads the Wi-Fi signal, and names the apps using the network, so "Dropbox is filling your upload" or "your Wi-Fi is dropping data" comes with the readings behind it.
 - `glade network watch` follows latency second by second and says what was busiest at each spike, for when a call breaks up or a stream buffers.
 - `glade network check www.netflix.com` tells a slow service from a slow connection by comparing it with apple.com.

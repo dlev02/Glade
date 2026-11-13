@@ -11,12 +11,15 @@ nonisolated struct UsageRow: Identifiable, Hashable, Sendable {
   let graphics: Double
   /// The front app sorts as most recent, unknowns as least.
   let lastUsed: Date
+  /// Bytes a second received and sent together, 0 when it isn’t measured.
+  let network: Double
 
-  init(_ app: AppUsage, logicalCores: Int) {
+  init(_ app: AppUsage, logicalCores: Int, traffic: AppTraffic? = nil) {
     self.app = app
     processor = app.cpuPercent / Double(max(logicalCores, 1))
     graphics = app.gpuPercent ?? -1
     lastUsed = app.isFrontmost ? .distantFuture : app.lastActive ?? .distantPast
+    network = traffic?.total ?? 0
   }
 
   var id: String { app.id }

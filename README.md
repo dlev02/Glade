@@ -89,6 +89,12 @@ The charge with one sentence saying what it's doing ("Charging to 80%, there in 
 
 The charge limit you set in System Settings › Battery shows here too. Glade can't change it: macOS only takes a new limit from System Settings, so **Change…** opens that pane. Glade records the charge every five minutes while it's open, on your Mac only; the energy figures cover the processor and neural engine, not the screen or graphics chip. **Settings > General > Battery detail** switches to Technical for milliamp-hours, watts, volts and cycles, and **Alerts** has six battery alerts: charged past the limit, limit turned off, hot while charging, health below 80%, kept awake on battery and a heavy drain while asleep. On a Mac without a battery the section is **Energy** and shows what applies.
 
+### Network
+
+![The Network section: a verdict with the connection drawn from this Mac to the router, provider and internet, latency, Wi-Fi and speed panels, the apps using the network, the router's devices and data used this week](docs/images/network.png)
+
+Whether your connection is healthy and, if not, where the trouble is: your Wi-Fi, your internet line or further out. Glade pings your router, your provider's first router and the internet once a second while the section is open and draws each one, so a slow hop shows where it is; a spike lines up with the app that was busiest at the time. **Wi-Fi** shows the signal, band, channel and link rate. **Test Speed** runs macOS's own speed test when you ask, and says how much slower the line gets when it's busy (what makes calls stutter during uploads) and whether it's good for calls, 4K and game streaming. **Using the Network** lists apps by what they're sending and receiving, and Performance gains a Network column. On an AT&T gateway, **Your Network** reads the line and lists the devices on your network with their signal, without a password. **Data Used** counts what this Mac used each day, by app and by network, while Glade is open. To tell your networks apart by name, macOS asks for Location access the first time; everything else works without it.
+
 ### Assistant
 
 ![The Assistant section: a question about the Mac and the answer, and a storage plan the AI refined with its reasons](docs/images/assistant.png)

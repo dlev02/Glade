@@ -9,7 +9,7 @@ import SwiftUI
 @Observable
 public final class AppModel {
   public enum Section: String, CaseIterable, Identifiable, Sendable {
-    case overview, storage, performance, battery, assistant, history
+    case overview, storage, performance, battery, network, assistant, history
 
     public var id: String { rawValue }
 
@@ -20,6 +20,7 @@ public final class AppModel {
       case .performance: "Performance"
       // A Mac without a battery still has energy to show.
       case .battery: BatteryReader.hasBattery ? "Battery" : "Energy"
+      case .network: "Network"
       case .assistant: "Assistant"
       case .history: "History"
       }
@@ -31,6 +32,7 @@ public final class AppModel {
       case .storage: "internaldrive"
       case .performance: "waveform.path.ecg"
       case .battery: BatteryReader.hasBattery ? "battery.75percent" : "bolt"
+      case .network: "wifi"
       case .assistant: "sparkles"
       case .history: "clock.arrow.trianglehead.counterclockwise.rotate.90"
       }
@@ -132,6 +134,9 @@ public final class AppModel {
   /// date in AppModel+Battery.
   public internal(set) var battery = BatteryState()
   @ObservationIgnored let batteryWork = BatteryWork()
+  /// The connection, latency, traffic, data used and speed tests, while Network shows.
+  public internal(set) var network = NetworkState()
+  @ObservationIgnored let networkWork = NetworkWork()
 
   // MARK: Free Up Memory
 
@@ -210,7 +215,7 @@ public final class AppModel {
 
   // MARK: Internals
 
-  private let defaults = UserDefaults.standard
+  let defaults = UserDefaults.standard
   private let sampler = SystemSampler()
   let monitor: ThresholdMonitor
   private var samplingTask: Task<Void, Never>?
@@ -259,6 +264,7 @@ public final class AppModel {
         sample.apps = Self.demoApps(sample.apps)
         sample.suggestions = SampleData.sampleSuggestions(apps: sample.apps)
         loadSample(sample)
+        loadNetworkSample(SampleData.sampleNetwork(.healthy))
         // `-demoSetup YES` shows Setup over the sample data.
         if DemoState.value("demoSetup") != nil { showsSetup = true }
         // `-demoSetup signin` shows it with no AI ready yet, only one to sign in to.
@@ -363,6 +369,7 @@ public final class AppModel {
       await refreshApps()
     }
     await sampleBattery()
+    await sampleNetwork()
     for alert in await monitor.ingest(reading) {
       alerts.insert(alert, at: 0)
       if alerts.count > 20 { alerts.removeLast() }
@@ -794,9 +801,10 @@ public final class AppModel {
     }
     await refreshApps()
     await refreshBatteryForAssistant()
+    let networkBrief = await networkForAssistant(text)
     let description = MacDescription.build(
       snapshot: snapshot, apps: apps, context: context, suggestions: suggestions, scan: scan, plan: plan,
-      battery: batteryBrief
+      battery: batteryBrief, network: networkBrief, networkHistory: networkBrief == nil ? nil : NetworkHistoryStore.load()
     )
     do {
       let reply = try await Assistant.ask(text, snapshot: description, earlier: earlier, config: config, providers: AgentProviders.all)

@@ -38,56 +38,80 @@ public struct NetworkWatch: Codable, Sendable, Equatable {
   public var summary: [NetworkStatus.Latency]
   public var spikes: [Spike]
 
+  /// One second of a live watch: the sample, and every app’s traffic as last measured.
+  public struct Tick: Sendable {
+    public var sample: Sample
+    public var apps: [AppTraffic]
+  }
+
+  /// A sample a second until the stream is cancelled: one `ping` per target for the
+  /// whole time and `nettop` every two seconds. For the Network section while it shows.
+  public static func live(targets: NetworkTargets) -> AsyncStream<Tick> {
+    AsyncStream { continuation in
+      let task = Task {
+        let collector = Collector()
+        await withTaskGroup(of: Void.self) { group in
+          for kind in NetworkTargets.Kind.allCases {
+            guard let host = targets.host(kind) else { continue }
+            group.addTask {
+              for await reply in Pinger.stream(host) {
+                if Task.isCancelled { break }
+                await collector.add(kind, reply.milliseconds)
+              }
+            }
+          }
+          group.addTask {
+            let sampler = SystemSampler()
+            while !Task.isCancelled {
+              await collector.traffic(await TrafficReader.now(seconds: 2, sampler: sampler))
+            }
+          }
+          group.addTask {
+            while !Task.isCancelled {
+              try? await Task.sleep(for: .seconds(1))
+              if Task.isCancelled { break }
+              let sample = await collector.tick()
+              continuation.yield(Tick(sample: sample, apps: await collector.apps))
+            }
+          }
+          await group.next()
+          group.cancelAll()
+        }
+        continuation.finish()
+      }
+      continuation.onTermination = { _ in task.cancel() }
+    }
+  }
+
   /// - Parameter onSample: Called once a second with the newest sample.
   public static func run(
     seconds: Int, path: NetworkPath, internetHost: String, onSample: @escaping @Sendable (Sample) -> Void = { _ in }
   ) async -> NetworkWatch {
     let started = Date()
     let targets = await NetworkTargets.current(path: path, internetHost: internetHost)
-    let collector = Collector()
     let length = min(600, max(5, seconds))
-    await withTaskGroup(of: Void.self) { group in
-      for kind in NetworkTargets.Kind.allCases {
-        guard let host = targets.host(kind) else { continue }
-        group.addTask {
-          for await reply in Pinger.stream(host) {
-            await collector.add(kind, reply.milliseconds)
-            if Task.isCancelled { break }
-          }
-        }
-      }
-      group.addTask {
-        let sampler = SystemSampler()
-        while !Task.isCancelled {
-          let apps = await TrafficReader.now(seconds: 2, sampler: sampler)
-          await collector.traffic(apps)
-        }
-      }
-      group.addTask {
-        for _ in 0..<length {
-          try? await Task.sleep(for: .seconds(1))
-          onSample(await collector.tick())
-        }
-      }
-      // The clock decides when it’s over.
-      await group.next()
-      group.cancelAll()
+    var samples: [Sample] = []
+    for await tick in live(targets: targets) {
+      samples.append(tick.sample)
+      onSample(tick.sample)
+      if samples.count >= length { break }
     }
-    let samples = await collector.samples
     return summarise(samples, started: started, targets: targets)
   }
 
-  static func summarise(_ samples: [Sample], started: Date, targets: NetworkTargets) -> NetworkWatch {
+  /// Summary and spikes over any run of samples, such as the last minute on screen.
+  public static func summarise(_ samples: [Sample], started: Date, targets: NetworkTargets) -> NetworkWatch {
     var summary: [NetworkStatus.Latency] = []
     var spikes: [Spike] = []
     for kind in NetworkTargets.Kind.allCases {
       guard let host = targets.host(kind) else { continue }
-      let values = samples.map { $0.value(kind) }
+      // Nothing before the first reply counts: the ping was still starting.
+      let values = Array(samples.map { $0.value(kind) }.drop { $0 == nil })
       let stats = LatencyStats(values)
       summary.append(.init(kind: kind, host: host, stats: stats))
       guard let typical = stats.typical else { continue }
       let threshold = max(typical * 3, typical + 30)
-      for sample in samples {
+      for sample in samples.suffix(values.count) {
         let value = sample.value(kind)
         if value.map({ $0 > threshold }) ?? true {
           spikes.append(Spike(date: sample.date, kind: kind, milliseconds: value, busiest: sample.busiest, sending: sample.sending))
@@ -105,12 +129,19 @@ public struct NetworkWatch: Codable, Sendable, Equatable {
     func add(_ kind: NetworkTargets.Kind, _ value: Double?) { pending[kind, default: []].append(value) }
     func traffic(_ apps: [AppTraffic]) { self.apps = apps }
 
-    /// The second just gone: the slowest reply from each place, a loss counting as none.
+    var last: [NetworkTargets.Kind: Double] = [:]
+
+    /// The second just gone: the slowest reply from each place, `nil` when one was
+    /// lost. A second that simply had no reply yet repeats the one before, since a
+    /// ping a second doesn’t always land inside each second.
     func tick() -> Sample {
       func take(_ kind: NetworkTargets.Kind) -> Double? {
         let values = pending[kind] ?? []
         pending[kind] = []
-        return values.compactMap { $0 }.max()
+        guard !values.isEmpty else { return last[kind] }
+        let worst = values.compactMap { $0 }.max()
+        if let worst { last[kind] = worst }
+        return worst
       }
       let busiest = apps.first.flatMap { $0.total >= 50_000 ? $0.name : nil }
       let sample = Sample(

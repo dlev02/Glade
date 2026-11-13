@@ -25,6 +25,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     false
   }
 
+  /// Writes the last few minutes of data used before quitting.
+  func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+    Task { @MainActor in
+      await Self.model.flushNetwork()
+      sender.reply(toApplicationShouldTerminate: true)
+    }
+    return .terminateLater
+  }
+
   func applicationWillTerminate(_ notification: Notification) {
     ActivityLog.shared.flush()
     Log.info(.app, "\(Brand.name) quit")

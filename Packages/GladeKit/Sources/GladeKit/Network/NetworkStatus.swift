@@ -12,6 +12,12 @@ public struct NetworkStatus: Codable, Sendable, Equatable {
     /// The address pinged. Shown on this Mac only, never to an AI.
     public var host: String?
     public var stats: LatencyStats?
+
+    public init(kind: NetworkTargets.Kind, host: String?, stats: LatencyStats?) {
+      self.kind = kind
+      self.host = host
+      self.stats = stats
+    }
   }
 
   public var date: Date

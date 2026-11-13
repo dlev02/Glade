@@ -92,7 +92,13 @@ struct PerformanceScreen: View {
   private func watch(_ on: Bool) {
     guard on != isWatching else { return }
     isWatching = on
-    if on { model.surfaceAppeared(detail: true) } else { model.surfaceDisappeared(detail: true) }
+    if on {
+      model.surfaceAppeared(detail: true)
+      model.trafficAppeared()
+    } else {
+      model.surfaceDisappeared(detail: true)
+      model.trafficDisappeared()
+    }
   }
 
   /// A table row’s height and the header’s, as AppKit draws them, for snapping.

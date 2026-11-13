@@ -17,7 +17,7 @@ public enum Snapshotter {
         return AnyView(DiskUsageSheet(close: {}).background(Color(nsColor: .windowBackgroundColor)))
       },
     ]
-    for group in [StorageSnapshots.all, AppSnapshots.all, PerformanceSnapshots.all, BatterySnapshots.all, AssistantSnapshots.all, SettingsSnapshots.all, HistorySnapshots.all] {
+    for group in [StorageSnapshots.all, AppSnapshots.all, PerformanceSnapshots.all, BatterySnapshots.all, NetworkSnapshots.all, AssistantSnapshots.all, SettingsSnapshots.all, HistorySnapshots.all] {
       all.merge(group) { _, new in new }
     }
     return all
@@ -51,6 +51,7 @@ public enum Snapshotter {
     var sample = await SampleData.capture()
     if live, let scan = ScanEngine.loadLast() { sample.scan = scan }
     model.loadSample(sample)
+    model.loadNetworkSample(SampleData.sampleNetwork(.healthy))
     model.appearance = dark ? .dark : .light
     model.section = section
 

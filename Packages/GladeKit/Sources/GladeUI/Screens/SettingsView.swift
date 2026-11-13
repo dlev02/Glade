@@ -26,6 +26,9 @@ struct SettingsView: View {
       Tab(SettingsTab.alerts.title, systemImage: SettingsTab.alerts.symbol, value: .alerts) {
         AlertsPane().settingsPane(.alerts)
       }
+      Tab(SettingsTab.network.title, systemImage: SettingsTab.network.symbol, value: .network) {
+        NetworkPane().settingsPane(.network)
+      }
       Tab(SettingsTab.search.title, systemImage: SettingsTab.search.symbol, value: .search) {
         SearchPane().settingsPane(.search)
       }

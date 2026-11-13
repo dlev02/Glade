@@ -6,8 +6,10 @@ import GladeKit
 struct OptionalColumns: Equatable {
   var graphics = false
   var lastUsed = false
+  var network = false
   private var emptyGraphics = 0
   private var emptyLastUsed = 0
+  private var emptyNetwork = 0
 
   /// Refreshes in a row with nothing in a column before it hides.
   private static let patience = 5
@@ -21,6 +23,8 @@ struct OptionalColumns: Equatable {
     let hasLastUsed = rows.contains { !$0.app.isFrontmost && $0.app.lastActive != nil }
     (graphics, emptyGraphics) = Self.step(showing: graphics, has: hasGraphics, empty: emptyGraphics)
     (lastUsed, emptyLastUsed) = Self.step(showing: lastUsed, has: hasLastUsed, empty: emptyLastUsed)
+    // A kilobyte a second is an app actually talking, not a keep-alive.
+    (network, emptyNetwork) = Self.step(showing: network, has: rows.contains { $0.network >= 1_000 }, empty: emptyNetwork)
   }
 
   private static func step(showing: Bool, has: Bool, empty: Int) -> (Bool, Int) {
