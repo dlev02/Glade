@@ -19,22 +19,33 @@ extension StoragePrompt {
   public static func littleSnitchPrompt(_ rules: LittleSnitchRules, request: String?, characterBudget: Int) -> String {
     var text = ""
     if let request, !request.isEmpty { text += "OWNER’S REQUEST\n\(request)\n\n" }
-    text += "RULES (\(rules.rules.count) from a \(rules.source)\(rules.blocklistEntries > 0 ? ", plus \(rules.blocklistEntries) blocklist entries not listed" : ""))\n"
-    text += "id | action | process | via | remote | direction | ports | protocol | off | group\n"
+    // The person’s own rules, the ones Glade noticed first, then the most used. Rules a
+    // group or Little Snitch itself manages are counted, not listed.
+    let findings = rules.findings()
+    let flagged = Set(findings.flatMap(\.ruleIDs))
+    let own = rules.rules.filter { !$0.managed && !$0.builtIn && !$0.disabled }
+    let ordered = own.filter { flagged.contains($0.id) } + own.filter { !flagged.contains($0.id) }.sorted { ($0.uses ?? 0) > ($1.uses ?? 0) }
+    let managed = rules.rules.filter(\.managed).count, builtIn = rules.rules.filter { $0.builtIn && !$0.managed }.count
+    text += "RULES: \(own.count) of the owner’s own in force (\(managed) more come from rule groups and \(builtIn) are Little Snitch’s or macOS’s own; not listed)\(rules.blocklistEntries > 0 ? ", plus \(rules.blocklistEntries) blocklist entries" : "")\n"
+    text += "id | action | app | process | via (helper it connects through) | remote | direction | ports | user | last used | uses\n"
     var omitted = 0
-    for rule in rules.rules {
-      let line = [rule.id, rule.action, rule.process, rule.via ?? "-", "\(rule.remoteKind == "any" ? "any" : "\(rule.remoteKind): \(rule.remote)")", rule.direction, rule.ports ?? "any", rule.proto ?? "any", rule.disabled ? "off" : "on", rule.group ?? "-"].joined(separator: " | ")
+    for rule in ordered {
+      let remote = rule.remoteKind == "any" ? "any" : "\(rule.remoteKind): \(rule.remote.prefix(160))"
+      let used = rule.lastUsed.map { $0.formatted(.iso8601.year().month().day()) } ?? "never"
+      var fields = [rule.id, rule.action, rule.app ?? "-", rule.process, rule.via ?? "-", remote]
+      fields += [rule.direction == "outgoing" ? "out" : "in", rule.ports ?? "any", rule.uid.map { "uid \($0)" } ?? "all", used, rule.uses.map(String.init) ?? "-"]
+      if rule.gone == true { fields.append("app gone") }
+      let line = fields.joined(separator: " | ")
       guard text.count + line.count < characterBudget * 3 / 4 else {
         omitted += 1
         continue
       }
       text += line + "\n"
     }
-    if omitted > 0 { text += "(\(omitted) more rules left out for length)\n" }
-    let findings = rules.findings()
+    if omitted > 0 { text += "(\(omitted) more of their rules left out for length; the least used)\n" }
     if !findings.isEmpty {
       text += "\nWHAT GLADE NOTICED\n"
-      for finding in findings.prefix(40) { text += "- [\(finding.ruleIDs.joined(separator: ", "))] \(finding.sentence)\n" }
+      for finding in findings.prefix(40) { text += "- [\(finding.ruleIDs.prefix(12).joined(separator: ", "))\(finding.ruleIDs.count > 12 ? ", …" : "")] \(finding.sentence)\n" }
     }
     if !rules.groups.isEmpty {
       text += "\nRULE GROUPS\n"

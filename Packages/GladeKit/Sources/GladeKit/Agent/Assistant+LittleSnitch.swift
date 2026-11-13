@@ -39,6 +39,10 @@ extension Assistant {
         review.rejected.append("\(id): no such rule")
         continue
       }
+      if rule.managed || rule.builtIn {
+        review.rejected.append("\(id): managed by \(rule.group ?? "Little Snitch"), not deleted on its own")
+        continue
+      }
       if rule.action == "deny", !duplicates.contains(id) {
         review.rejected.append("\(id): a deny rule that isn’t a duplicate stays")
         continue

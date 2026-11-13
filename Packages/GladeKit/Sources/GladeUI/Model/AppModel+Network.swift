@@ -238,7 +238,7 @@ extension AppModel {
       var text = review.summary
       for point in review.points { text += "\n\n**\(point.title)**  \n\(point.detail)" }
       if !review.remove.isEmpty {
-        text += "\n\n### Worth deleting in Little Snitch\n" + review.remove.map { "- \($0.sentence)" }.joined(separator: "\n")
+        text += "\n\n### Worth deleting in Little Snitch (\(review.remove.count) rules)\n" + review.removalsByApp.map { "- \($0)" }.joined(separator: "\n")
       }
       if !review.add.isEmpty {
         text += "\n\n\(review.add.count == 1 ? "One new rule is" : "\(review.add.count) new rules are") ready to import into Little Snitch as a group that starts switched off."

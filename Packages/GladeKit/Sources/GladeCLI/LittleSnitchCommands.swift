@@ -107,8 +107,8 @@ struct LittleSnitchReviewCommand: AsyncParsableCommand {
       print(review.summary)
       for point in review.points { print("\n• \(point.title)\n  \(point.detail)") }
       if !review.remove.isEmpty {
-        print("\nWorth deleting in Little Snitch:")
-        for rule in review.remove { print("  – \(rule.sentence)") }
+        print("\nWorth deleting in Little Snitch (\(review.remove.count) rules, by app; --json lists each):")
+        for line in review.removalsByApp { print("  – \(line)") }
       }
       if let written {
         print("\n\(review.add.count) suggested rules written to \(Redactor.tilde(written)).")
