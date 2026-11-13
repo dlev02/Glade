@@ -39,7 +39,7 @@ public enum Snapshotter {
 
   /// - Parameters:
   ///   - screen: One of `screens`. `window` is the whole main window showing `section`.
-  ///   - live: Use this Mac’s real last scan instead of made-up findings.
+  ///   - live: Use this Mac’s real last scan and a real network reading instead of made-up ones.
   public static func render(
     screen: String, section: AppModel.Section = .overview, size: CGSize, dark: Bool, live: Bool, to url: URL
   ) async throws {
@@ -51,7 +51,7 @@ public enum Snapshotter {
     var sample = await SampleData.capture()
     if live, let scan = ScanEngine.loadLast() { sample.scan = scan }
     model.loadSample(sample)
-    model.loadNetworkSample(SampleData.sampleNetwork(.healthy))
+    model.loadNetworkSample(live ? await SampleData.liveNetwork() : SampleData.sampleNetwork(.healthy))
     model.appearance = dark ? .dark : .light
     model.section = section
 

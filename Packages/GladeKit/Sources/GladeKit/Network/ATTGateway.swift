@@ -10,7 +10,7 @@ enum ATTGateway {
     async let broadband = RouterReader.page(host, "/cgi-bin/broadbandstatistics.ha")
     async let devicePage = includeDevices ? RouterReader.page(host, "/cgi-bin/devices.ha", timeout: 25) : nil
     let (line, devices) = await (broadband.map(parseLine), devicePage.map(parseDevices))
-    Log.info(.network, "Read the AT&T gateway \(model): line \(line?.connected.map { $0 ? "up" : "down" } ?? "unknown"), \(devices?.filter(\.online).count ?? 0) devices online")
+    Log.info(.network, "Read the AT&T gateway \(model): line \(line?.connected.map { $0 ? "up" : "down" } ?? "unknown")\(devices.map { ", \($0.filter(\.online).count) devices online" } ?? "")")
     return RouterReport(
       kind: "AT&T gateway", maker: system["Manufacturer"].map(maker), model: model, firmware: system["Software Version"],
       line: line, devices: devices, read: now

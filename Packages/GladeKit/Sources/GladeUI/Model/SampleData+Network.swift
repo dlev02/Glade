@@ -20,6 +20,21 @@ extension SampleData {
     return state
   }
 
+  /// A real reading of this Mac’s network, for `glade snapshot network --live`: one
+  /// burst of pings stands in for the live chart.
+  static func liveNetwork() async -> NetworkState {
+    let status = await NetworkStatus.current(devices: true)
+    var state = NetworkState()
+    state.status = status
+    state.wifi = status.wifi
+    state.traffic = status.apps
+    state.verdicts = status.verdicts
+    state.tests = SpeedTest.history()
+    state.history = NetworkHistoryStore.load()
+    state.littleSnitch = LittleSnitchRules.load()
+    return state
+  }
+
   /// Made-up Little Snitch rules with one of each thing Glade notices.
   static let sampleRules = """
     {"name":"Sample","rules":[

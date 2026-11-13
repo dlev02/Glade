@@ -5,8 +5,8 @@ import SwiftUI
 /// from made-up readings so they look the same on any Mac.
 enum NetworkSnapshots {
   static let all: [String: (AppModel) -> AnyView] = [
+    // With --live, this Mac’s own reading (loaded by the snapshotter).
     "network": { model in
-      model.loadNetworkSample(SampleData.sampleNetwork(.healthy))
       model.networkSetupAsked = true
       return AnyView(NavigationStack { NetworkScreen() })
     },
