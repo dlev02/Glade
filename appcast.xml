@@ -6,6 +6,49 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Glade</title>
         <item>
+            <title>0.4.0</title>
+            <pubDate>Thu, 12 Nov 2026 22:35:01 -0600</pubDate>
+            <link>https://github.com/dlev02/Glade/releases/tag/v0.4.0</link>
+            <sparkle:version>7</sparkle:version>
+            <sparkle:shortVersionString>0.4.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <description sparkle:format="markdown"><![CDATA[
+### Network
+
+- A new **Network** section answers "is it my Wi-Fi, my internet, or the service?" It draws your connection from this Mac to your router, your provider and the internet, each with its latency, so a slow hop stands out, and leads with a plain verdict such as "Uploads are making everything wait" or "Your Wi-Fi signal is weak here".
+- **Latency** updates every second while the section is open, like the ping graph in a call app. **Wi-Fi** shows the signal, band, channel and link rate.
+- **Test Speed** runs macOS's own speed test when you ask. It tells you first how much data it will use, then how much slower your line gets when it's busy, and whether that's good enough for calls, 4K and game streaming.
+- **Using the Network** lists the apps sending and receiving the most, now and today, and Performance gains a Network column.
+- **Data Used** counts what this Mac used today, this week and this month, by day, app and network, while Glade is open.
+- To tell your networks apart by name, macOS asks for Location access the first time. Everything else works without it.
+- **Settings > Network** turns the section off, changes the host latency is measured against, and sets how long a speed test runs.
+
+### Your router
+
+- On an AT&T gateway, **Your Network** shows whether your internet line is up and lists the devices on your network with their signal, without a password.
+- You can add the gateway's Device Access Code. Glade checks it by signing in and keeps it in your Keychain, where no AI ever sees it.
+
+### Little Snitch
+
+- Import a Little Snitch backup on Network, and Glade points out rules that let anything through, duplicates, conflicts, rules for apps you've removed, and ones unused for a year.
+- **Review with Assistant** explains what to tidy. **Save Cleaned Backup…** writes your backup without the rules it suggested deleting, ready for Little Snitch's own Restore from Backup, which saves your current rules first. The review also names Little Snitch's filters for doing it by hand.
+- Glade only reads the file you choose. It never touches Little Snitch itself.
+
+### The Assistant remembers
+
+- It follows the conversation, so "and the other one?" or "is it safe to quit that?" is answered in the light of what came before. **New Conversation** starts afresh.
+- When an answer learns something lasting, such as your internet provider or a problem that keeps coming back, it offers **Remember**. Your notes go with every question after that, and you can change them in **Settings > Assistant**.
+- **Settings > Protection > Always clear**: name an app you no longer use, and its leftovers and caches are ticked whenever you clean. Leftovers go to the Trash. Personal files, installed apps and anything that can't come back never are, and unattended cleans leave these rules out.
+
+### Command line and AI agents
+
+- `glade network` says where a slowdown is, with the readings behind it. `glade network watch` follows latency second by second and names what was busiest at each spike. `glade network check www.netflix.com` tells a slow service from a slow connection. Also `glade network usage`, `apps`, `router` and `test`, which says how much data it would use before you confirm.
+- `glade littlesnitch` imports, reviews and writes a cleaned backup; `glade notes` and `glade rules` manage what the Assistant remembers and always clears; `glade ask --continue` follows on from your last question.
+- Coding agents connected to Glade get the same tools. They see verdicts, numbers and app names, never your network's name, addresses or device names.
+]]></description>
+            <enclosure url="https://github.com/dlev02/Glade/releases/download/v0.4.0/Glade-0.4.0.zip" length="15266322" type="application/octet-stream" sparkle:edSignature="YHhylYF0n85oHcQN45Ja0N1dYW3Or5WfqCXt+cMIm/G1o1AH035k32PDEzbF1g6WuAdKO2AE/kHlSCCUA1INAQ=="/>
+        </item>
+        <item>
             <title>0.3.0</title>
             <pubDate>Thu, 12 Nov 2026 15:33:43 -0600</pubDate>
             <link>https://github.com/dlev02/Glade/releases/tag/v0.3.0</link>
@@ -71,36 +114,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
 ]]></description>
             <enclosure url="https://github.com/dlev02/Glade/releases/download/v0.2.3/Glade-0.2.3.zip" length="11134651" type="application/octet-stream" sparkle:edSignature="PWc5TOsOLz5DrB0H5b4nB/q67xL6Sn13O9cQKOHv4h49k9GMH8eEkDsO5MHxxplhFUylchJ1reqys3f6rhYVDw=="/>
         </item>
-        <item>
-            <title>0.2.2</title>
-            <pubDate>Thu, 12 Nov 2026 01:18:28 -0600</pubDate>
-            <link>https://github.com/dlev02/Glade/releases/tag/v0.2.2</link>
-            <sparkle:version>4</sparkle:version>
-            <sparkle:shortVersionString>0.2.2</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
-            <description sparkle:format="markdown"><![CDATA[
-### See what "Other" is
-
-- On Overview, **Other** now opens a list of everything else on the disk, biggest first: your home folder, apps, macOS and the simulator systems and assets it downloads, system data and memory swap. Open any folder to see the biggest things inside it, and how much of it Storage already lists. It reads names and sizes only, and protected folders are never measured. `glade usage` shows the same from the command line.
-- Other sits with the rest of the key under the storage bar instead of on the heading's line.
-
-### Storage
-
-- An older version of a test browser is cleared after three days once a newer version beside it is the one being used, instead of waiting a month.
-- Hidden Xcode build folders inside projects (`.deriveddata` and the like, which scripts and agents make) are found and cleared like any other build data.
-- Aside's saved sessions older than two weeks are listed, and CleanShot's capture history is listed once it is a week old instead of a month. Both are yours to decide: Glade never ticks them, and they go to the Trash.
-- Free just the rows you highlight: Shift- or Command-click several, then right-click and choose **Free Up…** (or press Delete). What you ticked elsewhere stays as it was.
-
-### Fixed
-
-- Pointing at the storage bar on Overview shows the slice under the pointer. Before, every part of the bar answered as Other.
-- The key under the bar no longer flickers as the pointer moves from one entry to the next.
-]]></description>
-            <enclosure url="https://github.com/dlev02/Glade/releases/download/v0.2.2/Glade-0.2.2.zip" length="11128841" type="application/octet-stream" sparkle:edSignature="NU6siVHm1fC/R7dLwU05svgwC0ChodwkGlA7Ze7f+MVfkbfQLs5AkG3uQ9i2fJjw3MtKhP+Qb/kONiuL+nAyCQ=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: kRR5uRgGI61KIWcOUux1d6+yB1mRzynPFWdpIP0pZ2UvwOnCsUDkj/l5ZnCmXxDfaYoa/55bznuVqVHnG2NEAQ==
-length: 8437
+edSignature: 6djm/hOy0nSENmX4rEkpguZ5MZYVIEeLdyltuVrY83Dq9kqxumEwulg3jLuNUDozRLF6qCFqsR2q9fQ4GXRZBg==
+length: 10543
 -->
