@@ -471,7 +471,7 @@ public final class AppModel {
         }
         guard let scan else { return }
         if apps.isEmpty { await refreshApps() }
-        let base = Planner.plan(scan: scan, level: config.level, config: config)
+        let base = Planner.plan(scan: scan, level: config.level, config: config, includeRules: true)
         let result = try await Assistant.advise(
           scan: scan, plan: base, goal: "Free space is low (\(alert.body)) Suggest what to clear.",
           activity: MacDescription.activity(context: context, apps: apps), config: config, proactive: true,
@@ -582,7 +582,7 @@ public final class AppModel {
       plan = nil
       return
     }
-    plan = Planner.plan(scan: scan, level: config.level, config: config)
+    plan = Planner.plan(scan: scan, level: config.level, config: config, includeRules: true)
     advice = nil
   }
 
@@ -762,7 +762,7 @@ public final class AppModel {
       assistantState = .idle
       return
     }
-    let base = Planner.plan(scan: scan, level: config.level, config: config)
+    let base = Planner.plan(scan: scan, level: config.level, config: config, includeRules: true)
     if apps.isEmpty { await refreshApps() }
     do {
       let result = try await Assistant.advise(

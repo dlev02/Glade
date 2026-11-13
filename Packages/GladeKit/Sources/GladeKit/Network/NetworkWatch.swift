@@ -66,16 +66,24 @@ public struct NetworkWatch: Codable, Sendable, Equatable {
           for kind in NetworkTargets.Kind.allCases {
             guard let host = targets.host(kind) else { continue }
             group.addTask {
-              for await reply in Pinger.stream(host) {
-                if Task.isCancelled { break }
-                await collector.add(kind, reply.milliseconds)
+              // A ping that stops (a host that can’t be found, the network changing) is
+              // started again after a pause, so one target never ends the watch.
+              while !Task.isCancelled {
+                for await reply in Pinger.stream(host) {
+                  if Task.isCancelled { break }
+                  await collector.add(kind, reply.milliseconds)
+                }
+                try? await Task.sleep(for: .seconds(5))
               }
             }
           }
           group.addTask {
             let sampler = SystemSampler()
             while !Task.isCancelled {
+              let started = ContinuousClock.now
               await collector.traffic(await TrafficReader.now(seconds: 2, sampler: sampler))
+              // At least two seconds a pass, even when nettop fails at once.
+              try? await Task.sleep(until: started + .seconds(2))
             }
           }
           group.addTask {

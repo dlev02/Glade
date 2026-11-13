@@ -95,9 +95,14 @@ public struct LittleSnitchRules: Codable, Sendable, Equatable {
       for case let group as [String: Any] in groups.values {
         let name = (group["name"] as? String) ?? (group["title"] as? String) ?? "Unnamed group"
         let rules = (group["rules"] as? [[String: Any]]) ?? []
-        raw += rules.map { ($0, name) }
         let subscribed = group["url"] != nil || group["subscriptionURL"] != nil || group["remoteURL"] != nil
         let enabled = (group["enabled"] as? Bool) ?? (group["disabled"] as? Bool).map { !$0 }
+        // A switched-off group’s rules aren’t in force, whatever each says.
+        raw += rules.map { rule in
+          var rule = rule
+          if enabled == false { rule["disabled"] = true }
+          return (rule, name)
+        }
         parsed.groups.append(Group(name: name, enabled: enabled, rules: rules.count, subscribed: subscribed))
       }
     }
@@ -118,13 +123,17 @@ public struct LittleSnitchRules: Codable, Sendable, Equatable {
       return nil
     }
     guard let process = string("process") ?? string("processPath") ?? string("executable") else { return nil }
-    var remote = "any", kind = "any"
+    // Every remote field the rule has, so two rules only match when all of them do.
+    var parts: [(kind: String, value: String)] = []
     for (key, name) in [("remote-hosts", "hosts"), ("remote-domains", "domains"), ("remote-addresses", "addresses"), ("remoteHosts", "hosts"), ("remoteDomains", "domains"), ("remoteAddresses", "addresses")] {
-      if let value = string(key), !value.isEmpty {
-        remote = value
-        kind = name
-        break
-      }
+      if let value = string(key), !value.isEmpty, !parts.contains(where: { $0.kind == name }) { parts.append((name, value)) }
+    }
+    var remote = "any", kind = "any"
+    if parts.count == 1 {
+      (kind, remote) = (parts[0].kind, parts[0].value)
+    } else if parts.count > 1 {
+      kind = "mixed"
+      remote = parts.map { "\($0.kind): \($0.value)" }.joined(separator: "; ")
     }
     if kind == "any", let special = string("remote"), special != "any" {
       remote = special
@@ -159,7 +168,7 @@ public struct LittleSnitchRules: Codable, Sendable, Equatable {
     var seen: [String: String] = [:]
     var byTarget: [String: [LittleSnitchRule]] = [:]
     for rule in active {
-      let key = [rule.process, rule.via ?? "", rule.remote, rule.direction, rule.ports ?? "", rule.proto ?? ""].joined(separator: "|")
+      let key = [rule.process, rule.via ?? "", rule.remoteKind, rule.remote, rule.direction, rule.ports ?? "", rule.proto ?? ""].joined(separator: "|")
       if let first = seen[key + "|" + rule.action] {
         found.append(Finding(kind: .duplicate, ruleIDs: [first, rule.id], sentence: "\(rule.sentence) appears twice."))
       } else {

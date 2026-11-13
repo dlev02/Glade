@@ -78,7 +78,7 @@ public enum NetworkSample {
     ]
 
     let router = RouterReport(
-      kind: "Router", maker: "Example", model: "Gateway", firmware: nil,
+      kind: "Router", maker: "Example", model: "Gateway", firmware: nil, serial: nil,
       line: .init(connected: true, source: "Fibre", portMbps: 1000, received: nil, sent: nil, errors: 0, drops: 0),
       devices: (0..<23).map { index in
         let names = ["Living Room TV", "Kitchen Speaker", "iPad", "iPhone", "Printer", "Thermostat", "Doorbell", "Watch"]

@@ -13,7 +13,7 @@ enum ATTGateway {
     Log.info(.network, "Read the AT&T gateway \(model): line \(line?.connected.map { $0 ? "up" : "down" } ?? "unknown")\(devices.map { ", \($0.filter(\.online).count) devices online" } ?? "")")
     return RouterReport(
       kind: "AT&T gateway", maker: system["Manufacturer"].map(maker), model: model, firmware: system["Software Version"],
-      line: line, devices: devices, read: now
+      serial: system["Serial Number"].flatMap { $0.isEmpty ? nil : $0 }, line: line, devices: devices, read: now
     )
   }
 

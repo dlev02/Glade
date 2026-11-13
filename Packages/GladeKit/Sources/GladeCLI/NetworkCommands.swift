@@ -101,7 +101,7 @@ struct NetworkApps: AsyncParsableCommand {
   var limit = 15
 
   func run() async throws {
-    let now = await TrafficReader.now(seconds: 2)
+    let now = await TrafficReader.now(seconds: 2).map(\.withoutHome)
     let history = NetworkHistoryStore.load()
     let today = history.byApp(since: Calendar.current.startOfDay(for: Date()))
     struct Report: Encodable {
@@ -145,6 +145,8 @@ struct NetworkUsage: AsyncParsableCommand {
 
   @OptionGroup var output: OutputOptions
 
+  @OptionGroup var privacy: PrivacyOptions
+
   @Option(name: .long, help: "today, week or month.")
   var period: Period = .week
 
@@ -158,7 +160,8 @@ struct NetworkUsage: AsyncParsableCommand {
     switch by {
     case .day: rows = history.byDay(since: start).map(\.total)
     case .app: rows = history.byApp(since: start)
-    case .network: rows = history.byNetwork(since: start)
+    case .network:
+      rows = privacy.showNames ? history.byNetwork(since: start) : NetworkHistory.anonymised(history.byNetwork(since: start), current: WiFiLink.current()?.networkName)
     }
     struct Report: Encodable {
       var period: String

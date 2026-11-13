@@ -36,6 +36,9 @@ public struct RouterReport: Codable, Sendable, Equatable {
   public var maker: String?
   public var model: String?
   public var firmware: String?
+  /// Identifies this gateway, so a saved password is only ever offered to it. Never
+  /// shown to an AI.
+  public var serial: String?
   public var line: Line?
   public var devices: [Device]?
   public var read: Date

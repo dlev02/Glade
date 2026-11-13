@@ -24,6 +24,8 @@ extension ATTGateway {
     configuration.httpCookieAcceptPolicy = .always
     configuration.urlCache = nil
     configuration.timeoutIntervalForRequest = 15
+    // Straight to the gateway, never through a proxy that could see the exchange.
+    configuration.connectionProxyDictionary = [:]
     let session = URLSession(configuration: configuration, delegate: SameHostRedirects(), delegateQueue: nil)
     guard let loginURL = URL(string: "http://\(host)/cgi-bin/login.ha") else { throw RouterAccessError.unreachable }
     // The first visit sets the cookie; the second shows the form with its nonce.
@@ -46,8 +48,10 @@ extension ATTGateway {
       throw RouterAccessError.unreachable
     }
     let reply = String(decoding: data, as: UTF8.self)
-    // A refused code shows the form again.
-    if reply.contains(#"name="hashpassword""#) || reply.contains("Access Code Required") {
+    // A refused code shows the form again; too many tries shows a lockout notice.
+    let lowered = reply.lowercased()
+    if reply.contains(#"name="hashpassword""#) || reply.contains("Access Code Required") || lowered.contains("locked") || lowered.contains("too many") {
+      session.invalidateAndCancel()
       Log.info(.network, "The gateway refused the access code")
       throw RouterAccessError.wrongCode
     }
@@ -68,24 +72,25 @@ extension RouterReader {
     guard let report = await read(router: host, maximumAge: 0), report.kind == "AT&T gateway", let model = report.model else {
       throw RouterAccessError.notSupported
     }
-    _ = try await ATTGateway.signIn(host: host, code: code.trimmingCharacters(in: .whitespacesAndNewlines))
-    try RouterCredentials.save(code.trimmingCharacters(in: .whitespacesAndNewlines), account: RouterCredentials.account(model: model, host: host))
+    let session = try await ATTGateway.signIn(host: host, code: code.trimmingCharacters(in: .whitespacesAndNewlines))
+    session.urlSession.invalidateAndCancel()
+    try RouterCredentials.save(code.trimmingCharacters(in: .whitespacesAndNewlines), account: RouterCredentials.account(model: model, serial: report.serial, host: host))
   }
 
   /// Whether Glade has a working password for this router.
   public static func hasAccess(_ report: RouterReport, host: String) -> Bool {
     guard let model = report.model else { return false }
-    return RouterCredentials.has(account: RouterCredentials.account(model: model, host: host))
+    return RouterCredentials.has(account: RouterCredentials.account(model: model, serial: report.serial, host: host))
   }
 
   public static func forgetAccess(_ report: RouterReport, host: String) {
     guard let model = report.model else { return }
-    RouterCredentials.delete(account: RouterCredentials.account(model: model, host: host))
+    RouterCredentials.delete(account: RouterCredentials.account(model: model, serial: report.serial, host: host))
   }
 
   /// Signs in with the saved password, for reading or, later, changing settings.
   static func session(_ report: RouterReport, host: String) async throws -> ATTGateway.Session {
-    guard let model = report.model, let code = RouterCredentials.read(account: RouterCredentials.account(model: model, host: host)) else {
+    guard let model = report.model, let code = RouterCredentials.read(account: RouterCredentials.account(model: model, serial: report.serial, host: host)) else {
       throw RouterAccessError.wrongCode
     }
     return try await ATTGateway.signIn(host: host, code: code)
@@ -93,6 +98,8 @@ extension RouterReader {
 
   /// Checks the saved password still works.
   public static func checkAccess(_ report: RouterReport, host: String) async -> Bool {
-    (try? await session(report, host: host)) != nil
+    guard let signedIn = try? await session(report, host: host) else { return false }
+    signedIn.urlSession.invalidateAndCancel()
+    return true
   }
 }

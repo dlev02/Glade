@@ -8,9 +8,11 @@ import Security
 public enum RouterCredentials {
   static let service = "Glade router access"
 
-  /// The Keychain account: the router’s model and address, so a different router on
-  /// another network never gets this one’s password.
-  public static func account(model: String, host: String) -> String { "\(model) at \(host)" }
+  /// The Keychain account: the router’s model and serial number, so another gateway at
+  /// the same address (every BGW320 is 192.168.1.254) is never offered this password.
+  public static func account(model: String, serial: String?, host: String) -> String {
+    serial.map { "\(model) \($0)" } ?? "\(model) at \(host)"
+  }
 
   public static func has(account: String) -> Bool {
     var query = base(account)

@@ -22,7 +22,7 @@ struct Advise: AsyncParsableCommand {
   func run() async throws {
     let config = ConfigStore.load()
     let scan = try await Scans.recent(rescan: rescan, quiet: output.json)
-    let base = Planner.plan(scan: scan, level: level ?? config.level, config: config)
+    let base = Planner.plan(scan: scan, level: level ?? config.level, config: config, includeRules: true)
     let sampler = SystemSampler()
     let apps = await sampler.apps()
     let context = ActivityContext.current(apps: apps)

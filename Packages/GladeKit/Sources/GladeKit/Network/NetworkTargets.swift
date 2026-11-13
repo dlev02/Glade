@@ -82,7 +82,12 @@ public struct NetworkTargets: Codable, Sendable, Equatable {
   /// Home, office and carrier-grade private ranges, and link-local.
   static func isPrivate(_ address: String) -> Bool {
     let parts = address.split(separator: ".").compactMap { Int($0) }
-    guard parts.count == 4 else { return address.hasPrefix("fe80") || address.hasPrefix("fd") || address.hasPrefix("fc") }
+    guard parts.count == 4 else {
+      // IPv6 link-local and unique local addresses; a host name is never private here.
+      guard address.contains(":") else { return false }
+      let lowered = address.lowercased()
+      return lowered.hasPrefix("fe80:") || lowered.hasPrefix("fd") || lowered.hasPrefix("fc")
+    }
     switch (parts[0], parts[1]) {
     case (10, _), (127, _), (169, 254), (192, 168): return true
     case (172, 16...31): return true

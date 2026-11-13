@@ -1,32 +1,35 @@
 import Foundation
 
 /// The person’s standing rules: apps and tools whose leftovers and caches they always
-/// want gone (“I don’t use Cursor any more”). A rule ticks a matching finding at every
-/// level, the way the person would by hand, so it may tick what no level or AI can,
-/// such as an app’s leftovers. It never ticks personal files, anything blocked or in
-/// use, or an installed app, and only a person can add one.
+/// want gone (“I don’t use Cursor any more”). A rule ticks a finding owned by that app
+/// at every level, in plans the person sees before a clean, the way they would by hand.
+/// It ticks only an app’s leftovers (which go to the Trash) and things that rebuild or
+/// download again; never personal files, anything blocked or in use, an installed app
+/// or a copy of one, or anything else that can’t come back. Only a person adds one.
 public enum AlwaysClear {
   /// The shortest rule accepted, so “AI” or “Go” can’t sweep in half the disk.
   public static let minimumLength = 3
 
   /// The rule that ticks this finding, or `nil`.
   public static func rule(for finding: Finding, rules: [String]) -> String? {
-    guard mayClear(finding) else { return nil }
-    return rules.first { rule in
-      matches(finding.owner?.name ?? "", rule: rule) || matches(finding.title, rule: rule)
-    }
+    guard mayClear(finding), let owner = finding.owner?.name else { return nil }
+    // The owner only: a title can mention an app (“Worktree – Glade”) without being its.
+    return rules.first { matches(owner, rule: $0) }
   }
 
-  /// What a rule may never tick, whatever it names.
+  /// What a rule may tick at all, whatever it names: an app’s leftovers, which go to the
+  /// Trash, or something that rebuilds or downloads again.
   public static func mayClear(_ finding: Finding) -> Bool {
-    !finding.isBlocked && finding.risk != .personal && finding.category != .installedApps
+    guard !finding.isBlocked, finding.risk != .personal, finding.category != .installedApps, finding.category != .appCopies else { return false }
+    if finding.category == .appLeftovers { return finding.method == .trash }
+    return finding.autoLevel != nil && (finding.recovery == .automatic || finding.recovery == .redownload)
   }
 
   /// The rule’s words appear in the name, whole and in order: “Cursor” matches
   /// “Cursor” and “Cursor’s cache”, not “Cursorly” or “Recursor”.
   static func matches(_ name: String, rule: String) -> Bool {
     let wanted = words(rule)
-    guard !wanted.isEmpty, rule.trimmingCharacters(in: .whitespaces).count >= minimumLength else { return false }
+    guard !wanted.isEmpty, wanted.joined().count >= minimumLength else { return false }
     let have = words(name)
     guard have.count >= wanted.count else { return false }
     for start in 0...(have.count - wanted.count) where Array(have[start..<start + wanted.count]) == wanted {
@@ -44,6 +47,7 @@ public enum AlwaysClear {
   /// A rule cleaned up for saving, or `nil` when it’s too short to be safe.
   public static func normalised(_ rule: String) -> String? {
     let trimmed = rule.trimmingCharacters(in: .whitespacesAndNewlines)
-    return trimmed.count >= minimumLength && !words(trimmed).isEmpty ? trimmed : nil
+    // Letters and digits count, so “C++” (one letter) is too short.
+    return words(trimmed).joined().count >= minimumLength ? trimmed : nil
   }
 }

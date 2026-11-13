@@ -13,4 +13,11 @@ public struct AppTraffic: Codable, Sendable, Identifiable, Equatable {
   public var sent: Double
 
   public var total: Double { received + sent }
+
+  /// The same, with the home folder in the app’s path shortened to `~`.
+  public var withoutHome: AppTraffic {
+    var copy = self
+    copy.bundlePath = bundlePath.map(Redactor.tilde)
+    return copy
+  }
 }

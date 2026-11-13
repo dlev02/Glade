@@ -43,12 +43,16 @@ public struct CleanPlan: Codable, Sendable, Identifiable {
 /// Decides what each clean level selects. Rules only; an assistant can adjust the
 /// result afterwards but only within what `mayAutoSelect` allows.
 public enum Planner {
-  public static func plan(scan: ScanResult, level: CleanLevel, config: GladeConfig = ConfigStore.load(), now: Date = Date()) -> CleanPlan {
+  /// - Parameter includeRules: Apply the person’s always-clear rules. Only for plans a
+  ///   person sees before anything is removed; never for unattended or agent cleans.
+  public static func plan(
+    scan: ScanResult, level: CleanLevel, config: GladeConfig = ConfigStore.load(), now: Date = Date(), includeRules: Bool = false
+  ) -> CleanPlan {
     var items: [PlanItem] = []
     for finding in scan.findings {
       let (selected, reason) = decide(finding, level: level, now: now)
       // The person’s own standing rule ticks what they’d tick themselves.
-      if !selected, let rule = AlwaysClear.rule(for: finding, rules: config.alwaysClear) {
+      if includeRules, !selected, let rule = AlwaysClear.rule(for: finding, rules: config.alwaysClear) {
         items.append(PlanItem(id: finding.id, selected: true, reason: "You asked Glade to always clear \(rule).", source: .person))
         continue
       }

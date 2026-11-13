@@ -57,7 +57,7 @@ struct NotesRemove: ParsableCommand {
 struct Rules: AsyncParsableCommand {
   static let configuration = CommandConfiguration(
     abstract: "Apps and tools whose leftovers and caches are always ticked, such as one you no longer use.",
-    discussion: "A rule ticks matching findings at every level, as you would by hand, and they go to the Trash. It never ticks personal files, anything in use, or an installed app.",
+    discussion: "When you clean, a rule ticks that app’s leftovers (they go to the Trash) and caches at every level, as you would by hand. Never personal files, anything in use, an installed app or anything that can’t come back, and never in unattended cleans. Adding one needs your own Terminal.",
     subcommands: [RulesList.self, RulesAdd.self, RulesRemove.self],
     defaultSubcommand: RulesList.self
   )
@@ -94,6 +94,11 @@ struct RulesAdd: ParsableCommand {
   @Argument(help: "The app or tool’s name, such as Cursor.") var name: String
 
   func run() throws {
+    // A person at a terminal only: an agent with a shell shouldn’t be able to widen what
+    // Glade clears. Settings › Protection › Always clear does the same in the window.
+    guard isatty(STDIN_FILENO) != 0 else {
+      throw ValidationError("Rules are added by a person: run this in your own Terminal, or use Settings › Protection › Always clear.")
+    }
     guard let rule = AlwaysClear.normalised(name) else {
       throw ValidationError("Use the app’s name, at least \(AlwaysClear.minimumLength) characters.")
     }

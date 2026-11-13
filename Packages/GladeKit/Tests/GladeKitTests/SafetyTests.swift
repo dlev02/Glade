@@ -738,7 +738,7 @@ struct SafetyTests {
   /// What an AI is shown about the network names no network, access point, address or
   /// device, however the reading was taken.
   @Test func networkReadingsShownToAnAINameNothingOnTheNetwork() {
-    let secrets = ["Maple Street", "aa:bb:cc:dd:ee:ff", "192.168.1.254", "203.0.113.1", "Sam’s iPhone", "Kitchen Speaker"]
+    let secrets = ["Maple Street", "aa:bb:cc:dd:ee:ff", "192.168.1.254", "203.0.113.1", "Sam’s iPhone", "Kitchen Speaker", "SN-SECRET-1"]
     let path = NetworkPath(
       connected: true, medium: .wifi, interface: "en0", isExpensive: false, isConstrained: false, router: "192.168.1.254",
       defaultInterface: "en0", vpns: [], proxy: false
@@ -748,7 +748,7 @@ struct SafetyTests {
       security: "WPA2", networkName: "Maple Street", accessPoint: "aa:bb:cc:dd:ee:ff"
     )
     let router = RouterReport(
-      kind: "AT&T gateway", maker: "Nokia", model: "BGW320-505", firmware: "6.40.4",
+      kind: "AT&T gateway", maker: "Nokia", model: "BGW320-505", firmware: "6.40.4", serial: "SN-SECRET-1",
       line: .init(connected: true, source: "Fibre", portMbps: 1000, received: 1, sent: 1, errors: 0, drops: 0),
       devices: [
         .init(name: "Sam’s iPhone", online: true, connection: "Wi-Fi 5 GHz", signalBars: 2, throughMesh: false, lastActive: "now"),
@@ -799,19 +799,30 @@ struct SafetyTests {
     var installed = appFinding("cursor-app", [home + "/Applications/Cursor.app"], bundleID: "com.todesktop.cursor")
     installed.title = "Cursor"
     installed.owner = Owner("Cursor")
-    let result = scan([cursor, cursorCache, lookalike, running, personal, installed])
+    // Things a rule must never touch even when the name matches.
+    var archive = leftover("archive", "Cursor 1.2 archive", owner: "Cursor")
+    archive.category = .xcode
+    archive.method = .delete
+    var copy = leftover("cursor-copy", "Copy of Cursor 1.2", owner: "Cursor")
+    copy.category = .appCopies
+    // Named in the title only, owned by something else.
+    let titled = leftover("worktree", "Worktree – Cursor / main", owner: "Git")
+    let result = scan([cursor, cursorCache, lookalike, running, personal, installed, archive, copy, titled])
 
     var config = GladeConfig()
     // Without a rule, no level ticks leftovers.
-    #expect(Planner.plan(scan: result, level: .aggressive, config: config).selectedIDs.isEmpty)
+    #expect(Planner.plan(scan: result, level: .aggressive, config: config, includeRules: true).selectedIDs.isEmpty)
     config.alwaysClear = ["Cursor"]
     for level in CleanLevel.allCases {
-      #expect(Set(Planner.plan(scan: result, level: level, config: config).selectedIDs) == ["cursor", "cursor-cache"])
+      #expect(Set(Planner.plan(scan: result, level: level, config: config, includeRules: true).selectedIDs) == ["cursor", "cursor-cache"])
+      // Unattended and agent plans never apply rules.
+      #expect(Planner.plan(scan: result, level: level, config: config).selectedIDs.isEmpty)
     }
-    // Too short to be a rule.
+    // Too short to be a rule, counting letters and digits.
     #expect(AlwaysClear.normalised("AI") == nil)
+    #expect(AlwaysClear.normalised("C++") == nil)
     config.alwaysClear = ["or"]
-    #expect(Planner.plan(scan: result, level: .careful, config: config).selectedIDs.isEmpty)
+    #expect(Planner.plan(scan: result, level: .careful, config: config, includeRules: true).selectedIDs.isEmpty)
   }
 
   /// A Little Snitch review never lets everything through, never drops a block that
@@ -822,26 +833,30 @@ struct SafetyTests {
        {"action":"allow","process":"/Applications/Safari.app/Contents/MacOS/Safari","remote":"any"},
        {"action":"deny","process":"any","remote-domains":["tracker.example"]},
        {"action":"deny","process":"any","remote-domains":["ads.example"]},
-       {"action":"deny","process":"any","remote-domains":["ads.example"]}
+       {"action":"deny","process":"any","remote-domains":["ads.example"]},
+       {"action":"deny","process":"any","remote-hosts":["ads.example"]}
       ]}
       """
     let rules = try LittleSnitchRules.parse(Data(file.utf8))
     let raw = try JSONDecoder().decode(Assistant.RawSnitchReview.self, from: Data("""
       {"summary":"s","points":[],
-       "remove":["r2","r4","r99"],
+       "remove":["r2","r4","r5","r99"],
        "add":[
         {"action":"allow","process":"any","domains":["example.com"],"hosts":[],"direction":"outgoing","notes":""},
         {"action":"allow","process":"/Applications/Evil.app/Contents/MacOS/Evil","domains":["evil.example"],"hosts":[],"direction":"outgoing","notes":""},
         {"action":"allow","process":"/Applications/Safari.app/Contents/MacOS/Safari","domains":[],"hosts":[],"direction":"outgoing","notes":""},
-        {"action":"deny","process":"/Applications/Safari.app/Contents/MacOS/Safari","domains":["tracker2.example"],"hosts":[],"direction":"outgoing","notes":"x"}
+        {"action":"deny","process":"/Applications/Safari.app/Contents/MacOS/Safari","domains":["tracker2.example"],"hosts":[],"direction":"outgoing","notes":"x"},
+        {"action":"allow","process":"/Applications/Safari.app/Contents/MacOS/Safari","domains":["pixel.tracker.example"],"hosts":[],"direction":"outgoing","notes":""},
+        {"action":"deny","process":"any","domains":["*.example"],"hosts":[],"direction":"outgoing","notes":""}
        ]}
       """.utf8))
     var review = LittleSnitchReview(summary: "", points: [], remove: [], add: [], rejected: [], provider: "test", model: nil, runID: "")
     Assistant.validate(raw, rules: rules, into: &review)
-    // Only the duplicate block may go; the other block and an unknown rule stay.
+    // Only the duplicate block may go; a host block isn’t a duplicate of a domain block.
     #expect(review.remove.map(\.id) == ["r4"])
-    // Only the narrow deny for an app already in the rules survives.
+    // Only the narrow deny for an app already in the rules survives: no allow under a
+    // block, no wildcard.
     #expect(review.add.count == 1 && review.add[0].action == "deny" && review.add[0].domains == ["tracker2.example"])
-    #expect(review.rejected.count == 5)
+    #expect(review.rejected.count == 8)
   }
 }

@@ -35,7 +35,7 @@ struct ProtectionPane: View {
       } header: {
         Text("Always clear")
       } footer: {
-        Text("Leftovers and caches of these are ticked at every level and go to the Trash. Never personal files or installed apps.")
+        Text("Their leftovers (to the Trash) and caches are ticked when you clean. Never personal files, installed apps or anything that can’t come back.")
           .foregroundStyle(.secondary)
       }
 

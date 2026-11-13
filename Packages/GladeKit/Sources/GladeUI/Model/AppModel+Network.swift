@@ -52,9 +52,12 @@ extension AppModel {
     networkWork.trafficTask = Task { [weak self] in
       let sampler = SystemSampler()
       while !Task.isCancelled {
+        let started = ContinuousClock.now
         let traffic = await TrafficReader.now(seconds: 2, sampler: sampler)
         guard !Task.isCancelled, let self else { return }
         self.network.traffic = traffic
+        // At least two seconds a pass, even when nettop fails at once.
+        try? await Task.sleep(until: started + .seconds(2))
       }
     }
   }
@@ -76,7 +79,12 @@ extension AppModel {
     networkWork.liveTask = Task { [weak self] in
       guard let self else { return }
       await self.refreshNetworkStatus(devices: true)
-      guard let path = self.network.status?.path, path.connected, !Task.isCancelled else { return }
+      // Offline, or the section went while reading: nothing to watch. Clearing the task
+      // lets the next visit start again.
+      guard let path = self.network.status?.path, path.connected, !Task.isCancelled, self.networkWork.watchers > 0 else {
+        if !Task.isCancelled { self.networkWork.liveTask = nil }
+        return
+      }
       let targets = await NetworkTargets.current(path: path, internetHost: self.config.network.internetHost)
       self.network.targets = targets
       var ticks = 0
@@ -97,7 +105,7 @@ extension AppModel {
           if self.network.status?.path.router != path.router {
             self.network.live = []
             self.networkWork.liveTask = nil
-            self.startLive()
+            if !Task.isCancelled, self.networkWork.watchers > 0 { self.startLive() }
             return
           }
         }

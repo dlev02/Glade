@@ -111,7 +111,7 @@ Ask it to remove something by name ("remove the Adobe apps", "uninstall iMovie")
 | Apple Intelligence (on this Mac) | Tested |
 | Gemini CLI, Cursor CLI, GitHub Copilot CLI, Qwen Code, Ollama | Written from their documentation; not yet tested |
 
-It follows the conversation, so "and the other one?" makes sense, and it remembers what you choose: when an answer learns something lasting (your internet provider, a problem that keeps coming back) it offers **Remember**, and your notes go with every question after that. They're listed in **Settings > Assistant**, where you can add, change or remove them. Rules work in code, not in a prompt: under **Settings > Protection > Always clear**, an app you no longer use has its leftovers and caches ticked at every level and sent to the Trash.
+It follows the conversation, so "and the other one?" makes sense, and it remembers what you choose: when an answer learns something lasting (your internet provider, a problem that keeps coming back) it offers **Remember**, and your notes go with every question after that. They're listed in **Settings > Assistant**, where you can add, change or remove them. Rules work in code, not in a prompt: under **Settings > Protection > Always clear**, an app you no longer use has its leftovers (to the Trash) and caches ticked whenever you clean, never its personal files or anything that can't come back.
 
 Each tool runs in an empty temporary folder with its own tools, plugins, MCP servers and memory switched off. Apple Intelligence and Ollama run on your Mac; the others send the request to their provider under your account.
 

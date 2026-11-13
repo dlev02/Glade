@@ -32,7 +32,7 @@ extension MCPTools {
       readOnly: true
     ) { arguments in
       let limit = arguments["limit"]?.int ?? 15
-      let now = await TrafficReader.now(seconds: 2)
+      let now = await TrafficReader.now(seconds: 2).map(\.withoutHome)
       let today = NetworkHistoryStore.load().byApp(since: Calendar.current.startOfDay(for: Date()))
       struct Report: Encodable {
         var now: [AppTraffic]

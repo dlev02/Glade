@@ -120,7 +120,7 @@ public enum Guide {
     glade rules --json        # apps whose leftovers and caches are always ticked, and what each covers now
     ```
 
-    Read the notes before advising: they hold what a reading can’t show (the internet provider, a router, a problem that came back before, an app no longer used). Current readings win where a note disagrees. Notes and rules are the person’s to keep: suggest one (“Want me to remember that you’re on AT&T fibre? `glade notes add …`”) rather than adding it unasked. A rule (`glade rules add <app>`) ticks that app’s leftovers and caches at every level, to the Trash; never suggest one for an app that’s still installed and in use.
+    Read the notes before advising: they hold what a reading can’t show (the internet provider, a router, a problem that came back before, an app no longer used). Current readings win where a note disagrees. Notes and rules are the person’s to keep: suggest one (“Want me to remember that you’re on AT&T fibre? `glade notes add …`”) rather than adding it unasked. A rule ticks that app’s leftovers and caches in plans the person sees (never in MCP cleans by level); only the person can add one, from their own Terminal or Settings, so suggest it in words.
 
     ## Asking Glade’s own assistant
 

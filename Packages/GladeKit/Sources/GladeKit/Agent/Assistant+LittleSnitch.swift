@@ -66,14 +66,32 @@ extension Assistant {
         review.rejected.append("add any process: allowing every process is too broad")
         continue
       }
+      // An allow must never open what an existing block closes.
+      if action == "allow", let blocked = (domains + hosts).first(where: { underDeny($0, process: item.process, rules: rules) }) {
+        review.rejected.append("add \(item.process): allowing \(blocked) would undo a block")
+        continue
+      }
       let path = item.process.hasPrefix("~/") ? NSHomeDirectory() + item.process.dropFirst() : item.process
       review.add.append(.init(action: action, process: path, domains: domains, hosts: hosts, direction: direction, notes: String(item.notes.prefix(200))))
     }
   }
 
+  /// A plain host or domain: two labels at least, no wildcards.
   static func isHostName(_ text: String) -> Bool {
-    !text.isEmpty && text.count < 254 && text.contains(".") && !text.hasPrefix(".") && !text.hasPrefix("-")
-      && text.allSatisfy { $0.isLetter || $0.isNumber || $0 == "." || $0 == "-" || $0 == "*" }
+    let labels = text.split(separator: ".", omittingEmptySubsequences: false)
+    return text.count < 254 && labels.count >= 2 && labels.allSatisfy { !$0.isEmpty && !$0.hasPrefix("-") }
+      && labels.last?.allSatisfy(\.isLetter) == true
+      && text.allSatisfy { $0.isLetter || $0.isNumber || $0 == "." || $0 == "-" }
+  }
+
+  /// Whether an active deny rule for this process (or any process) covers the host.
+  static func underDeny(_ host: String, process: String, rules: LittleSnitchRules) -> Bool {
+    rules.rules.contains { rule in
+      guard rule.action == "deny", !rule.disabled, rule.process == "any" || rule.process == process else { return false }
+      if rule.remoteKind == "any" { return true }
+      let names = rule.remote.components(separatedBy: CharacterSet(charactersIn: ",; ")).map { $0.lowercased() }.filter { $0.contains(".") }
+      return names.contains { $0 == host || host.hasSuffix("." + $0) }
+    }
   }
 
   struct RawSnitchReview: Decodable {

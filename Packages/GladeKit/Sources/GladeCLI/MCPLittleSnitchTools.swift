@@ -16,7 +16,14 @@ extension MCPTools {
         var rules: LittleSnitchRules
         var findings: [LittleSnitchRules.Finding]
       }
-      return JSONFiles.string(Report(rules: rules, findings: rules.findings()))
+      // Notes are the person’s own words; the review leaves them out too.
+      var shown = rules
+      shown.rules = rules.rules.map { rule in
+        var rule = rule
+        rule.notes = nil
+        return rule
+      }
+      return JSONFiles.string(Report(rules: shown, findings: rules.findings()))
     },
   ]
 }

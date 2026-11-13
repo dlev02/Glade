@@ -26,6 +26,11 @@ public struct SiteCheck: Codable, Sendable, Equatable {
       check.error = "That isn’t a site name Glade can check."
       return check
     }
+    // Sites on the internet only, not devices on the local network.
+    guard !NetworkTargets.isPrivate(host), !host.hasSuffix(".local"), !host.hasSuffix(".lan"), host.contains(".") else {
+      check.error = "Glade only checks sites on the internet."
+      return check
+    }
     var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 15)
     // The first byte only: many sites refuse HEAD (405), and a byte is all a timing needs.
     request.setValue("bytes=0-0", forHTTPHeaderField: "Range")

@@ -84,13 +84,11 @@ extension NetworkStatus {
     copy.wifi?.networkName = nil
     copy.wifi?.accessPoint = nil
     copy.path.router = nil
+    // Which VPN is on matters; the ones merely set up don’t.
+    copy.path.vpns = path.vpns.filter(\.connected)
     copy.latency = latency.map { Latency(kind: $0.kind, host: nil, stats: $0.stats) }
     copy.router = router?.forAI()
-    copy.apps = apps.map { app in
-      var app = app
-      app.bundlePath = app.bundlePath.map(Redactor.tilde)
-      return app
-    }
+    copy.apps = apps.map(\.withoutHome)
     return copy
   }
 }
@@ -99,6 +97,7 @@ extension RouterReport {
   /// Devices become anonymous: how each connects and its signal, no names.
   public func forAI(keepOffline: Bool = false) -> RouterReport {
     var copy = self
+    copy.serial = nil
     copy.devices = devices?.map { Device(name: nil, online: $0.online, connection: $0.connection, signalBars: $0.signalBars, throughMesh: $0.throughMesh, lastActive: nil) }
       .filter { keepOffline || $0.online }
     return copy

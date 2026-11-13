@@ -24,7 +24,7 @@ struct Plan: AsyncParsableCommand {
   func run() async throws {
     let config = ConfigStore.load()
     let scan = try await Scans.recent(rescan: rescan, quiet: output.json)
-    let plan = Planner.plan(scan: scan, level: level ?? config.level, config: config)
+    let plan = Planner.plan(scan: scan, level: level ?? config.level, config: config, includeRules: true)
 
     struct Row: Encodable {
       var id: String
