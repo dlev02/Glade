@@ -31,6 +31,7 @@ extension AppModel {
     guard isLive, !networkWork.frozen, config.network.enabled else { return }
     network.tests = SpeedTest.history()
     network.history = NetworkHistoryStore.load()
+    network.littleSnitch = LittleSnitchRules.load()
     startLive()
   }
 
@@ -196,6 +197,51 @@ extension AppModel {
   public var networkSetupAsked: Bool {
     get { defaults.bool(forKey: "networkSetupAsked") }
     set { defaults.set(newValue, forKey: "networkSetupAsked") }
+  }
+
+  // MARK: Little Snitch
+
+  /// Reads an export the person chose. Returns why not when it can’t be read.
+  public func importLittleSnitch(_ url: URL) -> String? {
+    let scoped = url.startAccessingSecurityScopedResource()
+    defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+    do {
+      let rules = try LittleSnitchRules.parse(try Data(contentsOf: url))
+      try rules.save()
+      network.littleSnitch = rules
+      Log.info(.network, "Imported \(rules.rules.count) Little Snitch rules from a \(rules.source)")
+      return nil
+    } catch {
+      Log.warning(.network, "Little Snitch export couldn’t be read: \(error.localizedDescription)")
+      return error.localizedDescription
+    }
+  }
+
+  /// Has the AI review the imported rules, in the Assistant’s conversation.
+  /// - Parameter asked: The person typed the request, so it’s already on screen.
+  public func reviewLittleSnitch(goal: String? = nil, asked: Bool = false) async {
+    guard let rules = network.littleSnitch ?? LittleSnitchRules.load() else { return }
+    section = .assistant
+    if !asked { messages.append(Message(role: .person, text: "Review my Little Snitch rules")) }
+    assistantState = .thinking("Reading \(rules.rules.count) Little Snitch rules…")
+    do {
+      let review = try await Assistant.reviewLittleSnitch(rules, request: goal, config: config, providers: AgentProviders.all)
+      var text = review.summary
+      for point in review.points { text += "\n\n**\(point.title)**  \n\(point.detail)" }
+      if !review.remove.isEmpty {
+        text += "\n\n### Worth deleting in Little Snitch\n" + review.remove.map { "- \($0.sentence)" }.joined(separator: "\n")
+      }
+      if !review.add.isEmpty {
+        text += "\n\n\(review.add.count == 1 ? "One new rule is" : "\(review.add.count) new rules are") ready to import into Little Snitch as a group that starts switched off."
+      }
+      var message = Message(role: .assistant, text: text, provider: review.provider, model: review.model)
+      message.rulesFile = review.rulesFile()
+      messages.append(message)
+      assistantState = .idle
+    } catch {
+      messages.append(Message(role: .problem, text: error.localizedDescription))
+      assistantState = .failed(error.localizedDescription)
+    }
   }
 
   // MARK: The Assistant

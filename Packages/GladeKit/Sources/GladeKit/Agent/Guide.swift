@@ -105,6 +105,8 @@ public enum Guide {
 
     A speed test fills the connection against Apple’s servers and uses a lot of data (hundreds of MB, gigabytes on a fast line). Run it only when speed under load is the question and the person agrees; check the dry run’s estimate first, and never on a hotspot. Results include latency when the line is full: a large gap over idle is bufferbloat, which a router’s Smart Queue or QoS setting fixes.
 
+    Little Snitch: `glade littlesnitch` summarises the rules the person imported (`glade littlesnitch import <backup>`), with what stands out; `glade littlesnitch review` asks Glade’s AI for suggestions and writes new rules to an .lsrules file. Never try to run Little Snitch’s own command line: it needs root and an opening in its security that the person shouldn’t have to make.
+
     Readings never include the network’s name, addresses or device names; device counts and their signal are there. Data used covers only the time Glade’s app was open and includes local traffic, so it isn’t the provider’s bill.
 
     ## Notes and rules

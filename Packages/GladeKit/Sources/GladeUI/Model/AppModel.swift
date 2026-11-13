@@ -76,6 +76,8 @@ public final class AppModel {
     public var proposal: ProposalState?
     /// A lasting fact the answer suggests remembering, until it’s saved or dismissed.
     public var suggestedNote: String?
+    /// Suggested Little Snitch rules, as an `.lsrules` file to save.
+    public var rulesFile: Data?
   }
 
   // MARK: Settings
@@ -791,6 +793,11 @@ public final class AppModel {
       return
     }
     let lowered = text.lowercased()
+    // Little Snitch questions get a review of the imported rules.
+    if lowered.contains("little snitch"), network.littleSnitch != nil || LittleSnitchRules.load() != nil {
+      await reviewLittleSnitch(goal: text, asked: true)
+      return
+    }
     let wantsSpace = ["free", "clean", "clear", "space", "storage", " gb", "delete", "remove"].contains { lowered.contains($0) }
     if wantsSpace, scan != nil {
       await adviseStorage(goal: text)

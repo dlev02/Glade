@@ -16,6 +16,19 @@ extension SampleData {
     state.signal = readings.signal.enumerated().map { index, rssi in
       HistoryChart.Point(date: now.addingTimeInterval(Double(index - readings.signal.count) * 2), value: Double(rssi + 90) / 60 * 100)
     }
+    state.littleSnitch = try? LittleSnitchRules.parse(Data(sampleRules.utf8), now: now.addingTimeInterval(-3 * 86_400))
     return state
   }
+
+  /// Made-up Little Snitch rules with one of each thing Glade notices.
+  static let sampleRules = """
+    {"name":"Sample","rules":[
+     {"action":"allow","process":"/Applications/Safari.app/Contents/MacOS/Safari","remote":"any"},
+     {"action":"allow","process":"/System/Applications/Music.app/Contents/MacOS/Music","remote-domains":["apple.com"]},
+     {"action":"allow","process":"/System/Applications/Music.app/Contents/MacOS/Music","remote-domains":["apple.com"]},
+     {"action":"deny","process":"/Applications/Old Editor.app/Contents/MacOS/Old Editor","remote-domains":["updates.example"]},
+     {"action":"allow","process":"any","remote":"any","disabled":false},
+     {"action":"deny","process":"any","remote-domains":["tracker.example"]}
+    ],"denied-remote-domains":["ads.example","beacon.example","pixel.example"]}
+    """
 }

@@ -63,6 +63,10 @@ struct MessageRow: View {
         ProposalCard(message: message.id, state: proposal)
           .padding(.top, Metrics.xs)
       }
+      if let file = message.rulesFile {
+        Button("Save Rules File…", systemImage: "square.and.arrow.down") { save(file) }
+          .padding(.top, Metrics.xs)
+      }
       if let note = message.suggestedNote {
         NoteSuggestion(message: message.id, note: note)
           .padding(.top, Metrics.xs)
@@ -71,6 +75,21 @@ struct MessageRow: View {
     }
     .onHover { hovering in
       withAnimation(.snappy(duration: 0.15)) { isHovered = hovering }
+    }
+  }
+
+  /// Saves suggested Little Snitch rules where the person chooses; opening the file
+  /// imports it into Little Snitch.
+  private func save(_ file: Data) {
+    let panel = NSSavePanel()
+    panel.nameFieldStringValue = "Glade suggested rules.lsrules"
+    panel.canCreateDirectories = true
+    guard panel.runModal() == .OK, let url = panel.url else { return }
+    do {
+      try file.write(to: url, options: .atomic)
+      Log.info(.app, "Saved suggested Little Snitch rules")
+    } catch {
+      Log.warning(.app, "Couldn’t save the suggested rules: \(error.localizedDescription)")
     }
   }
 

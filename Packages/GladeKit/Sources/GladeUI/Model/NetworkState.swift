@@ -19,6 +19,8 @@ public struct NetworkState {
   public var testStarted: Date?
   public var testProblem: String?
   public var loadingRouter = false
+  /// The Little Snitch rules last imported, if any.
+  public var littleSnitch: LittleSnitchRules?
   /// The Wi-Fi signal over the last few minutes, 0 (−90 dBm) to 100 (−30 dBm).
   var signal: [HistoryChart.Point] = []
 

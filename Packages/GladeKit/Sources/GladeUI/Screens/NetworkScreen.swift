@@ -35,6 +35,9 @@ struct NetworkScreen: View {
             .frame(width: size.width > 0 ? min(320, size.width * 0.36) : 300)
         }
         DataUsedCard(history: network.history)
+        if LittleSnitchRules.isInstalled || network.littleSnitch != nil {
+          LittleSnitchCard(rules: network.littleSnitch)
+        }
       }
       .frame(maxWidth: Metrics.contentWidth, alignment: .leading)
       .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }

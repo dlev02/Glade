@@ -92,7 +92,7 @@ struct DataUsedCard: View {
       AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) { value in
         AxisGridLine()
         AxisValueLabel {
-          if let bytes = value.as(Double.self) { Text(Format.bytes(Int64(bytes))) }
+          if let bytes = value.as(Double.self), bytes > 0 { Text(Format.bytes(Int64(bytes))) }
         }
       }
     }

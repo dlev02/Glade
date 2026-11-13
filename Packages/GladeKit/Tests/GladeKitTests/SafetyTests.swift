@@ -813,4 +813,35 @@ struct SafetyTests {
     config.alwaysClear = ["or"]
     #expect(Planner.plan(scan: result, level: .careful, config: config).selectedIDs.isEmpty)
   }
+
+  /// A Little Snitch review never lets everything through, never drops a block that
+  /// isn’t a duplicate, and only names apps already in the person’s rules.
+  @Test func littleSnitchSuggestionsNeverLoosenTheFirewall() throws {
+    let file = """
+      {"name":"Mine","rules":[
+       {"action":"allow","process":"/Applications/Safari.app/Contents/MacOS/Safari","remote":"any"},
+       {"action":"deny","process":"any","remote-domains":["tracker.example"]},
+       {"action":"deny","process":"any","remote-domains":["ads.example"]},
+       {"action":"deny","process":"any","remote-domains":["ads.example"]}
+      ]}
+      """
+    let rules = try LittleSnitchRules.parse(Data(file.utf8))
+    let raw = try JSONDecoder().decode(Assistant.RawSnitchReview.self, from: Data("""
+      {"summary":"s","points":[],
+       "remove":["r2","r4","r99"],
+       "add":[
+        {"action":"allow","process":"any","domains":["example.com"],"hosts":[],"direction":"outgoing","notes":""},
+        {"action":"allow","process":"/Applications/Evil.app/Contents/MacOS/Evil","domains":["evil.example"],"hosts":[],"direction":"outgoing","notes":""},
+        {"action":"allow","process":"/Applications/Safari.app/Contents/MacOS/Safari","domains":[],"hosts":[],"direction":"outgoing","notes":""},
+        {"action":"deny","process":"/Applications/Safari.app/Contents/MacOS/Safari","domains":["tracker2.example"],"hosts":[],"direction":"outgoing","notes":"x"}
+       ]}
+      """.utf8))
+    var review = LittleSnitchReview(summary: "", points: [], remove: [], add: [], rejected: [], provider: "test", model: nil, runID: "")
+    Assistant.validate(raw, rules: rules, into: &review)
+    // Only the duplicate block may go; the other block and an unknown rule stay.
+    #expect(review.remove.map(\.id) == ["r4"])
+    // Only the narrow deny for an app already in the rules survives.
+    #expect(review.add.count == 1 && review.add[0].action == "deny" && review.add[0].domains == ["tracker2.example"])
+    #expect(review.rejected.count == 5)
+  }
 }
