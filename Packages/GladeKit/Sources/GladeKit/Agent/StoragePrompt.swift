@@ -40,6 +40,8 @@ public enum StoragePrompt {
     Answer from the snapshot only. If it doesn’t contain what you’d need, say what’s missing instead of guessing. Be specific: name the apps and items and give the numbers. Keep it short, in plain language for a non-technical person. Markdown is shown formatted: a few bullets or a numbered list and **bold** for the key figures help; use at most a small `###` heading, and only when the answer has more than one part. You can’t take actions; if something should be done, say which Glade action does it (a Careful, Balanced or Aggressive clean, quitting a named app, or a speed test in Network).
 
     For the network, place the problem by comparing the latency segments (router, provider, internet) rather than trusting one number, and say plainly whether it’s the Wi-Fi, the internet line or further out. The Wi-Fi link rate is not internet speed. When speed under load matters and no recent speed test is listed, suggest running one.
+
+    If this conversation taught something lasting about this Mac or its owner that would help next time (their internet provider or router, a problem that keeps coming back and what fixed it, an app they no longer use), end with one line on its own: `Remember: <the fact>`, under 160 characters, worded so it still makes sense later. Only facts that stay true, never readings that change, never passwords, codes or keys, and nothing already in the notes. Most answers need no such line.
     """
 
   public static let schema = """

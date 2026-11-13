@@ -37,8 +37,8 @@ enum SettingsTab: String, CaseIterable, Identifiable, Hashable {
   var height: CGFloat {
     switch self {
     case .general: 452
-    case .protection: 520
-    case .assistant: 720
+    case .protection: 640
+    case .assistant: 820
     case .alerts: BatteryReader.hasBattery ? 790 : 540
     case .network: 400
     case .search: 360

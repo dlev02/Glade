@@ -107,6 +107,15 @@ public enum Guide {
 
     Readings never include the network’s name, addresses or device names; device counts and their signal are there. Data used covers only the time Glade’s app was open and includes local traffic, so it isn’t the provider’s bill.
 
+    ## Notes and rules
+
+    ```
+    glade notes --json        # what the person has told Glade to remember, dated
+    glade rules --json        # apps whose leftovers and caches are always ticked, and what each covers now
+    ```
+
+    Read the notes before advising: they hold what a reading can’t show (the internet provider, a router, a problem that came back before, an app no longer used). Current readings win where a note disagrees. Notes and rules are the person’s to keep: suggest one (“Want me to remember that you’re on AT&T fibre? `glade notes add …`”) rather than adding it unasked. A rule (`glade rules add <app>`) ticks that app’s leftovers and caches at every level, to the Trash; never suggest one for an app that’s still installed and in use.
+
     ## Asking Glade’s own assistant
 
     ```

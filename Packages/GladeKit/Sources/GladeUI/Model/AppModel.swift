@@ -74,6 +74,8 @@ public final class AppModel {
     public var advice: StorageAdvice?
     /// Set when the answer proposed things to remove.
     public var proposal: ProposalState?
+    /// A lasting fact the answer suggests remembering, until it’s saved or dismissed.
+    public var suggestedNote: String?
   }
 
   // MARK: Settings
@@ -137,6 +139,8 @@ public final class AppModel {
   /// The connection, latency, traffic, data used and speed tests, while Network shows.
   public internal(set) var network = NetworkState()
   @ObservationIgnored let networkWork = NetworkWork()
+  /// Bumped when the Assistant’s notes change, so lists of them redraw.
+  var notesRevision = 0
 
   // MARK: Free Up Memory
 
@@ -808,7 +812,9 @@ public final class AppModel {
     )
     do {
       let reply = try await Assistant.ask(text, snapshot: description, earlier: earlier, config: config, providers: AgentProviders.all)
-      messages.append(Message(role: .assistant, text: reply.answer, provider: reply.provider, model: reply.model))
+      var answer = Message(role: .assistant, text: reply.answer, provider: reply.provider, model: reply.model)
+      answer.suggestedNote = reply.remember
+      messages.append(answer)
       assistantState = .idle
     } catch {
       messages.append(Message(role: .problem, text: error.localizedDescription))

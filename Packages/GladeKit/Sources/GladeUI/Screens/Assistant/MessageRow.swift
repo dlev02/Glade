@@ -63,6 +63,10 @@ struct MessageRow: View {
         ProposalCard(message: message.id, state: proposal)
           .padding(.top, Metrics.xs)
       }
+      if let note = message.suggestedNote {
+        NoteSuggestion(message: message.id, note: note)
+          .padding(.top, Metrics.xs)
+      }
       actions
     }
     .onHover { hovering in

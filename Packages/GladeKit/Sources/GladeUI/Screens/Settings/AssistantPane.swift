@@ -112,6 +112,15 @@ struct AssistantPane: View {
         .disabled(!model.config.assistant.proactive)
       }
 
+      Section {
+        Toggle("Use notes", isOn: $model.config.assistant.useNotes)
+        if model.config.assistant.useNotes { NoteRows() }
+      } header: {
+        Text("Notes")
+      } footer: {
+        Text("Sent with every question, to whichever AI answers.")
+          .foregroundStyle(.secondary)
+      }
     }
     .confirmationDialog("Share file excerpts with cloud AIs?", isPresented: $confirmsSharing) {
       Button("Share Excerpts") { model.config.assistant.shareExcerpts = true }

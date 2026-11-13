@@ -31,6 +31,15 @@ struct ProtectionPane: View {
       }
 
       Section {
+        AlwaysClearRows()
+      } header: {
+        Text("Always clear")
+      } footer: {
+        Text("Leftovers and caches of these are ticked at every level and go to the Trash. Never personal files or installed apps.")
+          .foregroundStyle(.secondary)
+      }
+
+      Section {
         DisclosureGroup(isExpanded: $showsAlwaysProtected) {
           VStack(alignment: .leading, spacing: 0) {
             ForEach(Array(locked.enumerated()), id: \.element.id) { index, zone in

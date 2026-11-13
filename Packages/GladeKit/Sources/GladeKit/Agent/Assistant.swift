@@ -176,7 +176,7 @@ public enum Assistant {
     config: GladeConfig = ConfigStore.load(),
     proactive: Bool = false,
     providers: [any AgentProvider]
-  ) async throws -> (answer: String, provider: String, model: String?, runID: String) {
+  ) async throws -> (answer: String, provider: String, model: String?, runID: String, remember: String?) {
     let provider = try await pick(config: config, providers: providers, proactive: proactive)
     let budget = provider.isLocal ? 9_000 : 60_000
     var prompt = ""
@@ -189,7 +189,9 @@ public enum Assistant {
       model: config.assistant.models[provider.id], config: config, proactive: proactive, schema: nil,
       question: question, earlier: earlier
     )
-    return (reply.text.trimmingCharacters(in: .whitespacesAndNewlines), reply.provider, reply.model ?? config.assistant.models[provider.id], runID)
+    // A closing “Remember: …” is a suggested note, kept only if the person saves it.
+    let split = AssistantNotes.suggestion(in: reply.text.trimmingCharacters(in: .whitespacesAndNewlines))
+    return (split.answer, reply.provider, reply.model ?? config.assistant.models[provider.id], runID, split.note)
   }
 
   // MARK: Running
@@ -224,6 +226,11 @@ public enum Assistant {
     config: GladeConfig, proactive: Bool, schema: String? = StoragePrompt.schema,
     question: String? = nil, earlier: [ConversationTurn]? = nil
   ) async throws -> (AgentReply, String) {
+    // The notes the person kept go first, so every kind of request knows them.
+    var prompt = prompt
+    if config.assistant.useNotes, let notes = AssistantNotes.section(AssistantNotes.load(), budget: provider.isLocal ? 1_500 : 7_000) {
+      prompt = notes + "\n\n" + prompt
+    }
     var record = AssistantRun(
       id: UUID().uuidString, date: Date(), purpose: purpose, provider: provider.id, model: model,
       system: system, prompt: prompt, reply: nil, error: nil, duration: 0, inputTokens: nil,

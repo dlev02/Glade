@@ -21,6 +21,8 @@
 
 ### Assistant
 
+- The Assistant remembers what you choose. When an answer learns something lasting, such as your internet provider or a problem that keeps coming back, it offers **Remember**, and your notes go with every question after that. They're in **Settings > Assistant**, and `glade notes` lists them.
+- **Settings > Protection > Always clear**: name an app you no longer use, and its leftovers and caches are ticked at every level and go to the Trash. Personal files and installed apps never are. Also `glade rules add <app>`.
 - The Assistant now follows the conversation, so a follow-up like "and the other one?" or "is it safe to quit that?" is answered in the light of what came before. **New Conversation** starts afresh. On the command line, `glade ask --continue` follows on from your last question.
 
 ## 0.3.0 — 2026-11-12

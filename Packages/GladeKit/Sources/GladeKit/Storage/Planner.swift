@@ -47,6 +47,11 @@ public enum Planner {
     var items: [PlanItem] = []
     for finding in scan.findings {
       let (selected, reason) = decide(finding, level: level, now: now)
+      // The person’s own standing rule ticks what they’d tick themselves.
+      if !selected, let rule = AlwaysClear.rule(for: finding, rules: config.alwaysClear) {
+        items.append(PlanItem(id: finding.id, selected: true, reason: "You asked Glade to always clear \(rule).", source: .person))
+        continue
+      }
       items.append(PlanItem(id: finding.id, selected: selected, reason: reason))
     }
     var plan = CleanPlan(

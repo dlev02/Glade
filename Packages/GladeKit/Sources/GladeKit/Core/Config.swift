@@ -49,6 +49,8 @@ public struct AssistantSettings: Codable, Sendable, Equatable {
   public var runsPerDay: Int?
   /// Seconds before a run is abandoned.
   public var timeout: Double
+  /// Include the notes the person kept (`AssistantNotes`) when asking an AI.
+  public var useNotes: Bool = true
 
   public init() {
     order = ["claude", "codex", "apple"]
@@ -74,6 +76,7 @@ public struct AssistantSettings: Codable, Sendable, Equatable {
     proactive = try c.decodeIfPresent(Bool.self, forKey: .proactive) ?? proactive
     if c.contains(.runsPerDay) { runsPerDay = try c.decodeIfPresent(Int.self, forKey: .runsPerDay) }
     timeout = try c.decodeIfPresent(Double.self, forKey: .timeout) ?? timeout
+    useNotes = try c.decodeIfPresent(Bool.self, forKey: .useNotes) ?? useNotes
   }
 }
 
@@ -251,6 +254,8 @@ public struct GladeConfig: Codable, Sendable, Equatable {
   public var level: CleanLevel
   /// Apps the assistant must never suggest quitting, by bundle identifier or name.
   public var keepRunning: [String]
+  /// Apps and tools whose leftovers and caches are always ticked (`AlwaysClear`).
+  public var alwaysClear: [String]
   public var assistant: AssistantSettings
   public var automation: AutomationSettings
   public var index: IndexSettings
@@ -265,6 +270,7 @@ public struct GladeConfig: Codable, Sendable, Equatable {
     trashEverything = false
     level = .balanced
     keepRunning = []
+    alwaysClear = []
     assistant = AssistantSettings()
     automation = AutomationSettings()
     index = IndexSettings()
@@ -282,6 +288,7 @@ public struct GladeConfig: Codable, Sendable, Equatable {
     trashEverything = try c.decodeIfPresent(Bool.self, forKey: .trashEverything) ?? trashEverything
     level = try c.decodeIfPresent(CleanLevel.self, forKey: .level) ?? level
     keepRunning = try c.decodeIfPresent([String].self, forKey: .keepRunning) ?? keepRunning
+    alwaysClear = try c.decodeIfPresent([String].self, forKey: .alwaysClear) ?? alwaysClear
     assistant = try c.decodeIfPresent(AssistantSettings.self, forKey: .assistant) ?? assistant
     automation = try c.decodeIfPresent(AutomationSettings.self, forKey: .automation) ?? automation
     index = try c.decodeIfPresent(IndexSettings.self, forKey: .index) ?? index

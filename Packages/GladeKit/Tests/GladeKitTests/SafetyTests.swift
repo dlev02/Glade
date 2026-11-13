@@ -776,4 +776,41 @@ struct SafetyTests {
     // The counts are still there.
     #expect(described.contains("2 devices online") && described.contains("2 on a weak signal"))
   }
+
+  /// A standing rule ticks the named app’s leftovers, which nothing else may, but
+  /// never personal files, anything blocked, installed apps or a lookalike name.
+  @Test func alwaysClearRulesTickOnlyTheNamedAppsLeftovers() {
+    func leftover(_ id: String, _ title: String, owner: String, risk: Risk = .caution, blockers: [Blocker] = []) -> Finding {
+      var item = finding(id, home + "/Library/Application Support/\(id)", method: .trash, risk: risk)
+      item.category = .appLeftovers
+      item.title = title
+      item.owner = Owner(owner)
+      item.recovery = .permanent
+      item.autoLevel = nil
+      item.blockers = blockers
+      return item
+    }
+    let cursor = leftover("cursor", "Cursor (leftovers)", owner: "Cursor")
+    let cursorCache = leftover("cursor-cache", "Cursor’s cache", owner: "Cursor")
+    let lookalike = leftover("recursor", "Recursor", owner: "Recursor")
+    let running = leftover("cursor-running", "Cursor (helper)", owner: "Cursor", blockers: [Blocker(.appRunning, "Cursor is open.")])
+    var personal = leftover("cursor-notes", "Cursor notes.txt", owner: "Cursor", risk: .personal)
+    personal.category = .downloads
+    var installed = appFinding("cursor-app", [home + "/Applications/Cursor.app"], bundleID: "com.todesktop.cursor")
+    installed.title = "Cursor"
+    installed.owner = Owner("Cursor")
+    let result = scan([cursor, cursorCache, lookalike, running, personal, installed])
+
+    var config = GladeConfig()
+    // Without a rule, no level ticks leftovers.
+    #expect(Planner.plan(scan: result, level: .aggressive, config: config).selectedIDs.isEmpty)
+    config.alwaysClear = ["Cursor"]
+    for level in CleanLevel.allCases {
+      #expect(Set(Planner.plan(scan: result, level: level, config: config).selectedIDs) == ["cursor", "cursor-cache"])
+    }
+    // Too short to be a rule.
+    #expect(AlwaysClear.normalised("AI") == nil)
+    config.alwaysClear = ["or"]
+    #expect(Planner.plan(scan: result, level: .careful, config: config).selectedIDs.isEmpty)
+  }
 }

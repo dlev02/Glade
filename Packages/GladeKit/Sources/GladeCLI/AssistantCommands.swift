@@ -125,10 +125,16 @@ struct Ask: AsyncParsableCommand {
     struct Answer: Encodable {
       var answer: String
       var provider: String
+      /// A lasting fact the AI suggests remembering; kept only with `glade notes add`.
+      var suggestedNote: String?
     }
-    emit(Answer(answer: reply.answer, provider: reply.provider), json: output.json) {
+    emit(Answer(answer: reply.answer, provider: reply.provider, suggestedNote: reply.remember), json: output.json) {
       print(reply.answer)
       print("\n— \(reply.provider)")
+      if let note = reply.remember {
+        print("\nWorth remembering: \(note)")
+        print("To keep it: \(Brand.cli) notes add \"\(note.replacingOccurrences(of: "\"", with: "'"))\"")
+      }
     }
   }
 }

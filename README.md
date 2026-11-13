@@ -109,6 +109,8 @@ Ask it to remove something by name ("remove the Adobe apps", "uninstall iMovie")
 | Apple Intelligence (on this Mac) | Tested |
 | Gemini CLI, Cursor CLI, GitHub Copilot CLI, Qwen Code, Ollama | Written from their documentation; not yet tested |
 
+It follows the conversation, so "and the other one?" makes sense, and it remembers what you choose: when an answer learns something lasting (your internet provider, a problem that keeps coming back) it offers **Remember**, and your notes go with every question after that. They're listed in **Settings > Assistant**, where you can add, change or remove them. Rules work in code, not in a prompt: under **Settings > Protection > Always clear**, an app you no longer use has its leftovers and caches ticked at every level and sent to the Trash.
+
 Each tool runs in an empty temporary folder with its own tools, plugins, MCP servers and memory switched off. Apple Intelligence and Ollama run on your Mac; the others send the request to their provider under your account.
 
 ### Menu bar
@@ -151,6 +153,7 @@ Every command accepts `--json`, and nothing is removed without `--confirm`.
 | `glade network check <site>` | Is one service slow, or your connection? Compares it with apple.com. |
 | `glade network router` | What your router reports (AT&T gateways): the line, its speed and the devices on your network. |
 | `glade network test` | Says what a speed test would use; add `--confirm` to run macOS's own test. |
+| `glade notes`, `glade rules` | What the Assistant remembers; apps whose leftovers are always cleared. `add` and `remove` change them. |
 | `glade protect check <path>` | Why a path is or isn't off limits. |
 | `glade doctor` | Permissions and what Glade can't see; when space is low, what a clean would free. |
 | `glade show storage` | Open the window on overview, storage, performance, battery, network, assistant or history. |

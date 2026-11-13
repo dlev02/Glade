@@ -4,6 +4,41 @@ import SwiftUI
 /// Names for the AIs Glade talks to, worked out from the providers it has found, so
 /// the Assistant and History screens describe who answered the same way.
 extension AppModel {
+  // MARK: Notes
+
+  /// The notes the Assistant gets with every question.
+  public var notes: [AssistantNote] {
+    // Read so a change redraws whatever lists them.
+    _ = notesRevision
+    return AssistantNotes.load()
+  }
+
+  /// Keeps a note; returns why not when it can’t be kept.
+  @discardableResult
+  public func keepNote(_ text: String, source: AssistantNote.Source) -> String? {
+    do {
+      try AssistantNotes.add(text, source: source)
+      notesRevision += 1
+      return nil
+    } catch {
+      return error.localizedDescription
+    }
+  }
+
+  public func removeNote(_ id: UUID) {
+    AssistantNotes.remove(id)
+    notesRevision += 1
+  }
+
+  /// Saves or dismisses the note an answer suggested.
+  public func resolveSuggestedNote(in message: Message.ID, keep: Bool) -> String? {
+    guard let index = messages.firstIndex(where: { $0.id == message }), let note = messages[index].suggestedNote else { return nil }
+    var problem: String?
+    if keep { problem = keepNote(note, source: .assistant) }
+    if problem == nil { messages[index].suggestedNote = nil }
+    return problem
+  }
+
   /// The provider a message, run or receipt refers to. Records store the provider’s
   /// identifier, older ones its name; either matches.
   func providerStatus(_ reference: String?) -> ProviderStatus? {
