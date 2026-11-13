@@ -70,6 +70,8 @@ These run only while you're looking at your network: `glade network` and its com
 - **A site check** (`glade network check <site>`, or one an agent asks for): one request for the headers of the site you name and of `www.apple.com`, to time each step. Nothing is sent in it.
 - **A speed test**, only when you press **Test Speed**, run `glade network test --confirm`, or allow an agent that asks. It runs macOS's own `networkQuality`, which fills your connection for up to the length you set against Apple's servers (`mensura.cdn-apple.com` and Apple's `aaplimg.com` servers it chooses), and uses a lot of data: hundreds of megabytes, or gigabytes on a fast line. Apple handles it under [its privacy policy](https://www.apple.com/legal/privacy/). An agent can't start one on a hotspot or in Low Data Mode unless you allow it in Settings.
 
+The `glade network` commands leave out your Wi-Fi network's name, addresses and device names unless you add `--show-names`, since a coding agent reading their output is an AI too.
+
 If you use a firewall app, these are `/sbin/ping`, `/usr/sbin/traceroute` and `/usr/bin/networkQuality`, and Glade itself for the router and site checks.
 
 ### Questions you ask an AI

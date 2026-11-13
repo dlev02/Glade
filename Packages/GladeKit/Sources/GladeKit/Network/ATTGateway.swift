@@ -51,8 +51,12 @@ enum ATTGateway {
       case "MAC Address":
         close()
         current = RouterReport.Device(name: nil, online: false, connection: "Unknown", signalBars: nil, throughMesh: nil, lastActive: nil)
-      case "Name":
-        if current?.name == nil, !row.value.isEmpty, row.value.lowercased() != "unknown" { current?.name = row.value }
+      case "IPv4 Address / Name", "Name":
+        // “192.168.1.70 / Sams-iPhone”: the name follows the slash; the address isn’t kept.
+        let name = (row.value.components(separatedBy: "/").last ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if current?.name == nil, !name.isEmpty, name.lowercased() != "unknown", !name.contains(".") || name.contains(where: \.isLetter) {
+          current?.name = name
+        }
       case "Status":
         current?.online = row.value.lowercased() == "on"
       case "Last Activity":

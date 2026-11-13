@@ -27,11 +27,15 @@ public struct SiteCheck: Codable, Sendable, Equatable {
       return check
     }
     var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 15)
-    request.httpMethod = "HEAD"
+    // The first byte only: many sites refuse HEAD (405), and a byte is all a timing needs.
+    request.setValue("bytes=0-0", forHTTPHeaderField: "Range")
     request.httpShouldHandleCookies = false
     let delegate = MetricsDelegate()
     let started = Date()
     do {
+      // A new session each time, so every try measures finding, connecting and securing.
+      let session = Self.freshSession()
+      defer { session.finishTasksAndInvalidate() }
       let (_, response) = try await session.data(for: request, delegate: delegate)
       check.status = (response as? HTTPURLResponse)?.statusCode
     } catch {
@@ -53,11 +57,23 @@ public struct SiteCheck: Codable, Sendable, Equatable {
     return check
   }
 
-  /// The site, then the comparison site, side by side.
+  /// The site, then the comparison site, side by side: the median of three tries each,
+  /// since one try can land on a hiccup.
   public static func compare(_ host: String) async -> [SiteCheck] {
-    async let site = run(host)
-    async let control = run(control)
+    async let site = median(host)
+    async let control = median(Self.control)
     return await [site, control]
+  }
+
+  static func median(_ host: String) async -> SiteCheck {
+    var tries: [SiteCheck] = []
+    for _ in 0..<3 {
+      let check = await run(host)
+      if check.error != nil, tries.isEmpty { return check }
+      tries.append(check)
+    }
+    let answered = tries.filter { $0.error == nil }.sorted { ($0.total ?? 0) < ($1.total ?? 0) }
+    return answered.isEmpty ? tries[0] : answered[answered.count / 2]
   }
 
   /// One sentence comparing a site with the control.
@@ -69,18 +85,25 @@ public struct SiteCheck: Codable, Sendable, Equatable {
     if let lookup = site.lookup, lookup > 300, lookup > (control.lookup ?? 0) * 3 {
       return "Finding \(site.host)’s address was slow (\(Int(lookup)) ms), which delays it starting. Your DNS may be the problem."
     }
-    if siteTotal > controlTotal * 3, siteTotal - controlTotal > 300 {
-      return "\(site.host) is slow to answer (\(Int(siteTotal)) ms against \(Int(controlTotal)) ms for \(control.host)), so the delay is at its end or on the way to it, not your connection."
+    let figures = "(\(Int(siteTotal)) ms against \(Int(controlTotal)) ms for \(control.host))"
+    if controlTotal > 1_000 {
+      return "Even \(control.host) was slow \(figures), so the delay is your connection, not \(site.host)."
     }
-    return "\(site.host) answered about as quickly as \(control.host) (\(Int(siteTotal)) ms against \(Int(controlTotal)) ms), so the way there looks fine."
+    if siteTotal > controlTotal * 2.5, siteTotal - controlTotal > 250 {
+      return "\(site.host) is slow to answer \(figures), so the delay is at its end or on the way to it, not your connection."
+    }
+    if siteTotal > controlTotal * 1.5, siteTotal - controlTotal > 100 {
+      return "\(site.host) answered a little slower than \(control.host) \(figures), which is normal for a site further away."
+    }
+    return "\(site.host) answered about as quickly as \(control.host) \(figures), so the way there looks fine."
   }
 
-  static let session: URLSession = {
+  static func freshSession() -> URLSession {
     let configuration = URLSessionConfiguration.ephemeral
     configuration.httpCookieStorage = nil
     configuration.urlCache = nil
     return URLSession(configuration: configuration)
-  }()
+  }
 
   final class MetricsDelegate: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     var metrics: URLSessionTaskMetrics?

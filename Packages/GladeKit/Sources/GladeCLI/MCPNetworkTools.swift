@@ -81,7 +81,9 @@ extension MCPTools {
           var estimatedBytes: Int64?
           var limitedConnection: Bool
         }
-        return JSONFiles.string(Plan(wouldRun: false, seconds: seconds, estimatedBytes: SpeedTest.estimatedBytes(seconds: seconds, last: SpeedTest.last), limitedConnection: path.isLimited))
+        var estimate = SpeedTest.estimatedBytes(seconds: seconds, last: SpeedTest.last)
+        if estimate == nil, let mbps = await SpeedTest.lineMbps(path: path) { estimate = SpeedTest.estimatedBytes(seconds: seconds, mbps: mbps) }
+        return JSONFiles.string(Plan(wouldRun: false, seconds: seconds, estimatedBytes: estimate, limitedConnection: path.isLimited))
       }
       if path.isLimited, !config.network.agentTestsWhenLimited {
         throw MCPFailure(message: "This is a hotspot or Low Data Mode. The person can run a test themselves in Glade, or allow agents to in Settings › Network.")

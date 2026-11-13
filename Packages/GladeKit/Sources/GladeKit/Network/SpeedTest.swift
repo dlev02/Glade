@@ -11,6 +11,17 @@ public enum SpeedTest {
     return Int64(bitsPerSecond / 8 * Double(seconds))
   }
 
+  /// Bytes a test of this length would use at this many megabits a second, both ways.
+  public static func estimatedBytes(seconds: Int, mbps: Double) -> Int64 {
+    Int64(mbps * 1_000_000 * 1.3 / 8 * Double(seconds))
+  }
+
+  /// The fastest the connection could go before any test: the router’s port, else the Wi-Fi link.
+  public static func lineMbps(path: NetworkPath) async -> Double? {
+    if let router = path.router, let port = (await RouterReader.read(router: router))?.line?.portMbps { return Double(port) }
+    return WiFiLink.current()?.linkRateMbps
+  }
+
   public static func run(seconds: Int, path: NetworkPath) async throws -> SpeedTestResult {
     guard path.connected else { throw SpeedTestError.notConnected }
     let length = min(60, max(5, seconds))

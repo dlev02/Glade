@@ -15,6 +15,13 @@ public struct NetworkWatch: Codable, Sendable, Equatable {
     public var sending: Double
     public var receiving: Double
 
+    /// Named for their units in JSON: milliseconds, bytes a second.
+    enum CodingKeys: String, CodingKey {
+      case date, busiest = "busiestApp"
+      case router = "routerMs", provider = "providerMs", internet = "internetMs"
+      case sending = "sendingBytesPerSecond", receiving = "receivingBytesPerSecond"
+    }
+
     public func value(_ kind: NetworkTargets.Kind) -> Double? {
       switch kind {
       case .router: router
@@ -27,10 +34,15 @@ public struct NetworkWatch: Codable, Sendable, Equatable {
   public struct Spike: Codable, Sendable, Equatable {
     public var date: Date
     public var kind: NetworkTargets.Kind
+    /// `nil` when the reply was lost.
     public var milliseconds: Double?
     /// What was busiest then, and how much it was sending.
     public var busiest: String?
     public var sending: Double
+
+    enum CodingKeys: String, CodingKey {
+      case date, kind, milliseconds, busiest = "busiestApp", sending = "sendingBytesPerSecond"
+    }
   }
 
   public var started: Date

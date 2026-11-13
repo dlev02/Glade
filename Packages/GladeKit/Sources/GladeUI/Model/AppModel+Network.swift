@@ -137,6 +137,7 @@ extension AppModel {
   /// Roughly how much data a test would use, from the last one.
   public var speedTestEstimate: Int64? {
     SpeedTest.estimatedBytes(seconds: config.network.testSeconds, last: network.lastTest)
+      ?? network.status?.router?.line?.portMbps.map { SpeedTest.estimatedBytes(seconds: config.network.testSeconds, mbps: Double($0)) }
   }
 
   public func runSpeedTest() async {

@@ -2,6 +2,13 @@ import ArgumentParser
 import Foundation
 import GladeKit
 
+/// Names and addresses stay out of output unless asked for, because an agent reading
+/// it is an AI too.
+struct PrivacyOptions: ParsableArguments {
+  @Flag(name: .long, help: "Include the Wi-Fi network’s name, addresses and device names (for you, not for pasting into an AI).")
+  var showNames = false
+}
+
 /// The network: how good the connection is, where a slowdown is, what’s using it and
 /// how much data has gone.
 struct Network: AsyncParsableCommand {
@@ -24,9 +31,11 @@ struct NetworkNow: AsyncParsableCommand {
   )
 
   @OptionGroup var output: OutputOptions
+  @OptionGroup var privacy: PrivacyOptions
 
   func run() async throws {
-    let status = await NetworkStatus.current()
+    let reading = await NetworkStatus.current()
+    let status = privacy.showNames ? reading : reading.forAI()
     emit(status, json: output.json) {
       for line in NetworkText.lines(status) { print(line) }
     }
@@ -41,9 +50,14 @@ struct NetworkWatchCommand: AsyncParsableCommand {
   )
 
   @OptionGroup var output: OutputOptions
+  @OptionGroup var privacy: PrivacyOptions
 
   @Option(name: .customLong("for"), help: "How many seconds to watch (5 to 600).")
   var seconds = 30
+
+  func validate() throws {
+    guard (5...600).contains(seconds) else { throw ValidationError("--for takes 5 to 600 seconds.") }
+  }
 
   func run() async throws {
     let config = ConfigStore.load()
@@ -51,17 +65,18 @@ struct NetworkWatchCommand: AsyncParsableCommand {
     guard path.connected else { throw ValidationError("This Mac isn’t connected to a network.") }
     let live = !output.json
     if live { print("Watching for \(seconds) seconds…   router · provider · internet   (ms; ✕ lost)") }
-    let watch = await NetworkWatch.run(seconds: seconds, path: path, internetHost: config.network.internetHost) { sample in
+    let measured = await NetworkWatch.run(seconds: seconds, path: path, internetHost: config.network.internetHost) { sample in
       guard live else { return }
       let cells = NetworkTargets.Kind.allCases.map { kind in sample.value(kind).map { String(format: "%6.1f", $0) } ?? "     ✕" }
       let busy = sample.busiest.map { "  \($0) ↑\(NetworkDiagnosis.rate(sample.sending))" } ?? ""
       print("\(sample.date.formatted(date: .omitted, time: .standard))  \(cells.joined(separator: "  "))\(busy)")
     }
+    let watch = privacy.showNames ? measured : measured.forAI()
     emit(watch, json: output.json) {
       print("")
       for item in watch.summary { print("\(item.kind.title): \(item.stats?.sentence ?? "not measured")\(item.stats?.jitter.map { ", jitter \(LatencyStats.ms($0))" } ?? "")") }
       if watch.spikes.isEmpty {
-        print("No spikes.")
+        print("No spikes (a spike is a reply over three times the typical, and at least 30 ms more, or a lost one).")
       } else {
         print("\n\(watch.spikes.count) spikes:")
         for spike in watch.spikes.prefix(12) {
@@ -100,7 +115,7 @@ struct NetworkApps: AsyncParsableCommand {
       if report.now.isEmpty { print("  Nothing is using the network.") }
       for app in report.now { print("  \(app.name.padding(toLength: 28, withPad: " ", startingAt: 0)) ↓ \(NetworkDiagnosis.rate(app.received))   ↑ \(NetworkDiagnosis.rate(app.sent))") }
       print("\nToday:")
-      if report.today.isEmpty { print("  Nothing recorded yet. The app records this while it’s open.") }
+      if report.today.isEmpty { print("  Nothing recorded yet. Glade’s app counts this while it’s open, from the first time a version with the Network section runs.") }
       for app in report.today { print("  \(app.name.padding(toLength: 28, withPad: " ", startingAt: 0)) ↓ \(Format.bytes(Int64(app.received)))   ↑ \(Format.bytes(Int64(app.sent)))") }
     }
   }
@@ -155,11 +170,11 @@ struct NetworkUsage: AsyncParsableCommand {
     let report = Report(period: period.rawValue, total: history.total(since: start), rows: rows, recordingSince: history.since, coverage: history.coverage(since: start))
     emit(report, json: output.json) {
       guard let since = history.since else {
-        print("Nothing recorded yet. Glade records data used while the app is open.")
+        print("Nothing recorded yet. Glade’s app counts data used while it’s open, from the first time a version with the Network section runs. The command line can’t count by itself.")
         return
       }
       print("\(period == .today ? "Today" : period == .week ? "The last 7 days" : "The last 30 days"): \(Format.bytes(Int64(report.total.total))) (↓ \(Format.bytes(Int64(report.total.received))) ↑ \(Format.bytes(Int64(report.total.sent))))")
-      print("Recorded since \(since.formatted(date: .abbreviated, time: .shortened)); Glade saw \(Format.percent(report.coverage)) of this period.")
+      print("Recorded since \(since.formatted(date: .abbreviated, time: .shortened)); the app was open for \(Format.percent(report.coverage)) of this period (coverage), so the real total may be higher.")
       print("")
       for row in rows.prefix(30) { print("  \(row.name.padding(toLength: 28, withPad: " ", startingAt: 0)) \(Format.bytes(Int64(row.total)))") }
     }
@@ -184,23 +199,32 @@ struct NetworkTest: AsyncParsableCommand {
   @Flag(name: .long, help: "Run even on a hotspot or in Low Data Mode.")
   var allowLimited = false
 
+  func validate() throws {
+    if let seconds, !(5...60).contains(seconds) { throw ValidationError("--seconds takes 5 to 60.") }
+  }
+
   func run() async throws {
     let config = ConfigStore.load()
     let length = seconds ?? config.network.testSeconds
     let path = await NetworkPath.current()
-    let estimate = SpeedTest.estimatedBytes(seconds: length, last: SpeedTest.last)
+    let lineMbps = await SpeedTest.lineMbps(path: path)
+    let estimate = SpeedTest.estimatedBytes(seconds: length, last: SpeedTest.last) ?? lineMbps.map { SpeedTest.estimatedBytes(seconds: length, mbps: $0) }
     guard confirm else {
       struct Plan: Encodable {
-        var wouldRun: Bool
+        /// Nothing ran: this is the dry run.
+        var ran: Bool
+        var needsConfirm: Bool
         var seconds: Int
+        /// From the last test, or the line’s or Wi-Fi’s rated speed when there’s none.
         var estimatedBytes: Int64?
+        /// A hotspot or Low Data Mode, where a test needs --allow-limited.
         var limitedConnection: Bool
         var command: String
       }
-      let plan = Plan(wouldRun: false, seconds: length, estimatedBytes: estimate, limitedConnection: path.isLimited, command: "\(Brand.cli) network test --confirm")
+      let plan = Plan(ran: false, needsConfirm: true, seconds: length, estimatedBytes: estimate, limitedConnection: path.isLimited, command: "\(Brand.cli) network test --confirm")
       emit(plan, json: output.json) {
         print("A speed test fills your connection for up to \(length) seconds against Apple’s servers.")
-        if let estimate { print("At your last measured speed that’s about \(Format.bytes(estimate)) of data.") }
+        if let estimate { print("That’s up to about \(Format.bytes(estimate)) of data\(SpeedTest.last == nil ? " at your line’s rated speed" : " at your last measured speed").") }
         if path.isLimited { print("You’re on a limited connection (a hotspot or Low Data Mode), so it would use your allowance.") }
         print("To run it: \(plan.command)\(path.isLimited ? " --allow-limited" : "")")
       }
@@ -225,8 +249,9 @@ struct NetworkRouter: AsyncParsableCommand {
   )
 
   @OptionGroup var output: OutputOptions
+  @OptionGroup var privacy: PrivacyOptions
 
-  @Flag(name: .long, help: "List every device, including ones that are off.")
+  @Flag(name: .long, help: "Also list devices the router remembers but that are off now.")
   var all = false
 
   func run() async throws {
@@ -235,22 +260,23 @@ struct NetworkRouter: AsyncParsableCommand {
     guard let report = await RouterReader.read(router: router, includeDevices: true, maximumAge: 60) else {
       throw ValidationError("Glade doesn’t know how to read this router yet. AT&T gateways are supported.")
     }
-    var shown = report
-    if !all { shown.devices = report.online }
+    var shown = privacy.showNames ? report : report.forAI(keepOffline: all)
+    if !all { shown.devices = shown.devices?.filter(\.online) }
     emit(shown, json: output.json) {
       print(report.title + (report.firmware.map { " (firmware \($0))" } ?? ""))
       print("Access code: \(RouterReader.hasAccess(report, host: router) ? "saved in the Keychain" : "not saved (\(Brand.cli) network router-access)")")
       if let line = report.line {
-        print("Line: \(line.connected == true ? "up" : line.connected == false ? "DOWN" : "unknown")\(line.source.map { ", \($0)" } ?? "")\(line.portMbps.map { " at \($0) Mbps" } ?? "")")
-        if let received = line.received, let sent = line.sent { print("Since the router started: ↓ \(Format.bytes(Int64(clamping: received))) ↑ \(Format.bytes(Int64(clamping: sent)))") }
+        print("Line: \(line.connected == true ? "up" : line.connected == false ? "DOWN" : "unknown")\(line.source.map { ", \($0)" } ?? "")\(line.portMbps.map { "; its port runs at \($0) Mbps (not a measured speed)" } ?? "")")
+        if let received = line.received, let sent = line.sent { print("Carried since the router last restarted (not a weekly total): ↓ \(Format.bytes(Int64(clamping: received))) ↑ \(Format.bytes(Int64(clamping: sent)))") }
         if let errors = line.errors, errors > 0 { print("Errors on the line: \(errors)") }
       }
       print("\n\(report.online.count) devices online: " + report.onlineByConnection.map { "\($0.count) on \($0.connection)" }.joined(separator: ", "))
-      if report.weakDevices > 0 { print("\(report.weakDevices) on a weak signal (1–2 bars)") }
-      print("")
-      for device in (shown.devices ?? []).sorted(by: { ($0.name ?? "~") < ($1.name ?? "~") }) {
-        let bars = device.signalBars.map { " · \($0) bars" } ?? ""
-        print("  \((device.name ?? "Unnamed").padding(toLength: 30, withPad: " ", startingAt: 0)) \(device.connection)\(bars)\(device.online ? "" : " · off")")
+      if report.weakDevices > 0 { print("\(report.weakDevices) on a weak signal (1 or 2 bars)") }
+      print("\nDevices, weakest signal first\(privacy.showNames ? "" : " (add --show-names for their names)"):")
+      for (index, device) in (shown.devices ?? []).sorted(by: { ($0.signalBars ?? 9, $0.name ?? "~") < ($1.signalBars ?? 9, $1.name ?? "~") }).enumerated() {
+        let bars = device.signalBars.map { " · \($0) \($0 == 1 ? "bar" : "bars")" } ?? ""
+        let name = device.name ?? "Device \(index + 1)"
+        print("  \(name.padding(toLength: 30, withPad: " ", startingAt: 0)) \(device.connection)\(bars)\(device.online ? "" : " · off")")
       }
     }
   }
@@ -298,7 +324,7 @@ struct NetworkCheck: AsyncParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "check",
     abstract: "Check how quickly one site or service answers, against apple.com, to tell a slow service from a slow connection.",
-    discussion: "Makes one small request to each. Example: \(Brand.cli) network check www.netflix.com"
+    discussion: "Asks each for its first byte three times and compares the middle try. It times the site’s own front door: a streaming service’s video comes from other servers, so for buffering also run `\(Brand.cli) network watch` while it plays. Exits 1 if the site doesn’t answer. Example: \(Brand.cli) network check www.netflix.com"
   )
 
   @OptionGroup var output: OutputOptions
@@ -319,11 +345,14 @@ struct NetworkCheck: AsyncParsableCommand {
     emit(report, json: output.json) {
       print(report.verdict)
       print("")
+      print("  (median of three tries each; HTTP \(checks[0].status.map(String.init) ?? "–") from \(checks[0].host))")
       for check in checks {
         func ms(_ value: Double?) -> String { value.map { "\(Int($0)) ms" } ?? "–" }
         print("  \(check.host.padding(toLength: 26, withPad: " ", startingAt: 0)) address \(ms(check.lookup)) · connect \(ms(check.connect)) · secure \(ms(check.secure)) · first reply \(ms(check.firstReply))\(check.throughProxy ? " · via proxy/relay" : "")")
       }
     }
+    // A site that didn’t answer is a failure, so scripts and agents can tell.
+    if checks[0].error != nil { throw ExitCode(1) }
   }
 }
 
@@ -346,9 +375,14 @@ enum NetworkText {
       if let channel = wifi.channel { connection += " · channel \(channel)\(wifi.widthMHz.map { " (\($0) MHz)" } ?? "")" }
     }
     lines.append(connection)
-    for vpn in path.vpns where vpn.connected {
+    let connected = path.vpns.filter(\.connected)
+    if connected.isEmpty {
+      lines.append(path.vpnCarriesEverything ? "VPN: a tunnel carries all traffic (\(path.defaultInterface ?? "utun"))" : "VPN: none connected\(path.vpns.isEmpty ? "" : " (\(path.vpns.map(\.name).joined(separator: ", ")) set up)")")
+    }
+    for vpn in connected {
       lines.append("VPN: \(vpn.name) is on\(path.vpnCarriesEverything ? " and carries all traffic" : ", but not all traffic goes through it")")
     }
+    if path.proxy { lines.append("Proxy: a web proxy is set in System Settings") }
     if !status.latency.isEmpty {
       lines.append("Latency: " + status.latency.map { "\($0.kind.title) \($0.stats?.sentence ?? "not found")" }.joined(separator: " · "))
     }
@@ -357,7 +391,7 @@ enum NetworkText {
     lines.append(now)
     if let router = status.router {
       var text = "Router: \(router.title)"
-      if let line = router.line { text += " · \(line.source ?? "line") \(line.connected == false ? "down" : "up")\(line.portMbps.map { " at \($0) Mbps" } ?? "")" }
+      if let line = router.line { text += " · \(line.source ?? "line") \(line.connected == false ? "down" : "up")\(line.portMbps.map { " (port \($0) Mbps, not measured)" } ?? "")" }
       if router.devices != nil { text += " · \(router.online.count) devices online" }
       lines.append(text)
     }

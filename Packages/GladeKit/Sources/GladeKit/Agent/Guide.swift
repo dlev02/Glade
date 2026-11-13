@@ -103,11 +103,15 @@ public enum Guide {
 
     Answering “why is my internet slow” or “why does this buffer”: start with `glade network`. It measures three segments, and comparing them is the diagnosis: spikes or loss to the **router** with a weak or fair signal mean the Wi-Fi; a steady router with a slow **provider** hop means the line; both steady with a slow **internet** means further out. An app sending heavily while latency rises is the likely cause of calls stuttering (it fills the upload). The Mac using little while latency rises points at another device on the network. For one slow service, `glade network check <host>`. For intermittent trouble, `watch` while it happens. The Wi-Fi link rate is what the radio could carry, not internet speed; never report it as speed.
 
+    Reading the output: latencies are milliseconds; traffic is bytes a second (now) or bytes (totals); `lastTest` is absent until a test has run. In `watch`, a spike is a reply over three times the typical and at least 30 ms more, or a lost one, and each names the busiest app then (`busiestApp`). VPNs set up in System Settings are in `path.vpns`, and `path.defaultInterface` starting `utun` means a tunnel carries everything, whatever made it. The router’s port speed and the Wi-Fi link rate are ratings, not measured speed; the router’s byte totals run since it last restarted and aren’t a weekly figure. Output leaves out the network’s name, addresses and device names unless `--show-names` is given; never pass that flag on the person’s behalf.
+
+    Stutter on a call or in a game isn’t always the network: check `glade status` and `glade context` too, since a busy processor or memory pressure stutters calls as well.
+
     A speed test fills the connection against Apple’s servers and uses a lot of data (hundreds of MB, gigabytes on a fast line). Run it only when speed under load is the question and the person agrees; check the dry run’s estimate first, and never on a hotspot. Results include latency when the line is full: a large gap over idle is bufferbloat, which a router’s Smart Queue or QoS setting fixes.
 
     Little Snitch: `glade littlesnitch` summarises the rules the person imported (`glade littlesnitch import <backup>`), with what stands out; `glade littlesnitch review` asks Glade’s AI for suggestions and writes new rules to an .lsrules file. Never try to run Little Snitch’s own command line: it needs root and an opening in its security that the person shouldn’t have to make.
 
-    Readings never include the network’s name, addresses or device names; device counts and their signal are there. Data used covers only the time Glade’s app was open and includes local traffic, so it isn’t the provider’s bill.
+    Data used covers only the time Glade’s app was open (`coverage` is the share of the period it saw) and includes local traffic, so it isn’t the provider’s bill. If nothing is recorded, the person’s app may be an older version or not running; say so rather than guessing.
 
     ## Notes and rules
 

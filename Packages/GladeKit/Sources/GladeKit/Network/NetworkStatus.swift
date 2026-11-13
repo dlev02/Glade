@@ -86,16 +86,21 @@ extension NetworkStatus {
     copy.path.router = nil
     copy.latency = latency.map { Latency(kind: $0.kind, host: nil, stats: $0.stats) }
     copy.router = router?.forAI()
+    copy.apps = apps.map { app in
+      var app = app
+      app.bundlePath = app.bundlePath.map(Redactor.tilde)
+      return app
+    }
     return copy
   }
 }
 
 extension RouterReport {
   /// Devices become anonymous: how each connects and its signal, no names.
-  public func forAI() -> RouterReport {
+  public func forAI(keepOffline: Bool = false) -> RouterReport {
     var copy = self
     copy.devices = devices?.map { Device(name: nil, online: $0.online, connection: $0.connection, signalBars: $0.signalBars, throughMesh: $0.throughMesh, lastActive: nil) }
-      .filter(\.online)
+      .filter { keepOffline || $0.online }
     return copy
   }
 }

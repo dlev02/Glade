@@ -19,6 +19,7 @@
 - `glade network usage` totals data used by day, app or network. It's recorded while the app is open.
 - `glade network test` runs macOS's own speed test when you confirm it, with how much slower the line gets when busy and whether it's good enough for calls, 4K, game streaming and uploads. It says first how much data it would use.
 - On an AT&T gateway, `glade network router` reads the line's state and speed and lists the devices on your network with their signal, without a password.
+- `glade network router` lists devices weakest signal first; `--show-names` adds their names, which are otherwise left out because agents read this output too.
 - Coding agents connected to Glade get the same tools. They see verdicts, numbers and app names, never your network's name, addresses or device names.
 
 ### Assistant
