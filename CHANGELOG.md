@@ -1,32 +1,39 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 — 2026-11-12
 
 ### Network
 
-- A new **Network** section answers "is it my Wi-Fi, my internet or the service?" It draws your connection from this Mac to your router, your provider and the internet, each with its latency, so a slow hop stands out, and leads with a plain verdict such as "Uploads are making everything wait" or "Your Wi-Fi signal is weak here".
+- A new **Network** section answers "is it my Wi-Fi, my internet, or the service?" It draws your connection from this Mac to your router, your provider and the internet, each with its latency, so a slow hop stands out, and leads with a plain verdict such as "Uploads are making everything wait" or "Your Wi-Fi signal is weak here".
 - **Latency** updates every second while the section is open, like the ping graph in a call app. **Wi-Fi** shows the signal, band, channel and link rate.
-- **Test Speed** runs macOS's own speed test when you ask. It says how much data it will use first, and afterwards how much slower the line gets when busy and whether it's good for calls, 4K and game streaming.
-- **Using the Network** lists apps by what they're sending and receiving now and today, and Performance has a Network column.
-- **Data Used** shows what this Mac used today, this week and this month, by day, app and network, counted while Glade is open.
-- On an AT&T gateway, **Your Network** shows whether the line is up and lists the devices on your network with their signal, without a password.
-- If you use Little Snitch, import a backup on Network and Glade points out rules that let anything through, duplicates, conflicts, rules for apps you've removed and ones unused for a year. Rules that a subscription or macOS manages are left to their group. **Save Cleaned Backup…** writes your backup without the rules the review suggested deleting, to restore in Little Snitch in one step (`glade littlesnitch cleaned-backup`), and the review names Little Snitch's own filters for doing it by hand. **Review with Assistant** suggests what to delete and writes new rules to a file you import yourself. Glade never touches Little Snitch. Also `glade littlesnitch`.
-- On an AT&T gateway you can add its Device Access Code. Glade checks it by signing in and keeps it in your Keychain, where no AI ever sees it.
-- **Settings > Network** turns the section off, changes the host latency is measured against and sets how long a speed test runs.
-- `glade network` says whether your connection is healthy and, if not, where the problem is: your Wi-Fi, your internet line or further out. It measures latency to your router, your provider and the internet separately, reads the Wi-Fi signal, and names the apps using the network, so "Dropbox is filling your upload" or "your Wi-Fi is dropping data" comes with the readings behind it.
-- `glade network watch` follows latency second by second and says what was busiest at each spike, for when a call breaks up or a stream buffers.
-- `glade network check www.netflix.com` tells a slow service from a slow connection by comparing it with apple.com.
-- `glade network usage` totals data used by day, app or network. It's recorded while the app is open.
-- `glade network test` runs macOS's own speed test when you confirm it, with how much slower the line gets when busy and whether it's good enough for calls, 4K, game streaming and uploads. It says first how much data it would use.
-- On an AT&T gateway, `glade network router` reads the line's state and speed and lists the devices on your network with their signal, without a password.
-- `glade network router` lists devices weakest signal first; `--show-names` adds their names, which are otherwise left out because agents read this output too.
+- **Test Speed** runs macOS's own speed test when you ask. It tells you first how much data it will use, then how much slower your line gets when it's busy, and whether that's good enough for calls, 4K and game streaming.
+- **Using the Network** lists the apps sending and receiving the most, now and today, and Performance gains a Network column.
+- **Data Used** counts what this Mac used today, this week and this month, by day, app and network, while Glade is open.
+- To tell your networks apart by name, macOS asks for Location access the first time. Everything else works without it.
+- **Settings > Network** turns the section off, changes the host latency is measured against, and sets how long a speed test runs.
+
+### Your router
+
+- On an AT&T gateway, **Your Network** shows whether your internet line is up and lists the devices on your network with their signal, without a password.
+- You can add the gateway's Device Access Code. Glade checks it by signing in and keeps it in your Keychain, where no AI ever sees it.
+
+### Little Snitch
+
+- Import a Little Snitch backup on Network, and Glade points out rules that let anything through, duplicates, conflicts, rules for apps you've removed, and ones unused for a year.
+- **Review with Assistant** explains what to tidy. **Save Cleaned Backup…** writes your backup without the rules it suggested deleting, ready for Little Snitch's own Restore from Backup, which saves your current rules first. The review also names Little Snitch's filters for doing it by hand.
+- Glade only reads the file you choose. It never touches Little Snitch itself.
+
+### The Assistant remembers
+
+- It follows the conversation, so "and the other one?" or "is it safe to quit that?" is answered in the light of what came before. **New Conversation** starts afresh.
+- When an answer learns something lasting, such as your internet provider or a problem that keeps coming back, it offers **Remember**. Your notes go with every question after that, and you can change them in **Settings > Assistant**.
+- **Settings > Protection > Always clear**: name an app you no longer use, and its leftovers and caches are ticked whenever you clean. Leftovers go to the Trash. Personal files, installed apps and anything that can't come back never are, and unattended cleans leave these rules out.
+
+### Command line and AI agents
+
+- `glade network` says where a slowdown is, with the readings behind it. `glade network watch` follows latency second by second and names what was busiest at each spike. `glade network check www.netflix.com` tells a slow service from a slow connection. Also `glade network usage`, `apps`, `router` and `test`, which says how much data it would use before you confirm.
+- `glade littlesnitch` imports, reviews and writes a cleaned backup; `glade notes` and `glade rules` manage what the Assistant remembers and always clears; `glade ask --continue` follows on from your last question.
 - Coding agents connected to Glade get the same tools. They see verdicts, numbers and app names, never your network's name, addresses or device names.
-
-### Assistant
-
-- The Assistant remembers what you choose. When an answer learns something lasting, such as your internet provider or a problem that keeps coming back, it offers **Remember**, and your notes go with every question after that. They're in **Settings > Assistant**, and `glade notes` lists them.
-- **Settings > Protection > Always clear**: name an app you no longer use, and when you clean, its leftovers (to the Trash) and caches are ticked at every level. Personal files, installed apps and anything that can't come back never are, and unattended cleans leave rules out. Also `glade rules add <app>`.
-- The Assistant now follows the conversation, so a follow-up like "and the other one?" or "is it safe to quit that?" is answered in the light of what came before. **New Conversation** starts afresh. On the command line, `glade ask --continue` follows on from your last question.
 
 ## 0.3.0 — 2026-11-12
 
