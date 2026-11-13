@@ -88,6 +88,25 @@ public enum Guide {
 
     Something keeping the Mac awake follows the same rule as quitting: never stop it without asking, because it may be a download, an export or a call. Requests one process holds for another (coreaudiod for a simulator playing sound) are credited to the real one. Glade doesn’t stop command-line tools such as `caffeinate`; it names the app or terminal that started it so the person can stop it there. “Sleep is turned off for this whole Mac” means `pmset disablesleep` is on, usually set by an app that keeps Macs awake; turning it back on needs an administrator, so tell the person rather than trying.
 
+    ## Network
+
+    ```
+    glade network --json             # verdicts, Wi-Fi link, latency to router / provider / internet, apps using it, router, last speed test
+    glade network watch --for 30     # second by second, with the busiest app at each spike
+    glade network apps --json        # traffic per app now, and today’s totals
+    glade network usage --period week --by app   # data used (day, app or network), recorded while the app is open
+    glade network check www.netflix.com          # one service against apple.com: is it the service or the connection?
+    glade network router --json      # what an AT&T gateway reports: line, speed, devices by connection and signal
+    glade network test               # dry run: what a speed test would use
+    glade network test --confirm     # macOS’s speed test: download, upload, latency idle and when busy
+    ```
+
+    Answering “why is my internet slow” or “why does this buffer”: start with `glade network`. It measures three segments, and comparing them is the diagnosis: spikes or loss to the **router** with a weak or fair signal mean the Wi-Fi; a steady router with a slow **provider** hop means the line; both steady with a slow **internet** means further out. An app sending heavily while latency rises is the likely cause of calls stuttering (it fills the upload). The Mac using little while latency rises points at another device on the network. For one slow service, `glade network check <host>`. For intermittent trouble, `watch` while it happens. The Wi-Fi link rate is what the radio could carry, not internet speed; never report it as speed.
+
+    A speed test fills the connection against Apple’s servers and uses a lot of data (hundreds of MB, gigabytes on a fast line). Run it only when speed under load is the question and the person agrees; check the dry run’s estimate first, and never on a hotspot. Results include latency when the line is full: a large gap over idle is bufferbloat, which a router’s Smart Queue or QoS setting fixes.
+
+    Readings never include the network’s name, addresses or device names; device counts and their signal are there. Data used covers only the time Glade’s app was open and includes local traffic, so it isn’t the provider’s bill.
+
     ## Asking Glade’s own assistant
 
     ```
@@ -99,7 +118,7 @@ public enum Guide {
     ## Showing the person
 
     ```
-    glade show storage      # open Glade’s window on overview, storage, performance, battery, assistant or history
+    glade show storage      # open Glade’s window on overview, storage, performance, battery, network, assistant or history
     ```
 
     When you’ve found something worth a look, open the matching section so the person sees it in the app. This brings Glade in front of what they’re doing, so do it once, when there’s something to see; `--background` changes the section without coming forward.

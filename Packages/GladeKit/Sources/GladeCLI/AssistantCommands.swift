@@ -95,12 +95,15 @@ struct Ask: AsyncParsableCommand {
     let status = await BatteryStatus.current(history: history)
     let unplugged = status.reading.state == .onBattery ? history.unpluggedSince() : nil
     let energy = EnergyReport.build(period: unplugged == nil ? .hour : .unplugged, apps: apps, history: history, unpluggedAt: unplugged)
+    let config = ConfigStore.load()
+    let network = config.network.enabled && MacDescription.isAboutNetwork(question) ? await NetworkStatus.current(config: config, devices: true) : nil
     let description = MacDescription.build(
       snapshot: snapshot, apps: apps, context: context, suggestions: suggestions, scan: scan, plan: nil,
       battery: MacDescription.Battery(
         status: status, energy: energy.apps.isEmpty ? EnergyReport.build(period: .now, apps: apps, history: nil, unpluggedAt: nil) : energy,
         awake: await AwakeReport.current(apps: apps, sampler: sampler), sleeps: await SleepLog.recent()
-      )
+      ),
+      network: network, networkHistory: network == nil ? nil : NetworkHistoryStore.load()
     )
     // Asked to remove something: a proposal to confirm, never a removal.
     if RemovalRequest.wantsProposal(question, scan: scan) {

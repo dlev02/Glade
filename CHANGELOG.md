@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Network
+
+- `glade network` says whether your connection is healthy and, if not, where the problem is: your Wi-Fi, your internet line or further out. It measures latency to your router, your provider and the internet separately, reads the Wi-Fi signal, and names the apps using the network, so "Dropbox is filling your upload" or "your Wi-Fi is dropping data" comes with the readings behind it.
+- `glade network watch` follows latency second by second and says what was busiest at each spike, for when a call breaks up or a stream buffers.
+- `glade network check www.netflix.com` tells a slow service from a slow connection by comparing it with apple.com.
+- `glade network usage` totals data used by day, app or network. It's recorded while the app is open.
+- `glade network test` runs macOS's own speed test when you confirm it, with how much slower the line gets when busy and whether it's good enough for calls, 4K, game streaming and uploads. It says first how much data it would use.
+- On an AT&T gateway, `glade network router` reads the line's state and speed and lists the devices on your network with their signal, without a password.
+- Coding agents connected to Glade get the same tools. They see verdicts, numbers and app names, never your network's name, addresses or device names.
+
 ### Assistant
 
 - The Assistant now follows the conversation, so a follow-up like "and the other one?" or "is it safe to quit that?" is answered in the light of what came before. **New Conversation** starts afresh. On the command line, `glade ask --continue` follows on from your last question.

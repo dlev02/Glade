@@ -1,6 +1,6 @@
 # Glade
 
-Glade shows what is using your Mac's storage, memory, processors, graphics and battery, and clears it safely. It knows where caches, build data, simulators, package downloads, AI models and agent history pile up, says how each one comes back if removed, and never goes near your keys, mail, photos or cloud folders. Your own AI (Claude Code, Codex and others) can help it decide, and coding agents can drive it from the command line.
+Glade shows what is using your Mac's storage, memory, processors, graphics, battery and network, and clears it safely. It knows where caches, build data, simulators, package downloads, AI models and agent history pile up, says how each one comes back if removed, and never goes near your keys, mail, photos or cloud folders. Your own AI (Claude Code, Codex and others) can help it decide, and coding agents can drive it from the command line.
 
 ![The Glade window on the Overview section: free space, memory pressure, processor and graphics use, and what a clean would free](docs/images/overview.png)
 
@@ -139,9 +139,15 @@ Every command accepts `--json`, and nothing is removed without `--confirm`.
 | `glade battery`, `glade battery history` | Charge, health, power, temperature, charge limit and estimates; what was recorded day by day. |
 | `glade energy --period hour` | Apps by energy: `now`, `hour`, `12h` or `unplugged`. |
 | `glade awake`, `glade sleeps` | What is keeping the Mac awake; recent sleeps with the charge they cost and what woke the Mac. |
+| `glade network` | Is the connection healthy, and if not, where's the problem: your Wi-Fi, your internet line or further out? With the Wi-Fi signal, latency to the router, your provider and the internet, and the apps using the network. |
+| `glade network watch --for 30` | Latency second by second, with what was busiest at each spike. |
+| `glade network usage --period week --by app` | Data used by day, app or network, recorded while the app is open. |
+| `glade network check <site>` | Is one service slow, or your connection? Compares it with apple.com. |
+| `glade network router` | What your router reports (AT&T gateways): the line, its speed and the devices on your network. |
+| `glade network test` | Says what a speed test would use; add `--confirm` to run macOS's own test. |
 | `glade protect check <path>` | Why a path is or isn't off limits. |
 | `glade doctor` | Permissions and what Glade can't see; when space is low, what a clean would free. |
-| `glade show storage` | Open the window on overview, storage, performance, battery, assistant or history. |
+| `glade show storage` | Open the window on overview, storage, performance, battery, network, assistant or history. |
 
 Run `glade --help` for the rest.
 
@@ -166,7 +172,7 @@ macOS gives Full Disk Access to the app a command is started from, not to Glade.
 
 ## Privacy
 
-Glade has no account, analytics or server, and never sends what's inside your files. Apart from the daily update check to GitHub, the only thing that leaves your Mac is what you ask a cloud AI, which goes to that AI's provider under your own account; [PRIVACY.md](PRIVACY.md) lists exactly what it is shown.
+Glade has no account, analytics or server, and never sends what's inside your files. Apart from the daily update check to GitHub, what leaves your Mac is what you ask a cloud AI, which goes to that AI's provider under your own account, and the network checks you start: pings to your router, your provider and one internet host (1.1.1.1 unless you change it), and a speed test against Apple's servers only when you ask for one. [PRIVACY.md](PRIVACY.md) lists exactly what each one sends.
 
 ## Report a problem
 

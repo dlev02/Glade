@@ -734,4 +734,46 @@ struct SafetyTests {
     let alone = try await Assistant.propose(request, scan: result, snapshot: "", config: GladeConfig(), providers: [proposer])
     #expect(alone.reviewer == nil && alone.items.count == 3)
   }
+
+  /// What an AI is shown about the network names no network, access point, address or
+  /// device, however the reading was taken.
+  @Test func networkReadingsShownToAnAINameNothingOnTheNetwork() {
+    let secrets = ["Maple Street", "aa:bb:cc:dd:ee:ff", "192.168.1.254", "203.0.113.1", "Sam’s iPhone", "Kitchen Speaker"]
+    let path = NetworkPath(
+      connected: true, medium: .wifi, interface: "en0", isExpensive: false, isConstrained: false, router: "192.168.1.254",
+      defaultInterface: "en0", vpns: [], proxy: false
+    )
+    let wifi = WiFiLink(
+      interface: "en0", rssi: -58, noise: -94, band: "5 GHz", channel: 136, widthMHz: 80, generation: "Wi-Fi 6", linkRateMbps: 864,
+      security: "WPA2", networkName: "Maple Street", accessPoint: "aa:bb:cc:dd:ee:ff"
+    )
+    let router = RouterReport(
+      kind: "AT&T gateway", maker: "Nokia", model: "BGW320-505", firmware: "6.40.4",
+      line: .init(connected: true, source: "Fibre", portMbps: 1000, received: 1, sent: 1, errors: 0, drops: 0),
+      devices: [
+        .init(name: "Sam’s iPhone", online: true, connection: "Wi-Fi 5 GHz", signalBars: 2, throughMesh: false, lastActive: "now"),
+        .init(name: "Kitchen Speaker", online: true, connection: "Wi-Fi 2.4 GHz", signalBars: 1, throughMesh: nil, lastActive: nil),
+      ],
+      read: Date()
+    )
+    let status = NetworkStatus(
+      date: Date(), path: path, wifi: wifi,
+      latency: [
+        .init(kind: .router, host: "192.168.1.254", stats: LatencyStats([3, 4, 5])),
+        .init(kind: .provider, host: "203.0.113.1", stats: LatencyStats([5, 6, 7])),
+      ],
+      apps: [], router: router, lastTest: nil, verdicts: []
+    )
+    var history = NetworkHistory()
+    history.add(received: 1_000, sent: 1_000, network: "Maple Street", seconds: 60)
+
+    let described = MacDescription.describe(network: status, history: history).joined(separator: "\n")
+    let encoded = JSONFiles.string(status.forAI())
+    let usage = JSONFiles.string(NetworkHistory.anonymised(history.byNetwork(since: .distantPast), current: "Maple Street"))
+    for text in [described, encoded, usage] {
+      for secret in secrets { #expect(!text.contains(secret), "\(secret) reached the AI") }
+    }
+    // The counts are still there.
+    #expect(described.contains("2 devices online") && described.contains("2 on a weak signal"))
+  }
 }

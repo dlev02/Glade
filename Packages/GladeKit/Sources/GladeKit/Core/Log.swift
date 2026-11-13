@@ -3,7 +3,7 @@ import os
 
 /// The areas of the app that write to the log. One per boundary that can fail or surprise.
 public enum LogCategory: String, Codable, Sendable, CaseIterable {
-  case app, cli, scan, clean, safety, system, agent, automation, index, update, mcp
+  case app, cli, scan, clean, safety, system, agent, automation, index, update, mcp, network
 }
 
 public enum LogLevel: String, Codable, Sendable, Comparable {

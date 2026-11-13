@@ -1,14 +1,14 @@
 # Glade
 
-A macOS 26+ app that shows what is using the Mac's storage, memory, processors and graphics, and clears it safely. It lives in a window and the menu bar; its executable is also the `glade` command line and an MCP server (`glade mcp`).
+A macOS 26+ app that shows what is using the Mac's storage, memory, processors, graphics, battery and network, and clears it safely. It lives in a window and the menu bar; its executable is also the `glade` command line and an MCP server (`glade mcp`).
 Swift 6, SwiftUI; Sparkle 2 and Swift Argument Parser are the only dependencies. GPL-3.0. Not sandboxed (it needs Full Disk Access and runs other tools), hardened runtime, no entitlements.
-Sparkle's update check is the only network use of Glade's own, and asking an AI goes through the person's own command-line tool ([PRIVACY.md](PRIVACY.md)).
+Glade's own network use is Sparkle's update check and the network checks the person starts (pings, a speed test, reading the router's status pages); asking an AI goes through the person's own command-line tool ([PRIVACY.md](PRIVACY.md)).
 
 ## Layout
 
 - `App/`: a thin host. `main.swift` decides between the app and the command line (started as `glade`, or with a command name as the first argument, it runs `CLI`). `GladeApp` and `AppDelegate` start the shared `AppModel`; `UpdateController` wraps Sparkle.
 - `Packages/GladeKit`: everything else, a Swift package that builds without the Xcode project.
-  - `GladeKit`: the engine, no UI. `Safety/` (`ProtectedZones`, `Protection`), `Storage/` (`Catalog` of known locations, `Scanners/`, `ScanEngine`, `Planner`, `Cleaner`), `System/` (readings, apps, simulators, alerts), `Agent/` (`Assistant`, `StoragePrompt`, `Guide`, `Providers/`), `Core/` (`Config`, `Log`, `DiagnosticReport`, `Brand`, `Shell`).
+  - `GladeKit`: the engine, no UI. `Safety/` (`ProtectedZones`, `Protection`), `Storage/` (`Catalog` of known locations, `Scanners/`, `ScanEngine`, `Planner`, `Cleaner`), `System/` (readings, apps, simulators, alerts), `Network/` (Wi-Fi, latency, traffic, data used, speed test, routers, diagnosis), `Agent/` (`Assistant`, `StoragePrompt`, `Guide`, `Providers/`), `Core/` (`Config`, `Log`, `DiagnosticReport`, `Brand`, `Shell`).
   - `GladeUI`: the interface. Screens read `AppModel` and call its methods; none talk to the engine directly.
   - `GladeCLI`: every command, and `MCPServer`. Anything a person can do in the window has a command.
   - `glade`: the development executable, the same commands without the app.
@@ -37,7 +37,8 @@ Sparkle's update check is the only network use of Glade's own, and asking an AI 
 - **Models never get tools.** Every provider runs with its tools, plugins, MCP servers and memory off, in an empty temporary folder. Their output is parsed, and every suggestion is checked with `Planner.mayAutoSelect` and the plan's level before it counts. A request to remove something by name gets a proposal (`Assistant.propose`): finding identifiers from the candidates it was shown only, reviewed by a second model that can only comment, with what starts ticked decided in code (`RemovalProposal.item`: named by the person and removable here; never personal, permanent, blocked or with its own uninstaller). Nothing goes until the person confirms in `CleanConfirmation`, and then only through `Cleaner`.
 - **No file contents to a cloud AI** unless the person turns on `assistant.shareExcerpts`, which nothing uses yet. Prompts are built only in `StoragePrompt` and `MacDescription`. Installed apps' names, sizes, last-opened dates and sources are sent only for a removal request, and only the ones that match it (`RemovalRequest.candidates`).
 - **One logging helper.** Log through `Log` with a category, at every boundary that can fail or surprise, naming the thing and keeping the error code. No `print` outside the command line's own output. `Redactor` scrubs the home folder and secrets; never log prompt or reply text.
-- **No network code** beyond Sparkle and the local Ollama connection to 127.0.0.1. No analytics, crash reporting or server; problem reports are a file the person attaches themselves.
+- **No network code** beyond Sparkle, the local Ollama connection to 127.0.0.1, and `Network/`'s measurements: pings to the router, the provider's first hop and the internet host in settings (only while someone is looking: a command, the Network section, a watch); the router's own status pages on the local network, read without a password; a site check the person names; and macOS's `networkQuality` speed test, only when a person or a confirmed agent asks, never on a schedule or on a limited connection by an agent. They send nothing about the person. No analytics, crash reporting or server; problem reports are a file the person attaches themselves.
+- **Network readings shown to an AI** (`forAI()`, `MacDescription.describe(network:)`) never include the network's name, access point, addresses or device names; device counts and signal only. Router passwords, when there are any, live in the Keychain and never reach a prompt, a log, the command line or MCP.
 - **A new known location** in `Catalog` states how it comes back, and errs toward caution: when unsure, `caution`, or leave it out.
 
 ## Code style

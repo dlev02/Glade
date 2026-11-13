@@ -177,6 +177,39 @@ public struct BatterySettings: Codable, Sendable, Equatable {
   }
 }
 
+public struct NetworkSettings: Codable, Sendable, Equatable {
+  /// Show the Network section and keep a record of how much data this Mac uses.
+  public var enabled: Bool
+  /// Read the router’s own status pages (connection, devices) when Glade recognises it.
+  public var readRouter: Bool
+  /// Where internet latency is measured, beyond the router and the provider’s first
+  /// hop. That host sees this Mac’s address and a ping a second while measuring.
+  public var internetHost: String
+  /// How long a speed test may run, in seconds. Longer is steadier and uses more data.
+  public var testSeconds: Int
+  /// Let a coding agent run a speed test on a hotspot or in Low Data Mode. Off, so an
+  /// agent never spends a limited allowance; a person can always run one.
+  public var agentTestsWhenLimited: Bool
+
+  public init() {
+    enabled = true
+    readRouter = true
+    internetHost = "1.1.1.1"
+    testSeconds = 15
+    agentTestsWhenLimited = false
+  }
+
+  public init(from decoder: Decoder) throws {
+    self.init()
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? enabled
+    readRouter = try c.decodeIfPresent(Bool.self, forKey: .readRouter) ?? readRouter
+    internetHost = try c.decodeIfPresent(String.self, forKey: .internetHost) ?? internetHost
+    testSeconds = try c.decodeIfPresent(Int.self, forKey: .testSeconds) ?? testSeconds
+    agentTestsWhenLimited = try c.decodeIfPresent(Bool.self, forKey: .agentTestsWhenLimited) ?? agentTestsWhenLimited
+  }
+}
+
 public struct IndexSettings: Codable, Sendable, Equatable {
   /// Build and keep a searchable understanding of what files contain. Everything
   /// stays on this Mac.
@@ -222,6 +255,7 @@ public struct GladeConfig: Codable, Sendable, Equatable {
   public var automation: AutomationSettings
   public var index: IndexSettings
   public var battery: BatterySettings
+  public var network: NetworkSettings
 
   public init() {
     protectedPaths = []
@@ -235,6 +269,7 @@ public struct GladeConfig: Codable, Sendable, Equatable {
     automation = AutomationSettings()
     index = IndexSettings()
     battery = BatterySettings()
+    network = NetworkSettings()
   }
 
   public init(from decoder: Decoder) throws {
@@ -251,6 +286,7 @@ public struct GladeConfig: Codable, Sendable, Equatable {
     automation = try c.decodeIfPresent(AutomationSettings.self, forKey: .automation) ?? automation
     index = try c.decodeIfPresent(IndexSettings.self, forKey: .index) ?? index
     battery = try c.decodeIfPresent(BatterySettings.self, forKey: .battery) ?? battery
+    network = try c.decodeIfPresent(NetworkSettings.self, forKey: .network) ?? network
   }
 }
 

@@ -21,7 +21,8 @@ public enum MacDescription {
 
   public static func build(
     snapshot: SystemSnapshot?, apps: [AppUsage], context: ActivityContext?,
-    suggestions: [PerformanceSuggestion], scan: ScanResult?, plan: CleanPlan?, battery: Battery? = nil
+    suggestions: [PerformanceSuggestion], scan: ScanResult?, plan: CleanPlan?, battery: Battery? = nil,
+    network: NetworkStatus? = nil, networkHistory: NetworkHistory? = nil
   ) -> String {
     var lines: [String] = []
     if let snapshot {
@@ -56,6 +57,7 @@ public enum MacDescription {
       }
     }
     if let battery { lines += describe(battery) }
+    if let network { lines += describe(network: network, history: networkHistory) }
     if !suggestions.isEmpty {
       lines.append("")
       lines.append("WHAT GLADE'S RULES SUGGEST")
