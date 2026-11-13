@@ -102,11 +102,11 @@ for code in "$app" "$sparkle" "$sparkle/Autoupdate" "$sparkle/Updater.app" "$spa
   [[ "$details" == *"(runtime)"* ]] || die "$code has no hardened runtime"
   [[ "$details" == *"Timestamp="* ]] || die "$code has no secure timestamp"
 done
-# Glade needs no entitlements: it isn't sandboxed, and running other tools, reading the
-# disk and asking for notifications are all allowed under the hardened runtime without
-# one. Any entitlement here arrived by accident, and get-task-allow fails notarization.
+# Glade needs one entitlement: Location, so macOS tells it the Wi-Fi network's name under the
+# hardened runtime. Anything else arrived by accident, and get-task-allow fails notarization.
 entitlements=$(codesign -d --entitlements - --xml "$app" 2>/dev/null || true)
-[[ "$entitlements" != *"<key>"* ]] || die "the app carries entitlements it shouldn't: $entitlements"
+keys=$(print -r -- "$entitlements" | grep -o '<key>[^<]*</key>' | sort | tr '\n' ' ')
+[[ "$keys" == "<key>com.apple.security.personal-information.location</key> " ]] || die "the app's entitlements aren't exactly Location: $entitlements"
 # The source mentions /Users/ on purpose (log scrubbing, Bitrig's folders), so look for
 # this Mac's own folders instead: a build path that leaked would start with one of them.
 for local_path in "$HOME/" "$PWD/"; do

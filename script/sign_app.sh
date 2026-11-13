@@ -2,7 +2,8 @@
 # Signs a Glade.app from the inside out with the given codesign options: Sparkle's
 # helpers first, then the framework, then the app.
 # No --deep: it would apply one set of options to everything.
-# The app is signed with no entitlements, because it needs none (see make_release.sh).
+# The app carries one entitlement, Location, which the hardened runtime needs before macOS
+# will tell it the Wi-Fi network's name (App/Glade.entitlements; see make_release.sh).
 # Glade's engine is a local Swift package linked into the executable, so there is no
 # other framework or helper inside the app to sign.
 #   script/sign_app.sh path/to/Glade.app --force --sign IDENTITY [--options runtime] [--timestamp]
@@ -20,4 +21,4 @@ codesign "$@" "$app/Contents/Frameworks/Sparkle.framework"
 for item in "$app/Contents/Frameworks"/*; do
   [ "$(basename "$item")" = "Sparkle.framework" ] || { echo "sign_app: unexpected $item; sign it here first" >&2; exit 1; }
 done
-codesign "$@" "$app"
+codesign "$@" --entitlements "$(dirname "$0")/../App/Glade.entitlements" "$app"

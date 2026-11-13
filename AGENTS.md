@@ -1,7 +1,7 @@
 # Glade
 
 A macOS 26+ app that shows what is using the Mac's storage, memory, processors, graphics, battery and network, and clears it safely. It lives in a window and the menu bar; its executable is also the `glade` command line and an MCP server (`glade mcp`).
-Swift 6, SwiftUI; Sparkle 2 and Swift Argument Parser are the only dependencies. GPL-3.0. Not sandboxed (it needs Full Disk Access and runs other tools), hardened runtime, no entitlements.
+Swift 6, SwiftUI; Sparkle 2 and Swift Argument Parser are the only dependencies. GPL-3.0. Not sandboxed (it needs Full Disk Access and runs other tools), hardened runtime, one entitlement (Location, for the Wi-Fi network's name).
 Glade's own network use is Sparkle's update check and the network checks the person starts (pings, a speed test, reading the router's status pages); asking an AI goes through the person's own command-line tool ([PRIVACY.md](PRIVACY.md)).
 
 ## Layout

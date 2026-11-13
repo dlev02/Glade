@@ -34,6 +34,7 @@ Everything stays on your Mac.
 | The last scan: each finding's name, location, size and dates | `~/Library/Application Support/Glade/last-scan.json` |
 | Receipts: what each clean removed or moved to the Trash, and where it went, so it can be put back | `~/Library/Application Support/Glade/Receipts/` |
 | Little Snitch rules you imported, reduced to the fields above, with where the backup file is so a cleaned copy can be made from it | `~/Library/Application Support/Glade/little-snitch-rules.json` |
+| Your router's access code, only if you added it | your login Keychain, as "Glade router access" (not synced) |
 | Notes you keep for the Assistant: up to 30 short dated notes, only ones you typed or saved | `~/Library/Application Support/Glade/assistant-notes.json` |
 | Assistant runs: exactly what was sent to an AI and what came back, the newest 100 | `~/Library/Application Support/Glade/AgentRuns/` |
 | When each app was last in front, by bundle identifier | `~/Library/Application Support/Glade/activity.json` |
@@ -96,7 +97,7 @@ Each AI tool runs in a new, empty temporary folder that is deleted afterwards, w
 ## Permissions
 
 - **Full Disk Access** lets Glade measure folders macOS otherwise keeps from every app. Glade works without it and says what it couldn't see. Withdraw it in System Settings under Privacy & Security > Full Disk Access.
-- **Location** (optional) lets Glade read your Wi-Fi network's name and which access point you're on, which macOS treats as location. Glade uses it only to label data used by network and to notice when you move between access points; it never reads where you are. Everything else on Network works without it. Withdraw it in System Settings under Privacy & Security > Location Services.
+- **Location** (optional) lets Glade read your Wi-Fi network's name and which access point you're on, which macOS treats as location. Glade uses it only to label data used by network and to notice when you move between access points; it never reads where you are. Everything else on Network works without it. Withdraw it in System Settings under Privacy & Security > Location Services. It's the one entitlement in Glade's signature, because macOS won't offer Location without it.
 - **Local Network** lets Glade ping your router and read its status pages. Withdraw it in System Settings under Privacy & Security > Local Network.
 - **Notifications** carry Glade's alerts. Turn them off in System Settings under Notifications.
 
@@ -109,6 +110,7 @@ Quit Glade and move it from Applications to the Trash. To remove what it stored 
 ```sh
 rm -rf ~/Library/Application\ Support/Glade ~/Library/Logs/Glade
 defaults delete io.github.dlev02.glade
+security delete-generic-password -s "Glade router access"   # only if you saved a router access code
 ```
 
 If you linked the `glade` command, remove that link (for example `/usr/local/bin/glade`), and remove Glade from any agent you added it to as an MCP server. Items a clean moved to the Trash stay there until you empty it.
