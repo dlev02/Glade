@@ -33,7 +33,7 @@ Everything stays on your Mac.
 | Settings | `~/Library/Application Support/Glade/config.json`, and appearance, setup and update preferences in the app's preferences (`io.github.dlev02.glade`) |
 | The last scan: each finding's name, location, size and dates | `~/Library/Application Support/Glade/last-scan.json` |
 | Receipts: what each clean removed or moved to the Trash, and where it went, so it can be put back | `~/Library/Application Support/Glade/Receipts/` |
-| Little Snitch rules you imported, reduced to the fields above | `~/Library/Application Support/Glade/little-snitch-rules.json` |
+| Little Snitch rules you imported, reduced to the fields above, with where the backup file is so a cleaned copy can be made from it | `~/Library/Application Support/Glade/little-snitch-rules.json` |
 | Notes you keep for the Assistant: up to 30 short dated notes, only ones you typed or saved | `~/Library/Application Support/Glade/assistant-notes.json` |
 | Assistant runs: exactly what was sent to an AI and what came back, the newest 100 | `~/Library/Application Support/Glade/AgentRuns/` |
 | When each app was last in front, by bundle identifier | `~/Library/Application Support/Glade/activity.json` |

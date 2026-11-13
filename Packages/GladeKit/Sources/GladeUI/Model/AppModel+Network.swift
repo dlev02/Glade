@@ -215,7 +215,8 @@ extension AppModel {
     let scoped = url.startAccessingSecurityScopedResource()
     defer { if scoped { url.stopAccessingSecurityScopedResource() } }
     do {
-      let rules = try LittleSnitchRules.parse(try Data(contentsOf: url))
+      var rules = try LittleSnitchRules.parse(try Data(contentsOf: url))
+      rules.sourcePath = url.path
       try rules.save()
       network.littleSnitch = rules
       Log.info(.network, "Imported \(rules.rules.count) Little Snitch rules from a \(rules.source)")
@@ -229,27 +230,48 @@ extension AppModel {
   /// Has the AI review the imported rules, in the Assistant’s conversation.
   /// - Parameter asked: The person typed the request, so it’s already on screen.
   public func reviewLittleSnitch(goal: String? = nil, asked: Bool = false) async {
-    guard let rules = network.littleSnitch ?? LittleSnitchRules.load() else { return }
+    guard var rules = network.littleSnitch ?? LittleSnitchRules.load() else { return }
     section = .assistant
     if !asked { messages.append(Message(role: .person, text: "Review my Little Snitch rules")) }
     assistantState = .thinking("Reading \(rules.rules.count) Little Snitch rules…")
     do {
       let review = try await Assistant.reviewLittleSnitch(rules, request: goal, config: config, providers: AgentProviders.all)
+      rules.reviewRemovals = review.remove.map(\.id)
+      try? rules.save()
+      network.littleSnitch = rules
       var text = review.summary
       for point in review.points { text += "\n\n**\(point.title)**  \n\(point.detail)" }
       if !review.remove.isEmpty {
         text += "\n\n### Worth deleting in Little Snitch (\(review.remove.count) rules)\n" + review.removalsByApp.map { "- \($0)" }.joined(separator: "\n")
+        text += "\n\n### To do it\n" + review.howToApply().map { "- \($0)" }.joined(separator: "\n")
       }
       if !review.add.isEmpty {
         text += "\n\n\(review.add.count == 1 ? "One new rule is" : "\(review.add.count) new rules are") ready to import into Little Snitch as a group that starts switched off."
       }
       var message = Message(role: .assistant, text: text, provider: review.provider, model: review.model)
       message.rulesFile = review.rulesFile()
+      message.offersCleanedBackup = !review.remove.isEmpty && rules.sourcePath != nil
       messages.append(message)
       assistantState = .idle
     } catch {
       messages.append(Message(role: .problem, text: error.localizedDescription))
       assistantState = .failed(error.localizedDescription)
+    }
+  }
+
+  /// The imported backup without the rules the last review suggested deleting, for
+  /// Little Snitch’s Restore from Backup. Returns why not when it can’t be made.
+  public func cleanedLittleSnitchBackup() -> Result<(data: Data, removed: Int, name: String), Error> {
+    guard let rules = network.littleSnitch ?? LittleSnitchRules.load(), let source = rules.sourcePath, let removals = rules.reviewRemovals else {
+      return .failure(LittleSnitchBackup.Problem.nothingToRemove)
+    }
+    do {
+      let original = try Data(contentsOf: URL(fileURLWithPath: source))
+      let cleaned = try LittleSnitchBackup.cleaned(original, removing: Set(removals), expected: rules)
+      let name = ((source as NSString).lastPathComponent as NSString).deletingPathExtension + " (cleaned by Glade).lsbackup"
+      return .success((cleaned.data, cleaned.removed, name))
+    } catch {
+      return .failure(error)
     }
   }
 

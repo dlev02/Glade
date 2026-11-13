@@ -94,6 +94,12 @@ public struct LittleSnitchRules: Codable, Sendable, Equatable {
   public var blocklistEntries: Int
   /// Rules Glade couldn’t make sense of.
   public var unreadable: Int
+  /// The backup this came from and its fingerprint, so a cleaned copy is only ever made
+  /// from that exact file.
+  public var sourcePath: String?
+  public var sourceHash: String?
+  /// The rules the last review suggested deleting, by identifier.
+  public var reviewRemovals: [String]?
 
   public var allowCount: Int { rules.filter { $0.action == "allow" && !$0.disabled }.count }
   public var denyCount: Int { rules.filter { $0.action == "deny" && !$0.disabled }.count }
@@ -103,6 +109,7 @@ public struct LittleSnitchRules: Codable, Sendable, Equatable {
   ) throws -> LittleSnitchRules {
     guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { throw LittleSnitchError.notJSON }
     var parsed = LittleSnitchRules(imported: now, source: "rules file", name: json["name"] as? String, rules: [], groups: [], blocklistEntries: 0, unreadable: 0)
+    parsed.sourceHash = LittleSnitchBackup.fingerprint(data)
     for key in ["denied-remote-domains", "denied-remote-hosts", "denied-remote-addresses"] {
       parsed.blocklistEntries += (json[key] as? [Any])?.count ?? 0
     }

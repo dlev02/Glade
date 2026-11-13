@@ -859,4 +859,27 @@ struct SafetyTests {
     #expect(review.add.count == 1 && review.add[0].action == "deny" && review.add[0].domains == ["tracker2.example"])
     #expect(review.rejected.count == 8)
   }
+
+  /// A cleaned Little Snitch backup leaves out only the rules named, refuses a block or a
+  /// group’s rule, and only ever comes from the exact file Glade read.
+  @Test func cleanedLittleSnitchBackupDropsOnlyWhatMayGo() throws {
+    let file = Data("""
+      {"globalDefaults":{},"groups":{"g1":{"type":"builtinMacOSServices","isActive":true}},"rules":[
+       {"action":"allow","process":"/Applications/Gone.app/Contents/MacOS/Gone","remote":"any","origin":"alert"},
+       {"action":"deny","process":"any","remote-domains":"ads.example","origin":"alert"},
+       {"action":"allow","process":"any","remote-domains":"apple.com","group":"g1","origin":"factory"},
+       {"action":"allow","process":"/Applications/Safari.app/Contents/MacOS/Safari","remote-domains":"example.com","origin":"alert"}
+      ],"users":[{"uid":501}]}
+      """.utf8)
+    let rules = try LittleSnitchRules.parse(file, fileExists: { !$0.contains("Gone") })
+    let cleaned = try LittleSnitchBackup.cleaned(file, removing: ["r1", "r4"], expected: rules)
+    let json = try #require(try JSONSerialization.jsonObject(with: cleaned.data) as? [String: Any])
+    #expect(cleaned.removed == 2 && (json["rules"] as? [Any])?.count == 2 && json["users"] != nil && json["groups"] != nil)
+    // A block, a group’s rule, or a file that changed are refused.
+    #expect(throws: LittleSnitchBackup.Problem.self) { try LittleSnitchBackup.cleaned(file, removing: ["r2"], expected: rules) }
+    #expect(throws: LittleSnitchBackup.Problem.self) { try LittleSnitchBackup.cleaned(file, removing: ["r3"], expected: rules) }
+    var changed = file
+    changed.append(contentsOf: Array(" ".utf8))
+    #expect(throws: LittleSnitchBackup.Problem.self) { try LittleSnitchBackup.cleaned(changed, removing: ["r1"], expected: rules) }
+  }
 }

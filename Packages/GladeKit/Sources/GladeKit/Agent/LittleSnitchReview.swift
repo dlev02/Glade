@@ -43,6 +43,23 @@ public struct LittleSnitchReview: Codable, Sendable {
     }
   }
 
+  /// Where to find these in Little Snitch’s own rules window, by its filter names, and
+  /// the one-step way: restoring the cleaned backup Glade makes.
+  public func howToApply(now: Date = Date()) -> [String] {
+    guard !remove.isEmpty else { return [] }
+    let yearAgo = now.addingTimeInterval(-365 * 86_400)
+    let gone = remove.filter { $0.gone == true }.count
+    let unused = remove.filter { $0.gone != true && ($0.lastUsed.map { $0 < yearAgo } ?? false) }.count
+    let rest = remove.count - gone - unused
+    var steps = ["All at once: save the cleaned backup Glade made, then in Little Snitch choose File › Restore from Backup… and pick it. Little Snitch backs up your current rules first, so you can go back."]
+    var byHand: [String] = []
+    if gone > 0 { byHand.append("\(gone) under **Invalid Rules** (apps that were removed or moved)") }
+    if unused > 0 { byHand.append("\(unused) under **Unused for more than…** (set it to a year)") }
+    if rest > 0 { byHand.append("\(rest) by searching for the app’s name, or under **Redundant Rules**, which has its own Delete All Redundant Rules") }
+    steps.append("Or by hand, in Little Snitch’s rules window: " + byHand.joined(separator: "; ") + ".")
+    return steps
+  }
+
   /// The new rules as a Little Snitch rule group file, or `nil` when there are none.
   public func rulesFile(now: Date = Date()) -> Data? {
     guard !add.isEmpty else { return nil }

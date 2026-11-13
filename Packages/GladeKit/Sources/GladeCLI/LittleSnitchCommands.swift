@@ -13,7 +13,7 @@ struct LittleSnitch: AsyncParsableCommand {
       `\(Brand.cli) littlesnitch import <file>`. Suggested rules come back as an .lsrules file \
       you import into Little Snitch yourself, as a group that starts switched off.
       """,
-    subcommands: [LittleSnitchSummary.self, LittleSnitchImport.self, LittleSnitchReviewCommand.self],
+    subcommands: [LittleSnitchSummary.self, LittleSnitchImport.self, LittleSnitchReviewCommand.self, LittleSnitchCleanedBackup.self],
     defaultSubcommand: LittleSnitchSummary.self
   )
 }
@@ -69,7 +69,8 @@ struct LittleSnitchImport: ParsableCommand {
       throw ValidationError(LittleSnitchError.unreadableFile(error.localizedDescription).localizedDescription)
     }
     do {
-      let rules = try LittleSnitchRules.parse(data)
+      var rules = try LittleSnitchRules.parse(data)
+      rules.sourcePath = url.path
       try rules.save()
       Log.info(.network, "Imported \(rules.rules.count) Little Snitch rules from a \(rules.source)")
       print("Read \(rules.rules.count) rules (\(rules.allowCount) allow, \(rules.denyCount) deny). See them: \(Brand.cli) littlesnitch")
@@ -91,8 +92,11 @@ struct LittleSnitchReviewCommand: AsyncParsableCommand {
   @Option(name: .long, help: "Where to write suggested rules (default: the Desktop).") var out: String?
 
   func run() async throws {
-    guard let rules = LittleSnitchRules.load() else { throw ValidationError("No rules imported yet: \(Brand.cli) littlesnitch import <file>") }
+    guard var rules = LittleSnitchRules.load() else { throw ValidationError("No rules imported yet: \(Brand.cli) littlesnitch import <file>") }
     let review = try await Assistant.reviewLittleSnitch(rules, request: goal, providers: AgentProviders.all)
+    // Remembered so `cleaned-backup` can leave exactly these out.
+    rules.reviewRemovals = review.remove.map(\.id)
+    try? rules.save()
     var written: String?
     if let data = review.rulesFile() {
       let path = out.map { ($0 as NSString).expandingTildeInPath } ?? NSHomeDirectory() + "/Desktop/Glade suggested rules.lsrules"
@@ -109,6 +113,9 @@ struct LittleSnitchReviewCommand: AsyncParsableCommand {
       if !review.remove.isEmpty {
         print("\nWorth deleting in Little Snitch (\(review.remove.count) rules, by app; --json lists each):")
         for line in review.removalsByApp { print("  – \(line)") }
+        print("\nTo do it:")
+        for step in review.howToApply() { print("  \(step.replacingOccurrences(of: "**", with: ""))") }
+        print("  The cleaned backup: \(Brand.cli) littlesnitch cleaned-backup")
       }
       if let written {
         print("\n\(review.add.count) suggested rules written to \(Redactor.tilde(written)).")
@@ -116,6 +123,53 @@ struct LittleSnitchReviewCommand: AsyncParsableCommand {
       }
       if !review.rejected.isEmpty { print("\nGlade refused \(review.rejected.count) suggestions.") }
       print("\n— \(review.provider)")
+    }
+  }
+}
+
+struct LittleSnitchCleanedBackup: ParsableCommand {
+  static let configuration = CommandConfiguration(
+    commandName: "cleaned-backup",
+    abstract: "Write a copy of your backup without the rules the last review suggested deleting, to restore in Little Snitch.",
+    discussion: """
+      The copy is your backup with only those rules taken out; Glade refuses to drop a block \
+      that isn’t a duplicate or a rule a group manages. In Little Snitch choose File › Restore \
+      from Backup… and pick it; Little Snitch backs up your current rules first. Rules you \
+      made since the backup are not in it, so make a fresh backup and review it just before.
+      """
+  )
+  @Option(name: .long, help: "Where to write it (default: next to the original).") var out: String?
+  @Flag(name: .long, help: "Instead of the review’s list, leave out only rules for apps no longer on this Mac.") var goneApps = false
+
+  func run() throws {
+    guard let rules = LittleSnitchRules.load(), let source = rules.sourcePath else {
+      throw ValidationError("Import a Little Snitch backup first: \(Brand.cli) littlesnitch import <file>")
+    }
+    let ids: [String]
+    if goneApps {
+      ids = rules.rules.filter { $0.gone == true && !$0.managed && !$0.builtIn && $0.action != "deny" }.map(\.id)
+    } else {
+      guard let removals = rules.reviewRemovals, !removals.isEmpty else {
+        throw ValidationError("Run \(Brand.cli) littlesnitch review first, or add --gone-apps.")
+      }
+      ids = removals
+    }
+    let original: Data
+    do {
+      original = try Data(contentsOf: URL(fileURLWithPath: source))
+    } catch {
+      throw ValidationError("The backup at \(Redactor.tilde(source)) can’t be read any more. Import it again.")
+    }
+    do {
+      let cleaned = try LittleSnitchBackup.cleaned(original, removing: Set(ids), expected: rules)
+      let base = (source as NSString).deletingPathExtension
+      let path = out.map { ($0 as NSString).expandingTildeInPath } ?? base + " (cleaned by Glade).lsbackup"
+      guard path != source else { throw ValidationError("Choose a different file; the original stays as it is.") }
+      try cleaned.data.write(to: URL(fileURLWithPath: path), options: .atomic)
+      print("Wrote \(Redactor.tilde(path)) without \(cleaned.removed) rules.")
+      print("In Little Snitch choose File › Restore from Backup… and pick it. Little Snitch backs up your current rules first.")
+    } catch let problem as LittleSnitchBackup.Problem {
+      throw ValidationError(problem.localizedDescription)
     }
   }
 }

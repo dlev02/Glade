@@ -78,6 +78,8 @@ public final class AppModel {
     public var suggestedNote: String?
     /// Suggested Little Snitch rules, as an `.lsrules` file to save.
     public var rulesFile: Data?
+    /// A cleaned copy of the Little Snitch backup can be saved from this answer.
+    public var offersCleanedBackup = false
   }
 
   // MARK: Settings

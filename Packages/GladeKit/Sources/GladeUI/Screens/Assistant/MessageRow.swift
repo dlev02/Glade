@@ -6,6 +6,7 @@ import SwiftUI
 /// as plain reading text on the left, or a notice when something went wrong.
 /// Answers are rendered from their Markdown; Copy copies the Markdown itself.
 struct MessageRow: View {
+  @State private var backupProblem: String?
   @Environment(AppModel.self) private var model
   var message: AppModel.Message
   /// This message’s advice still describes the selection, so its card can act on it.
@@ -63,9 +64,20 @@ struct MessageRow: View {
         ProposalCard(message: message.id, state: proposal)
           .padding(.top, Metrics.xs)
       }
-      if let file = message.rulesFile {
-        Button("Save Rules File…", systemImage: "square.and.arrow.down") { save(file) }
-          .padding(.top, Metrics.xs)
+      if message.offersCleanedBackup || message.rulesFile != nil {
+        HStack(spacing: Metrics.m) {
+          if message.offersCleanedBackup {
+            Button("Save Cleaned Backup…", systemImage: "square.and.arrow.down") { saveCleanedBackup() }
+              .help("Your backup without these rules, to restore in Little Snitch")
+          }
+          if let file = message.rulesFile {
+            Button("Save New Rules…", systemImage: "plus.square.on.square") { save(file) }
+          }
+        }
+        .padding(.top, Metrics.xs)
+        if let backupProblem {
+          Text(backupProblem).font(.caption).foregroundStyle(Palette.critical)
+        }
       }
       if let note = message.suggestedNote {
         NoteSuggestion(message: message.id, note: note)
@@ -75,6 +87,26 @@ struct MessageRow: View {
     }
     .onHover { hovering in
       withAnimation(.snappy(duration: 0.15)) { isHovered = hovering }
+    }
+  }
+
+  /// Saves the cleaned backup next to where the person chooses; Little Snitch’s File ›
+  /// Restore from Backup… takes it from there.
+  private func saveCleanedBackup() {
+    switch model.cleanedLittleSnitchBackup() {
+    case .failure(let error):
+      backupProblem = error.localizedDescription
+    case .success(let cleaned):
+      backupProblem = nil
+      let panel = NSSavePanel()
+      panel.nameFieldStringValue = cleaned.name
+      panel.message = "Without \(cleaned.removed) rules. Then in Little Snitch: File › Restore from Backup…"
+      guard panel.runModal() == .OK, let url = panel.url else { return }
+      do {
+        try cleaned.data.write(to: url, options: .atomic)
+      } catch {
+        backupProblem = error.localizedDescription
+      }
     }
   }
 
