@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1 — 2026-11-17
+
+- **Adding your AT&T gateway's access code works.** Saving the Device Access Code always said "The router didn't answer", even on the router's own network. Glade now signs in and keeps the code in your Keychain, and if the router really is slow to answer, it says so instead of claiming it can't sign in to that router.
+- **The Assistant's answers line up with the question box.** Answers start where your typing does, and buttons such as **Save Cleaned Backup…**, **Copy** and **Show What Was Sent** sit on the same edge as the answer's text.
+
 ## 0.4.0 — 2026-11-12
 
 ### Network
