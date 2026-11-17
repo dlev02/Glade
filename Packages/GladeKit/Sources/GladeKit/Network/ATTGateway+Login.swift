@@ -27,11 +27,20 @@ extension ATTGateway {
     configuration.timeoutIntervalForRequest = 15
     // Straight to the gateway, never through a proxy that could see the exchange.
     configuration.connectionProxyDictionary = [:]
-    let session = URLSession(configuration: configuration, delegate: SameHostRedirects(), delegateQueue: nil)
+    // Redirects aren't followed: a right code is answered with a redirect to the home
+    // page, which can take longer to load than the timeout, so the redirect itself is
+    // the answer.
+    let session = URLSession(configuration: configuration, delegate: NoRedirects(), delegateQueue: nil)
     guard let loginURL = URL(string: "http://\(host)/cgi-bin/login.ha") else { throw RouterAccessError.unreachable }
     // The first visit sets the cookie; the second shows the form with its nonce.
     _ = try? await session.data(from: loginURL)
-    guard let (formData, _) = try? await session.data(from: loginURL) else { throw RouterAccessError.unreachable }
+    let formData: Data
+    do {
+      (formData, _) = try await session.data(from: loginURL)
+    } catch {
+      Log.warning(.network, "The gateway’s login page didn’t load: \((error as NSError).domain) \((error as NSError).code)")
+      throw RouterAccessError.unreachable
+    }
     let form = String(decoding: formData, as: UTF8.self)
     guard let nonce = HTMLRow.matches(#"name="nonce"\s+value="([^"]+)""#, in: form).first else {
       Log.warning(.network, "The gateway’s login page had no nonce")
@@ -45,16 +54,35 @@ extension ATTGateway {
       ("nonce", nonce), ("password", String(repeating: "*", count: code.count)), ("hashpassword", hash), ("Continue", "Continue"),
     ]
     request.httpBody = Data(fields.map { "\($0)=\(formEncode($1))" }.joined(separator: "&").utf8)
-    guard let (data, response) = try? await session.data(for: request), (response as? HTTPURLResponse)?.statusCode == 200 else {
+    let status: Int
+    let reply: String
+    let location: String?
+    do {
+      let (body, response) = try await session.data(for: request)
+      let http = response as? HTTPURLResponse
+      status = http?.statusCode ?? 0
+      location = http?.value(forHTTPHeaderField: "Location")
+      reply = String(decoding: body, as: UTF8.self)
+    } catch {
+      session.invalidateAndCancel()
+      Log.warning(.network, "The gateway didn’t answer the sign-in: \((error as NSError).domain) \((error as NSError).code)")
       throw RouterAccessError.unreachable
     }
-    let reply = String(decoding: data, as: UTF8.self)
-    // A refused code shows the form again; too many tries shows a lockout notice.
-    let lowered = reply.lowercased()
-    if reply.contains(#"name="hashpassword""#) || reply.contains("Access Code Required") || lowered.contains("locked") || lowered.contains("too many") {
+    switch status {
+    case 301...303 where !(location ?? "").contains("login"):
+      break
+    case 200:
+      // A refused code shows the form again; too many tries shows a lockout notice.
+      let lowered = reply.lowercased()
+      if reply.contains(#"name="hashpassword""#) || reply.contains("Access Code Required") || lowered.contains("locked") || lowered.contains("too many") {
+        session.invalidateAndCancel()
+        Log.info(.network, "The gateway refused the access code")
+        throw RouterAccessError.wrongCode
+      }
+    default:
       session.invalidateAndCancel()
-      Log.info(.network, "The gateway refused the access code")
-      throw RouterAccessError.wrongCode
+      Log.warning(.network, "The gateway answered the sign-in with HTTP \(status)")
+      throw RouterAccessError.unexpectedReply
     }
     Log.info(.network, "Signed in to the AT&T gateway")
     return Session(host: host, urlSession: session)
@@ -70,9 +98,9 @@ extension ATTGateway {
 extension RouterReader {
   /// Checks a router password by signing in, and keeps it in the Keychain if it works.
   public static func saveAccess(_ code: String, router host: String) async throws {
-    guard let report = await read(router: host, maximumAge: 0), report.kind == "AT&T gateway", let model = report.model else {
-      throw RouterAccessError.notSupported
-    }
+    // A gateway that's slow to answer is unreachable, not unsupported.
+    guard let report = await read(router: host, maximumAge: 0) else { throw RouterAccessError.unreachable }
+    guard report.kind == "AT&T gateway", let model = report.model else { throw RouterAccessError.notSupported }
     let session = try await ATTGateway.signIn(host: host, code: code.trimmingCharacters(in: .whitespacesAndNewlines))
     session.urlSession.invalidateAndCancel()
     try RouterCredentials.save(code.trimmingCharacters(in: .whitespacesAndNewlines), account: RouterCredentials.account(model: model, serial: report.serial, host: host))
@@ -102,5 +130,15 @@ extension RouterReader {
     guard let signedIn = try? await session(report, host: host) else { return false }
     signedIn.urlSession.invalidateAndCancel()
     return true
+  }
+}
+
+/// Hands every redirect back to the caller instead of following it.
+final class NoRedirects: NSObject, URLSessionTaskDelegate, Sendable {
+  func urlSession(
+    _ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+    newRequest request: URLRequest
+  ) async -> URLRequest? {
+    nil
   }
 }
