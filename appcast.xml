@@ -6,6 +6,19 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Glade</title>
         <item>
+            <title>0.4.1</title>
+            <pubDate>Tue, 17 Nov 2026 17:22:39 -0600</pubDate>
+            <link>https://github.com/dlev02/Glade/releases/tag/v0.4.1</link>
+            <sparkle:version>8</sparkle:version>
+            <sparkle:shortVersionString>0.4.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <description sparkle:format="markdown"><![CDATA[
+- **Adding your AT&T gateway's access code works.** Saving the Device Access Code always said "The router didn't answer", even on the router's own network. Glade now signs in and keeps the code in your Keychain, and if the router really is slow to answer, it says so instead of claiming it can't sign in to that router.
+- **The Assistant's answers line up with the question box.** Answers start where your typing does, and buttons such as **Save Cleaned Backup…**, **Copy** and **Show What Was Sent** sit on the same edge as the answer's text.
+]]></description>
+            <enclosure url="https://github.com/dlev02/Glade/releases/download/v0.4.1/Glade-0.4.1.zip" length="15269058" type="application/octet-stream" sparkle:edSignature="ppdBxteplh+IhJNspDaw2nHjOATDTTvZuZStdil2WTe00ifd5Pwl9cqRc4vBMvgr9iU36vWNa9xGDbyMPAwrDg=="/>
+        </item>
+        <item>
             <title>0.4.0</title>
             <pubDate>Thu, 12 Nov 2026 22:35:01 -0600</pubDate>
             <link>https://github.com/dlev02/Glade/releases/tag/v0.4.0</link>
@@ -99,24 +112,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
 ]]></description>
             <enclosure url="https://github.com/dlev02/Glade/releases/download/v0.3.0/Glade-0.3.0.zip" length="13341966" type="application/octet-stream" sparkle:edSignature="iJAWsVIN5fN/M3ZekFP4dgOWBwG5wPQOamnP47/87HO+wSKi7f633aPomnqAULDwRE/Hi59vp22niN3d7T+cBQ=="/>
         </item>
-        <item>
-            <title>0.2.3</title>
-            <pubDate>Thu, 12 Nov 2026 01:45:41 -0600</pubDate>
-            <link>https://github.com/dlev02/Glade/releases/tag/v0.2.3</link>
-            <sparkle:version>5</sparkle:version>
-            <sparkle:shortVersionString>0.2.3</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
-            <description sparkle:format="markdown"><![CDATA[
-### Fixed
-
-- In Storage, the group headings (Simulators, Agent Worktrees and so on) scroll along with their items. Before, the top one stuck to the window on a lighter strip with a gap beneath it, which stood out in dark mode.
-- Searching Storage for something that isn't there shows "No Results" across the whole list, with the Free Up bar at the bottom where it belongs, instead of a lighter band and the bar floating halfway up.
-]]></description>
-            <enclosure url="https://github.com/dlev02/Glade/releases/download/v0.2.3/Glade-0.2.3.zip" length="11134651" type="application/octet-stream" sparkle:edSignature="PWc5TOsOLz5DrB0H5b4nB/q67xL6Sn13O9cQKOHv4h49k9GMH8eEkDsO5MHxxplhFUylchJ1reqys3f6rhYVDw=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: 6djm/hOy0nSENmX4rEkpguZ5MZYVIEeLdyltuVrY83Dq9kqxumEwulg3jLuNUDozRLF6qCFqsR2q9fQ4GXRZBg==
-length: 10543
+edSignature: W0BtwGsmkNJde0HtNnGzsmLgt1u7K6INts735o5cXZnqoAHp4O2zvEaWu/aQWG/6jSj+rBHa36WqX5BhiWeyDw==
+length: 10657
 -->
