@@ -20,7 +20,8 @@ extension ATTGateway {
   static func signIn(host: String, code: String) async throws -> Session {
     guard NetworkTargets.isPrivate(host) else { throw RouterAccessError.unreachable }
     let configuration = URLSessionConfiguration.ephemeral
-    configuration.httpCookieStorage = HTTPCookieStorage()
+    // An ephemeral session keeps its own cookies in memory. A hand-made
+    // `HTTPCookieStorage()` stores nothing, and the gateway then never shows its form.
     configuration.httpCookieAcceptPolicy = .always
     configuration.urlCache = nil
     configuration.timeoutIntervalForRequest = 15
@@ -34,7 +35,7 @@ extension ATTGateway {
     let form = String(decoding: formData, as: UTF8.self)
     guard let nonce = HTMLRow.matches(#"name="nonce"\s+value="([^"]+)""#, in: form).first else {
       Log.warning(.network, "The gateway’s login page had no nonce")
-      throw RouterAccessError.unreachable
+      throw RouterAccessError.unexpectedReply
     }
     let hash = Insecure.MD5.hash(data: Data((code + nonce).utf8)).map { String(format: "%02x", $0) }.joined()
     var request = URLRequest(url: loginURL)

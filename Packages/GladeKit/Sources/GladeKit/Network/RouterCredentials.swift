@@ -76,6 +76,7 @@ public enum RouterAccessError: Error, LocalizedError {
   case notSupported
   case wrongCode
   case unreachable
+  case unexpectedReply
 
   public var errorDescription: String? {
     switch self {
@@ -83,6 +84,7 @@ public enum RouterAccessError: Error, LocalizedError {
     case .notSupported: "Glade can only sign in to AT&T gateways so far."
     case .wrongCode: "The router didn’t accept that code. It’s printed on the gateway’s label as Device Access Code."
     case .unreachable: "The router didn’t answer. Are you on its network?"
+    case .unexpectedReply: "The router answered, but its sign-in page wasn’t what Glade expected."
     }
   }
 }
