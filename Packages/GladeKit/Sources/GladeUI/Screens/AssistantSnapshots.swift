@@ -49,6 +49,17 @@ enum AssistantSnapshots {
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
       )
     },
+    // A Little Snitch review: its save button and, as on hover, the answer’s actions.
+    "assistant-littlesnitch": { model in
+      var answer = AppModel.Message(
+        role: .assistant,
+        text: "**155 rules** belong to apps that were removed or moved.\n\n**To do it**\n\n- All at once: save the cleaned backup, then in Little Snitch choose File › Restore from Backup… and pick it.\n- Or by hand, in Little Snitch’s rules window: 155 under **Invalid Rules**.",
+        provider: "claude", model: "opus"
+      )
+      answer.offersCleanedBackup = true
+      let messages = [AppModel.Message(role: .person, text: "Which Little Snitch rules can go?"), answer]
+      return AnyView(NavigationStack { AssistantScreen(preview: AssistantPreview(messages: messages)) })
+    },
     "assistant-sent": { _ in AnyView(RunSheet(run: sampleRuns()[0])) },
     "assistant-details": { _ in AnyView(RunsInspector(runs: sampleRuns()) { _ in }.frame(width: 300)) },
     "assistant-problem": { model in

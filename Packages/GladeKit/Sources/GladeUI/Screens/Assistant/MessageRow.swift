@@ -16,6 +16,9 @@ struct MessageRow: View {
   @FocusState private var focusedAction: Action?
 
   private enum Action { case copy, sent }
+  private static let actionSize: CGFloat = 18
+
+  private var hasButtons: Bool { message.offersCleanedBackup || message.rulesFile != nil }
 
   var body: some View {
     switch message.role {
@@ -64,7 +67,7 @@ struct MessageRow: View {
         ProposalCard(message: message.id, state: proposal)
           .padding(.top, Metrics.xs)
       }
-      if message.offersCleanedBackup || message.rulesFile != nil {
+      if hasButtons {
         HStack(spacing: Metrics.m) {
           if message.offersCleanedBackup {
             Button("Save Cleaned Backup…", systemImage: "square.and.arrow.down") { saveCleanedBackup() }
@@ -128,19 +131,25 @@ struct MessageRow: View {
   /// Shown on hover or when one of them has keyboard focus. VoiceOver reaches them as
   /// actions on the answer.
   private var actions: some View {
-    HStack(spacing: Metrics.m) {
+    // Each glyph in the same square, the first on the answer’s text edge, so the two
+    // read as one row whatever their symbols' own shapes.
+    HStack(spacing: Metrics.s) {
       CopyButton { message.text }
+        .frame(width: Self.actionSize, height: Self.actionSize, alignment: .leading)
         .focused($focusedAction, equals: .copy)
         .help("Copy")
       Button("Show What Was Sent", systemImage: Symbols.whatWasSent, action: showWhatWasSent)
+        .frame(width: Self.actionSize, height: Self.actionSize, alignment: .leading)
         .focused($focusedAction, equals: .sent)
         .help("Show What Was Sent")
     }
     .labelStyle(.iconOnly)
     .buttonStyle(.borderless)
     .foregroundStyle(.tertiary)
-    .font(.system(size: 13))
-    .padding(.top, -Metrics.xs)
+    .font(.system(size: 12))
+    .imageScale(.medium)
+    // Close under plain text; clear of a button row above.
+    .padding(.top, hasButtons ? 0 : -Metrics.xs)
     .opacity(isHovered || focusedAction != nil ? 1 : 0)
   }
 

@@ -18,6 +18,9 @@ struct ConversationView: View {
 
   /// The widest the reading column gets, shared with the composer.
   static let columnWidth: CGFloat = 660
+  /// How far the composer’s words sit inside its glass. Answers start on that same
+  /// edge, so the reading text and the question line up.
+  static let textInset: CGFloat = Metrics.m + Metrics.xs
   private static let thinkingID = "thinking"
 
   var body: some View {
@@ -41,7 +44,7 @@ struct ConversationView: View {
         }
         .animation(reduceMotion ? .easeOut(duration: 0.12) : .easeOut(duration: 0.16), value: messages.count)
         .animation(.easeOut(duration: 0.16), value: state)
-        .padding(.horizontal, Metrics.xl)
+        .padding(.horizontal, Metrics.xl + Self.textInset)
         .padding(.top, Metrics.xl)
         .padding(.bottom, Metrics.l)
         .frame(maxWidth: Self.columnWidth + Metrics.xl * 2)

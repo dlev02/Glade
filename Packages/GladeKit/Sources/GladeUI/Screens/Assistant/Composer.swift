@@ -27,7 +27,7 @@ struct Composer: View {
         .focused($isFocused)
         .accessibilityLabel("Question")
         .accessibilityIdentifier("composer.field")
-        .padding(.horizontal, Metrics.xs)
+        .padding(.horizontal, ConversationView.textInset - Metrics.m)
         .padding(.top, 2)
         .onKeyPress(.return, phases: .down) { press in
           if press.modifiers.contains(.shift) {
@@ -55,7 +55,7 @@ struct Composer: View {
           .accessibilityIdentifier("composer.send")
       }
       // The choices' words start on the question’s text edge.
-      .padding(.leading, Metrics.xs)
+      .padding(.leading, ConversationView.textInset - Metrics.m)
       .font(.callout)
     }
     .padding(Metrics.m)
