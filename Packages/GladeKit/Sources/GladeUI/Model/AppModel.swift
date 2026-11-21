@@ -258,7 +258,9 @@ public final class AppModel {
       section = start
     }
     monitor = ThresholdMonitor(settings: loaded.automation, stateFile: live ? GladePaths.support.appendingPathComponent("alerts.json") : nil)
-    isLive = live
+    // Sample data is decided here, not in `start()`: a window can appear first, and
+    // must not start reading the real network or apps.
+    isLive = live && !defaults.bool(forKey: "demo")
   }
 
   /// Starts background work. Call once when the app launches.
@@ -287,6 +289,21 @@ public final class AppModel {
         }
         // `-demoConversation empty` starts the Assistant with nothing asked yet.
         if DemoState.value("demoConversation") == "empty" { messages = [] }
+        // `-demoConversation link` adds an answer with a web address, to check it opens.
+        if DemoState.value("demoConversation") == "link" {
+          messages = [
+            Message(role: .person, text: "Where are my router’s settings?"),
+            Message(role: .assistant, text: "Open **https://example.com/router** in your browser.", provider: "claude"),
+          ]
+        }
+        // `-demoRouter att` makes the sample router an AT&T gateway, so its access code
+        // row shows. Its Keychain account is "BGW-TEST GLADE-TEST-0001".
+        if DemoState.value("demoRouter") == "att", var report = network.status?.router {
+          report.kind = "AT&T gateway"
+          report.model = "BGW-TEST"
+          report.serial = "GLADE-TEST-0001"
+          network.status?.router = report
+        }
         // `-demoProvider claude` puts that AI first, in memory only.
         if let first = DemoState.value("demoProvider") {
           config.assistant.order = [first] + config.assistant.order.filter { $0 != first }
