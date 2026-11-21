@@ -6,6 +6,47 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Glade</title>
         <item>
+            <title>0.5.0</title>
+            <pubDate>Sat, 21 Nov 2026 01:18:36 -0600</pubDate>
+            <link>https://github.com/dlev02/Glade/releases/tag/v0.5.0</link>
+            <sparkle:version>9</sparkle:version>
+            <sparkle:shortVersionString>0.5.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <description sparkle:format="markdown"><![CDATA[
+### The Assistant can do what it suggests
+
+- **Approve, and it's done.** When an answer suggests quitting idle apps, shutting down a simulator, a Careful clean, restarting a leaking macOS helper such as the Wi-Fi menu, or a speed test, a card under the answer lists each one with **Approve** and **Not Now**. A clean it ran has **Put Back**, and after a speed test the Assistant tells you what the result means.
+- **Choose how much it does by itself.** Settings › Assistant › Actions, also at the bottom of the conversation: **Ask Every Time** (the default) waits for you; **Auto** has a second AI check each action and runs it if that AI approves; **Full Access** runs them straight away.
+- **Glade's rules still decide.** Only what Free Up Memory or the clean level would choose, or what you named, ever runs by itself. Personal files, anything permanent and a speed test on a metered connection always wait for you, and the second AI can stop an action but never allow one. In Auto or Full Access, an app you asked to uninstall goes to the Trash without the extra confirmation, one at a time.
+
+### Uninstall any app
+
+- Apps that belong to the system, which includes most from the App Store such as iMovie, Keynote and Xcode, can now be uninstalled from Glade like any other. Glade asks Finder to move the app, and Finder asks for your password or Touch ID; Glade never sees it. The first time, macOS asks whether Glade may control Finder. **Put Back** brings the app back the same way.
+- The Assistant can now propose these apps when you name them, ticked like the rest.
+- On the command line, `glade uninstall --finder` and `glade undo --finder` do the same.
+
+### Assistant
+
+- **Your conversations are kept.** A column beside the conversation lists earlier ones under Pinned, Today, Yesterday and so on. Open any to read it or carry on, and rename, pin or delete it from its menu. Starting a new conversation no longer loses the last one.
+- **Questions go where you meant.** A pasted screenshot's file name no longer turns a question into a clean-up ("CleanShot" isn't "clean"), and a follow-up in a conversation about your network still gets your network's readings.
+- **It knows what Glade can do with your router.** The Assistant is told whether your gateway's access code is saved, so it no longer says it can't see it or sends you to the sticker.
+- **Effort for each AI.** Choose how hard each AI thinks, and the second opinion too, in Settings › Assistant or under the question box.
+- **Signing in to an AI is one click.** An AI that needs signing in, such as Gemini, has **Sign In…**, which opens Terminal running its command, and a button to copy the command. Glade looks again when you come back.
+- **Links in answers open.** A web address in an answer can be clicked.
+
+### Performance and Network
+
+- **Unfamiliar names explain themselves.** `swift-frontend` says it's the Swift compiler, `node` says it's JavaScript and which app started it, and macOS helpers that leak, such as the Wi-Fi menu, are marked when they use far more memory than usual.
+- **Forget removes your router's access code.** It did nothing when a different copy of Glade had saved the code; now it removes it, or says why it couldn't.
+- **Little Snitch's import date and Import Again… sit together** at the top of its card.
+
+### Fixed
+
+- An app you deleted by hand but installed with Homebrew no longer keeps its leftovers hidden from App Leftovers.
+]]></description>
+            <enclosure url="https://github.com/dlev02/Glade/releases/download/v0.5.0/Glade-0.5.0.zip" length="15946122" type="application/octet-stream" sparkle:edSignature="Qrk0PC38+DTryD/aSPDFQRmUNE1isW7pV88pyOTwXujGiGx5IdRxJaZI7BPn+IDGYTe54+Rd4rKyiAV3qIBLDw=="/>
+        </item>
+        <item>
             <title>0.4.1</title>
             <pubDate>Tue, 17 Nov 2026 17:22:39 -0600</pubDate>
             <link>https://github.com/dlev02/Glade/releases/tag/v0.4.1</link>
@@ -61,60 +102,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
 ]]></description>
             <enclosure url="https://github.com/dlev02/Glade/releases/download/v0.4.0/Glade-0.4.0.zip" length="15266322" type="application/octet-stream" sparkle:edSignature="YHhylYF0n85oHcQN45Ja0N1dYW3Or5WfqCXt+cMIm/G1o1AH035k32PDEzbF1g6WuAdKO2AE/kHlSCCUA1INAQ=="/>
         </item>
-        <item>
-            <title>0.3.0</title>
-            <pubDate>Thu, 12 Nov 2026 15:33:43 -0600</pubDate>
-            <link>https://github.com/dlev02/Glade/releases/tag/v0.3.0</link>
-            <sparkle:version>6</sparkle:version>
-            <sparkle:shortVersionString>0.3.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
-            <description sparkle:format="markdown"><![CDATA[
-### Battery
-
-- A new **Battery** section (called Energy on a Mac without a battery) shows the charge with one plain sentence, such as "On battery, about 6½ hours left", and a chart of the last 24 hours, 7 days or 30 days with time on the charger and asleep shaded.
-- **Health**, **Power** and **Temperature** each get a panel: how much of its original capacity the battery still holds, how hard the Mac is working, and how warm the battery is.
-- **Using the most power** lists apps by the energy they've used now, over the last hour, the last 12 hours or since you unplugged, with Quit on the row. It counts processor work only; the screen and graphics chip aren't split between apps.
-- **Keeping your Mac awake** names what is stopping it sleeping and for how long, including tools like `caffeinate` and simulators playing sound, with Quit or Shut Down beside each.
-- **While it slept** lists recent sleeps with the charge lost and how often the Mac woke; open one to see why.
-- The **charge limit** you set in System Settings is shown, with a shortcut to change it there. macOS doesn't let other apps change it.
-- Six alerts in **Settings > Alerts**: charged past the limit, limit turned off and health below 80% are on; hot while charging, kept awake on battery and a large drain while asleep are off until you switch them on.
-- **Settings > General > Battery detail**: Simple shows sentences and percentages; Technical adds watts, volts, mAh and cycle counts.
-- On battery, the menu bar shows the time left and what is using the most power, and Overview has a Battery tile.
-- Ask the Assistant "What's draining my battery?".
-
-### Uninstall apps
-
-- Storage has an **Apps** section: every app with its size, when you last opened it and where it came from, with big and long-unused ones first. Nothing is ever ticked for you.
-- Uninstalling moves the app and its own settings, caches and data to the Trash, and **Put Back** returns it all. The inspector shows what goes and what stays, such as data another app shares.
-- Apps that come with their own uninstaller (Adobe's, for example) get **Open Uninstaller**, because it removes parts Glade can't reach. Apps macOS asks for your password to remove get **Show in Finder**.
-- In **What's on This Disk**, each folder in your Library says which app uses it, or that no installed app does. From a row you can move a folder to the Trash, uninstall an app or find it in Storage.
-
-### Ask the Assistant to remove things
-
-- Ask it to remove apps by name ("remove the Adobe apps", "uninstall iMovie"). It lists what matches with a reason for each, and a second AI notes what to know first: a subscription that keeps billing, files only that app opens, other apps from the same developer.
-- Only what you named, and what Glade can remove, starts ticked. **Review and Remove…** opens the usual confirmation; everything goes to the Trash and the card offers **Put Back**.
-- For this, the AI you chose is sent the names, sizes and last-opened dates of the matching apps. [PRIVACY.md](PRIVACY.md) has the full list.
-
-### Command line and AI agents
-
-- New commands: `glade battery`, `glade energy`, `glade awake`, `glade sleeps`, `glade installed` and `glade uninstall` (a dry run unless you add `--confirm`), with matching tools for agents connected to Glade.
-- `glade ask` lists what it proposes removing and prints the commands to do it. It never removes anything itself.
-- `glade show <section> --background` changes the window's section without bringing Glade in front of what you're doing.
-
-### Fixed
-
-- In the menu bar, a suggestion's warning ("May be in use by Bitrig") and the memory reading ("Under pressure") are no longer cut off.
-- In dark mode, cards stand out from the window again instead of blending into it.
-
-### Changed
-
-- With Battery in the sidebar, Assistant is ⌘5 and History is ⌘6.
-]]></description>
-            <enclosure url="https://github.com/dlev02/Glade/releases/download/v0.3.0/Glade-0.3.0.zip" length="13341966" type="application/octet-stream" sparkle:edSignature="iJAWsVIN5fN/M3ZekFP4dgOWBwG5wPQOamnP47/87HO+wSKi7f633aPomnqAULDwRE/Hi59vp22niN3d7T+cBQ=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: W0BtwGsmkNJde0HtNnGzsmLgt1u7K6INts735o5cXZnqoAHp4O2zvEaWu/aQWG/6jSj+rBHa36WqX5BhiWeyDw==
-length: 10657
+edSignature: aFuEyax+an59gDcOlrJUCCppPPJ+02hbPXkL1j4eG6LHgrvY7bem13vy6iGnauqlG7pB4tlbGy8lphNhOkOvAA==
+length: 10252
 -->
