@@ -65,6 +65,10 @@ public struct NetworkStatus: Codable, Sendable, Equatable {
         }
       }
       router = await report
+      if let host = path.router, var report = router, report.kind == "AT&T gateway" {
+        report.accessSaved = RouterReader.hasAccess(report, host: host)
+        router = report
+      }
     }
     let apps = await traffic
     let lastTest = SpeedTest.last

@@ -56,6 +56,12 @@ extension MacDescription {
         if router.weakDevices > 0 { text += ", \(router.weakDevices) on a weak signal" }
       }
       lines.append(text)
+      // What Glade itself can do with the router, so the AI doesn't guess.
+      if router.kind == "AT&T gateway" {
+        lines.append(router.accessSaved == true
+          ? "Router access: Glade has this gateway's Device Access Code saved in the owner's Keychain (item “Glade router access”, which Keychain Access can show them) and uses it only to sign in. Glade reads the router's public status pages (line, devices) but does not yet read or change its settings (Wi-Fi channel, QoS); the owner changes those in the gateway's own settings page in a browser. You never see the code."
+          : "Router access: no access code saved. The owner can add the Device Access Code in Glade (Network, Your Network, Access code). Glade reads the router's public status pages only and does not read or change its settings.")
+      }
     }
     if let test = status.lastTest {
       lines.append("Last speed test \(Format.age(test.date, now: now)): \(Int(test.downloadMbps)) Mbps down, \(Int(test.uploadMbps)) up; latency \(test.idleLatency.map { "\(Int($0)) ms" } ?? "?") idle, \(test.busyLatency.map { "\(Int($0)) ms" } ?? "?") with the line full\(test.throughVPN.map { "; through \($0)" } ?? "")")

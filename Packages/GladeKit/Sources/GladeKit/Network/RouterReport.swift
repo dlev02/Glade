@@ -42,6 +42,9 @@ public struct RouterReport: Codable, Sendable, Equatable {
   public var line: Line?
   public var devices: [Device]?
   public var read: Date
+  /// Glade holds this router’s password in the Keychain. Set when the reading is taken,
+  /// never stored with it.
+  public var accessSaved: Bool? = nil
 
   public var online: [Device] { (devices ?? []).filter(\.online) }
 
