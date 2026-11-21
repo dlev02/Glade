@@ -10,6 +10,8 @@ public enum AppControlError: Error, LocalizedError, Equatable {
   /// A running process that isn’t an app, so it can’t be asked to quit.
   case notAnApp(String)
   case relaunchFailed(String, reason: String)
+  /// Not a macOS helper Glade may restart, or not over its usual size any more.
+  case notRestartable(String)
 
   public var errorDescription: String? {
     switch self {
@@ -19,6 +21,7 @@ public enum AppControlError: Error, LocalizedError, Equatable {
     case .isGlade: "\(Brand.name) doesn’t quit itself."
     case .notAnApp(let name): "\(name) is a process, not an app, so it can’t be asked to quit."
     case .relaunchFailed(let name, let reason): "\(name) quit but couldn’t be reopened: \(reason)"
+    case .notRestartable(let name): "\(name) isn’t a macOS helper that’s using far more memory than usual, so \(Brand.name) leaves it alone."
     }
   }
 }

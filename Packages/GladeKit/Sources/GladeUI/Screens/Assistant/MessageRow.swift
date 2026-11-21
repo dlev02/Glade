@@ -67,6 +67,10 @@ struct MessageRow: View {
         ProposalCard(message: message.id, state: proposal)
           .padding(.top, Metrics.xs)
       }
+      if let actions = message.actions {
+        ActionCard(message: message.id, state: actions)
+          .padding(.top, Metrics.xs)
+      }
       if hasButtons {
         HStack(spacing: Metrics.m) {
           if message.offersCleanedBackup {

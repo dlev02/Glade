@@ -47,6 +47,7 @@ struct Composer: View {
           effortMenu
         }
         Spacer(minLength: Metrics.s)
+        modeMenu
         Button("Send", systemImage: "arrow.up") { send() }
           .labelStyle(.iconOnly)
           .buttonStyle(SendButtonStyle())
@@ -147,6 +148,22 @@ struct Composer: View {
     .help("How hard it thinks")
   }
 
+  /// What the Assistant may do without asking, the same setting as Settings › Assistant.
+  private var modeMenu: some View {
+    let current = model.config.assistant.actionMode
+    return ChoicePopover(
+      "Actions",
+      value: current.title,
+      selection: Binding(get: { current }, set: { model.config.assistant.actionMode = $0 }),
+      sections: [ChoiceSection(choices: ActionMode.allCases.map { Choice($0, $0.title, subtitle: $0.consequence) })],
+      arrowEdge: .top,
+      clears: Self.space
+    )
+    .foregroundStyle(current == .full ? AnyShapeStyle(Palette.warning) : AnyShapeStyle(.primary))
+    .accessibilityIdentifier("composer.actionMode")
+    .help("What the Assistant may do without asking")
+  }
+
   private var canSend: Bool {
     !isBusy && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
   }
@@ -173,6 +190,17 @@ private struct SendButtonStyle: ButtonStyle {
       .opacity(configuration.isPressed ? 0.8 : 1)
       .contentShape(.circle)
       .animation(.snappy(duration: 0.12), value: isEnabled)
+  }
+}
+
+extension ActionMode {
+  /// What the mode means, in a few words, for the choice lists.
+  var consequence: String {
+    switch self {
+    case .ask: "You approve each change"
+    case .auto: "Another AI checks; safe changes run"
+    case .full: "Safe changes run straight away"
+    }
   }
 }
 

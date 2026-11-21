@@ -83,7 +83,7 @@ extension AppModel {
 
   /// Demo mode only: walks through the actions without touching anything. With
   /// `-demoRelief partial`, Mail stays open as if it were asking about unsaved work.
-  private func simulateRelief(_ actions: [ReliefPlan.Action]) async -> ReliefResult {
+  func simulateRelief(_ actions: [ReliefPlan.Action]) async -> ReliefResult {
     let partial = DemoState.value("demoRelief") == "partial"
     var entries: [ReliefResult.Entry] = []
     for (index, action) in actions.enumerated() {

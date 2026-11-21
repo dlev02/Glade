@@ -87,6 +87,11 @@ struct ProposalCard: View {
       } else {
         Label("No second opinion was available", systemImage: "person.2.slash")
       }
+      if let mode = state.ranByThemselves {
+        Label("Removed without asking (\(mode.title))", systemImage: "bolt.shield")
+      } else if let why = state.heldBack {
+        Label(why, systemImage: "hand.raised")
+      }
       if !proposal.rejected.isEmpty {
         AdviceDisclosure(isExpanded: $showsRefused) {
           Text(proposal.rejected.count == 1 ? "1 suggestion refused" : "\(proposal.rejected.count) suggestions refused")

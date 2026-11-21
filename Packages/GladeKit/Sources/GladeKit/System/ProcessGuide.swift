@@ -60,12 +60,18 @@ public enum ProcessGuide {
     "com.apple.textinputmenuagent": 300_000_000,
   ]
 
+  /// A macOS helper over its usual ceiling, which Glade may restart (`AppControl.restartHelper`).
+  public static func isRestartable(_ app: AppUsage) -> Bool {
+    guard let id = app.bundleIdentifier?.lowercased(), let ceiling = ceilings[id] else { return false }
+    return app.memoryBytes > ceiling
+  }
+
   public static func note(for app: AppUsage) -> Note? {
     let keys = [app.bundleIdentifier?.lowercased(), app.name.lowercased()].compactMap { $0 }
     let what = keys.lazy.compactMap { known[$0] }.first
     var unusual: String?
     if let key = keys.first(where: { ceilings[$0] != nil }), let ceiling = ceilings[key], app.memoryBytes > ceiling {
-      unusual = "Using far more memory than usual, which is a fault in macOS. Restarting the Mac clears it."
+      unusual = "Using far more memory than usual, which is a fault in macOS. Restarting it gives the memory back; macOS opens it again by itself."
     }
     let startedBy = app.startedBy.flatMap { $0.isEmpty ? nil : $0.prefix(3).joined(separator: ", ") }
     guard what != nil || startedBy != nil || unusual != nil else { return nil }

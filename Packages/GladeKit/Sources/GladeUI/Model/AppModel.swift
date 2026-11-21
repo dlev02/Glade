@@ -80,6 +80,8 @@ public final class AppModel {
     public var rulesFile: Data?
     /// A cleaned copy of the Little Snitch backup can be saved from this answer.
     public var offersCleanedBackup = false
+    /// Actions the answer proposed, and what became of them.
+    public var actions: ActionCardState?
   }
 
   // MARK: Settings
@@ -295,6 +297,13 @@ public final class AppModel {
             Message(role: .person, text: "Where are my router’s settings?"),
             Message(role: .assistant, text: "Open **https://example.com/router** in your browser.", provider: "claude"),
           ]
+        }
+        // `-demoActions ask|auto|full` asks a sample question whose answer proposes
+        // actions, under that mode (in memory only).
+        if let mode = DemoState.value("demoActions").flatMap(ActionMode.init(rawValue:)) {
+          config.assistant.actionMode = mode
+          messages = []
+          Task { await ask("My Mac feels slow. Quit what you can and run a speed test.") }
         }
         // `-demoRouter att` makes the sample router an AT&T gateway, so its access code
         // row shows. Its Keychain account is "BGW-TEST GLADE-TEST-0001".
@@ -720,6 +729,28 @@ public final class AppModel {
     }
   }
 
+  /// Removes findings the Assistant chose under Auto or Full Access, outside the
+  /// selection and without the confirmation sheet. `Cleaner` checks each one again as
+  /// it always does; the receipt says the Assistant started it.
+  func assistantClean(ids: [String], provider: String) async -> Receipt? {
+    guard let scan, !isCleaning, !ids.isEmpty, !isDemo else { return nil }
+    do {
+      let receipt = try await Cleaner.clean(
+        ids: ids, from: scan, config: config, options: CleanOptions(dryRun: false, initiator: .assistant(provider: provider))
+      )
+      let remaining = scan.removing(receipt)
+      ScanEngine.save(remaining)
+      self.scan = remaining
+      rebuildPlan()
+      receipts = Cleaner.receipts()
+      Log.info(.agent, "The Assistant’s clean removed \(receipt.entries.filter { $0.outcome.freedSpace }.count) of \(ids.count) items")
+      return receipt
+    } catch {
+      Log.warning(.agent, "The Assistant’s clean failed: \(error.localizedDescription)")
+      return nil
+    }
+  }
+
   /// Demo mode only: walks through the selection as a clean would and records what
   /// it would have done, without touching the disk.
   private func simulateClean(ids: [String], scan: ScanResult) async {
@@ -832,8 +863,16 @@ public final class AppModel {
     assistantState = .thinking("Thinking…")
     if isDemo {
       try? await Task.sleep(for: .seconds(2.5))
-      messages.append(Message(role: .assistant, text: SampleData.formattedAnswer(snapshot: snapshot, apps: apps), provider: "claude"))
+      var answer = Message(role: .assistant, text: SampleData.formattedAnswer(snapshot: snapshot, apps: apps), provider: "claude")
+      // `-demoActions YES`: the sample answer proposes the first actions offered.
+      if DemoState.value("demoActions") != nil {
+        let offered = await offeredActions(for: text)
+        let picked = Array(offered.filter { $0.kind != .putBack }.prefix(2)) + offered.filter { $0.kind == .speedTest }
+        answer.actions = ActionCardState(actions: Array(picked.prefix(ActionPolicy.perAnswer)), request: text, proposer: "claude", mode: config.assistant.actionMode)
+      }
+      messages.append(answer)
       assistantState = .idle
+      if answer.actions != nil { await settleActions(in: answer.id) }
       return
     }
     await refreshApps()
@@ -843,12 +882,19 @@ public final class AppModel {
       snapshot: snapshot, apps: apps, context: context, suggestions: suggestions, scan: scan, plan: plan,
       battery: batteryBrief, network: networkBrief, networkHistory: networkBrief == nil ? nil : NetworkHistoryStore.load()
     )
+    let offered = await offeredActions(for: text)
     do {
-      let reply = try await Assistant.ask(text, snapshot: description, earlier: earlier, config: config, providers: AgentProviders.all)
+      let reply = try await Assistant.ask(
+        text, snapshot: description, earlier: earlier, actions: offered, config: config, providers: AgentProviders.all
+      )
       var answer = Message(role: .assistant, text: reply.answer, provider: reply.provider, model: reply.model)
       answer.suggestedNote = reply.remember
+      if !reply.actions.isEmpty {
+        answer.actions = ActionCardState(actions: reply.actions, request: text, proposer: reply.provider, mode: config.assistant.actionMode)
+      }
       messages.append(answer)
       assistantState = .idle
+      if answer.actions != nil { await settleActions(in: answer.id) }
     } catch {
       messages.append(Message(role: .problem, text: error.localizedDescription))
       assistantState = .failed(error.localizedDescription)
@@ -876,7 +922,11 @@ public final class AppModel {
     messages.compactMap { message in
       switch message.role {
       case .person: ConversationTurn(role: .person, text: message.text)
-      case .assistant: ConversationTurn(role: .assistant, text: message.text)
+      case .assistant:
+        // What Glade did about the answer, in its own words, so the next answer knows.
+        ConversationTurn(role: .assistant, text: message.actions.map { card in
+          card.outcomeLines.isEmpty ? message.text : message.text + "\n\n(Glade: " + card.outcomeLines.joined(separator: " ") + ")"
+        } ?? message.text)
       case .problem: nil
       }
     }

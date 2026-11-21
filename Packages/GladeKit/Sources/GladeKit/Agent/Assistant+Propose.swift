@@ -140,8 +140,11 @@ extension Assistant {
         Log.warning(.safety, "Dropped a second-opinion note for \(note.id): not one of the proposed items")
         continue
       }
-      let verdict = RemovalProposal.Review.Verdict(rawValue: (note.verdict ?? "").lowercased()) ?? .ok
-      let text = clip(note.note ?? "")
+      // A verdict Glade can't read counts as a caution, so Auto never acts on it.
+      let parsed = RemovalProposal.Review.Verdict(rawValue: (note.verdict ?? "").lowercased())
+      let verdict = parsed ?? .caution
+      var text = clip(note.note ?? "")
+      if parsed == nil, text.isEmpty { text = "The second opinion gave no clear verdict." }
       // A caution with nothing to say isn’t one.
       proposal.items[index].review = .init(verdict: verdict == .caution && text.isEmpty ? .ok : verdict, note: text)
     }

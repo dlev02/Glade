@@ -25,6 +25,10 @@ public struct ProposalState: Sendable {
   /// The clean sheet is open with this card’s items.
   var awaitingClean = false
   public var outcome: Outcome?
+  /// Removed without the confirmation sheet, under this mode.
+  public var ranByThemselves: ActionMode?
+  /// Why it waited for the person in Auto or Full Access.
+  public var heldBack: String?
 
   public init(_ proposal: RemovalProposal) {
     self.proposal = proposal

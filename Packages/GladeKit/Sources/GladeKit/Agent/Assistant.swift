@@ -173,10 +173,13 @@ public enum Assistant {
     _ question: String,
     snapshot: String,
     earlier: [ConversationTurn] = [],
+    actions: [AgentAction] = [],
     config: GladeConfig = ConfigStore.load(),
     proactive: Bool = false,
     providers: [any AgentProvider]
-  ) async throws -> (answer: String, provider: String, model: String?, runID: String, remember: String?) {
+  ) async throws -> (answer: String, provider: String, model: String?, runID: String, remember: String?, actions: [AgentAction]) {
+    // Glade acts only for the person: a run it started by itself proposes nothing.
+    let actions = proactive ? [] : actions
     let provider = try await pick(config: config, providers: providers, proactive: proactive)
     let budget = provider.isLocal ? 9_000 : 60_000
     var prompt = ""
@@ -184,14 +187,17 @@ public enum Assistant {
       prompt += history + "\n\n"
     }
     prompt += "QUESTION\n\(question)\n\nWHAT GLADE SEES\n\(snapshot.prefix(budget))"
+    if let section = ActionCatalogue.section(actions) { prompt += "\n\n" + section }
     let (reply, runID) = try await run(
-      provider: provider, purpose: "question", system: StoragePrompt.questionSystem, prompt: prompt,
+      provider: provider, purpose: "question", system: StoragePrompt.questionSystem(offersActions: !actions.isEmpty), prompt: prompt,
       model: config.assistant.models[provider.id], config: config, proactive: proactive, schema: nil,
       question: question, earlier: earlier
     )
     // A closing “Remember: …” is a suggested note, kept only if the person saves it.
-    let split = AssistantNotes.suggestion(in: reply.text.trimmingCharacters(in: .whitespacesAndNewlines))
-    return (split.answer, reply.provider, reply.model ?? config.assistant.models[provider.id], runID, split.note)
+    let proposed = ActionCatalogue.proposals(in: reply.text, offered: actions)
+    if !proposed.dropped.isEmpty { amend(runID: runID) { $0.rejected = proposed.dropped.map { "\($0): not an action Glade offered" } } }
+    let split = AssistantNotes.suggestion(in: proposed.answer)
+    return (split.answer, reply.provider, reply.model ?? config.assistant.models[provider.id], runID, split.note, proposed.actions)
   }
 
   // MARK: Running

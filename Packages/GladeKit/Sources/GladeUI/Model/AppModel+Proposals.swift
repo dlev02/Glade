@@ -37,8 +37,10 @@ extension AppModel {
         }
       }
       let card = proposal.items.isEmpty && proposal.rejected.isEmpty ? nil : ProposalState(proposal)
-      messages.append(Message(role: .assistant, text: proposal.answer, provider: proposal.provider, model: proposal.model, proposal: card))
+      let answer = Message(role: .assistant, text: proposal.answer, provider: proposal.provider, model: proposal.model, proposal: card)
+      messages.append(answer)
       assistantState = .idle
+      if card != nil { await settleRemoval(in: answer.id) }
     } catch {
       messages.append(Message(role: .problem, text: error.localizedDescription))
       assistantState = .failed(error.localizedDescription)

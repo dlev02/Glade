@@ -30,6 +30,26 @@ public enum Effort: String, Codable, Sendable, CaseIterable, Identifiable {
   public var title: String { self == .automatic ? "Default" : rawValue.capitalized }
 }
 
+/// How much the Assistant may do without asking. Glade's own code decides which
+/// actions may ever run without the person (`ActionPolicy`); this only narrows it.
+public enum ActionMode: String, Codable, Sendable, CaseIterable, Identifiable {
+  /// Every change waits for the person to approve it.
+  case ask
+  /// A second AI checks each change Glade's rules allow; it runs if that AI approves.
+  case auto
+  /// Changes Glade's rules allow run straight away.
+  case full
+
+  public var id: String { rawValue }
+  public var title: String {
+    switch self {
+    case .ask: "Ask Every Time"
+    case .auto: "Auto"
+    case .full: "Full Access"
+    }
+  }
+}
+
 public struct AssistantSettings: Codable, Sendable, Equatable {
   /// Providers in the order to try them. The first one that’s ready is used.
   public var order: [String]
@@ -58,6 +78,8 @@ public struct AssistantSettings: Codable, Sendable, Equatable {
   public var timeout: Double
   /// Include the notes the person kept (`AssistantNotes`) when asking an AI.
   public var useNotes: Bool = true
+  /// What the Assistant may do without asking.
+  public var actionMode: ActionMode = .ask
 
   public init() {
     order = ["claude", "codex", "apple"]
@@ -86,6 +108,7 @@ public struct AssistantSettings: Codable, Sendable, Equatable {
     if c.contains(.runsPerDay) { runsPerDay = try c.decodeIfPresent(Int.self, forKey: .runsPerDay) }
     timeout = try c.decodeIfPresent(Double.self, forKey: .timeout) ?? timeout
     useNotes = try c.decodeIfPresent(Bool.self, forKey: .useNotes) ?? useNotes
+    actionMode = (try? c.decodeIfPresent(ActionMode.self, forKey: .actionMode)) ?? actionMode
   }
 
   /// How hard a provider thinks day to day.

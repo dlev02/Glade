@@ -113,6 +113,17 @@ struct AssistantPane: View {
       }
 
       Section {
+        choicePicker(
+          "Actions", value: model.config.assistant.actionMode.title, selection: $model.config.assistant.actionMode,
+          choices: ActionMode.allCases.map { Choice($0, $0.title, subtitle: $0.consequence) }
+        )
+        .accessibilityIdentifier("settings.actionMode")
+      } footer: {
+        Text("Glade’s own rules decide what may ever run by itself. Personal files, anything permanent and metered data always ask.")
+          .foregroundStyle(.secondary)
+      }
+
+      Section {
         Toggle("Ask AI at alert thresholds", isOn: $model.config.assistant.proactive)
         choicePicker(
           "Daily limit", value: runsTitle(model.config.assistant.runsPerDay), selection: $model.config.assistant.runsPerDay,
