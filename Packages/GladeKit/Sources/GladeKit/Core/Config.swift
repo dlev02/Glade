@@ -39,6 +39,13 @@ public struct AssistantSettings: Codable, Sendable, Equatable {
   public var deepModels: [String: String]
   /// The provider to call in for a closer look, or `nil` to stay with the same one.
   public var deepProvider: String?
+  /// How hard each provider thinks day to day. One that isn’t listed uses `effort`.
+  public var efforts: [String: Effort] = [:]
+  /// How hard each provider thinks when it gives the second opinion. One that isn’t
+  /// listed uses its everyday effort.
+  public var deepEfforts: [String: Effort] = [:]
+  /// The effort for a provider without its own, which is what every provider used
+  /// before effort was chosen for each.
   public var effort: Effort
   /// Let assistants that run in the cloud see short excerpts of file contents.
   /// Off by default: they get names, sizes and dates only.
@@ -72,11 +79,23 @@ public struct AssistantSettings: Codable, Sendable, Equatable {
     deepModels = try c.decodeIfPresent([String: String].self, forKey: .deepModels) ?? deepModels
     deepProvider = try c.decodeIfPresent(String.self, forKey: .deepProvider)
     effort = try c.decodeIfPresent(Effort.self, forKey: .effort) ?? effort
+    efforts = try c.decodeIfPresent([String: Effort].self, forKey: .efforts) ?? efforts
+    deepEfforts = try c.decodeIfPresent([String: Effort].self, forKey: .deepEfforts) ?? deepEfforts
     shareExcerpts = try c.decodeIfPresent(Bool.self, forKey: .shareExcerpts) ?? shareExcerpts
     proactive = try c.decodeIfPresent(Bool.self, forKey: .proactive) ?? proactive
     if c.contains(.runsPerDay) { runsPerDay = try c.decodeIfPresent(Int.self, forKey: .runsPerDay) }
     timeout = try c.decodeIfPresent(Double.self, forKey: .timeout) ?? timeout
     useNotes = try c.decodeIfPresent(Bool.self, forKey: .useNotes) ?? useNotes
+  }
+
+  /// How hard a provider thinks day to day.
+  public func effort(for provider: String) -> Effort {
+    efforts[provider] ?? effort
+  }
+
+  /// How hard a provider thinks when it gives the second opinion.
+  public func deepEffort(for provider: String) -> Effort {
+    deepEfforts[provider] ?? effort(for: provider)
   }
 }
 

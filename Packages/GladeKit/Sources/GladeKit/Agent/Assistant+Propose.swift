@@ -82,17 +82,17 @@ extension Assistant {
   /// otherwise Apple Intelligence on this Mac; otherwise any other ready provider.
   static func reviewer(
     config: GladeConfig, proposer: any AgentProvider, providers: [any AgentProvider]
-  ) async -> (provider: any AgentProvider, model: String?)? {
+  ) async -> (provider: any AgentProvider, model: String?, effort: Effort)? {
     if let (deep, model) = deepChoice(config: config, current: proposer, providers: providers), await deep.status().isReady {
-      return (deep, model)
+      return (deep, model, config.assistant.deepEffort(for: deep.id))
     }
     if proposer.id != "apple", let apple = providers.first(where: { $0.id == "apple" }), await apple.status().isReady {
-      return (apple, nil)
+      return (apple, nil, .automatic)
     }
     let ordered = config.assistant.order.compactMap { id in providers.first { $0.id == id } }
       + providers.filter { !config.assistant.order.contains($0.id) }
     for other in ordered where other.id != proposer.id && other.id != "apple" {
-      if await other.status().isReady { return (other, config.assistant.models[other.id]) }
+      if await other.status().isReady { return (other, config.assistant.models[other.id], config.assistant.effort(for: other.id)) }
     }
     return nil
   }
@@ -103,7 +103,7 @@ extension Assistant {
     _ proposal: inout RemovalProposal, scan: ScanResult, proposer: any AgentProvider,
     config: GladeConfig, providers: [any AgentProvider], now: Date, reviewing: (@Sendable (String) -> Void)?
   ) async {
-    guard let (reviewer, model) = await reviewer(config: config, proposer: proposer, providers: providers) else {
+    guard let (reviewer, model, effort) = await reviewer(config: config, proposer: proposer, providers: providers) else {
       Log.info(.agent, "No second opinion: no other AI is ready")
       return
     }
@@ -116,7 +116,7 @@ extension Assistant {
     do {
       let (reply, runID) = try await run(
         provider: reviewer, purpose: reviewPurpose, system: StoragePrompt.reviewSystem, prompt: prompt,
-        model: model, config: config, proactive: false, schema: StoragePrompt.reviewSchema
+        model: model, config: config, proactive: false, schema: StoragePrompt.reviewSchema, effort: effort
       )
       let raw = try decode(RawReview.self, from: reply.text, provider: reviewer.name)
       let refused = apply(raw.items ?? [], to: &proposal)

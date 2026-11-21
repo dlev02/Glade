@@ -6,11 +6,15 @@ import SwiftUI
 struct ProviderRow: View {
   var provider: ProviderStatus
   @Binding var model: String
+  /// How hard it thinks, for an AI that takes an effort.
+  var effort: Binding<Effort>?
   /// Shows the drag handle of a row that can be reordered.
   var showsHandle: Bool
   /// Leaves the handle’s room empty, so rows without one share the text edge of rows
   /// that have one.
   var reservesHandle = false
+  /// Called after Terminal opens to sign in, so the list can look again on return.
+  var signingIn: () -> Void = {}
 
   var body: some View {
     HStack(spacing: Metrics.m) {
@@ -29,11 +33,35 @@ struct ProviderRow: View {
           .lineLimit(2)
       }
       Spacer(minLength: Metrics.m)
-      if provider.isReady, provider.takesModel {
-        ModelField(title: provider.name, suggestions: provider.models, value: $model)
+      if provider.isReady {
+        HStack(spacing: Metrics.l) {
+          if provider.takesModel {
+            ModelField(title: provider.name, suggestions: provider.models, value: $model)
+          }
+          if provider.supportsEffort, let effort {
+            EffortField(title: provider.name, value: effort)
+          }
+        }
+      } else if let command = provider.signInCommand {
+        signInButtons(command)
       }
     }
     .padding(.vertical, 2)
+  }
+
+  /// Opens Terminal running the sign-in command, or copies it to run by hand.
+  private func signInButtons(_ command: String) -> some View {
+    HStack(spacing: Metrics.s) {
+      CopyButton(title: "Copy Command") { command }
+        .labelStyle(.iconOnly)
+        .buttonStyle(.borderless)
+        .foregroundStyle(.secondary)
+        .help("Copy “\(command)”")
+      Button("Sign In…") {
+        if SignInTerminal.open(provider) { signingIn() }
+      }
+      .help("Open Terminal and run “\(command)”")
+    }
   }
 
   @ViewBuilder private var status: some View {

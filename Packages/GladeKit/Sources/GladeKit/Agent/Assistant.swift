@@ -106,7 +106,7 @@ public enum Assistant {
         let deepPrompt = prompt.text + "\n\nA faster model looked at this first and asked for your judgement because: \(raw.escalate?.why ?? "it was unsure"). Do not escalate further."
         let (deepReply, deepRunID) = try await run(
           provider: deepProvider, purpose: "storage plan (closer look)", system: StoragePrompt.system, prompt: deepPrompt,
-          model: deepModel, config: config, proactive: proactive
+          model: deepModel, config: config, proactive: proactive, effort: config.assistant.deepEffort(for: deepProvider.id)
         )
         raw = try decode(RawAdvice.self, from: deepReply.text, provider: deepProvider.name)
         reply = deepReply
@@ -224,8 +224,9 @@ public enum Assistant {
   static func run(
     provider: any AgentProvider, purpose: String, system: String, prompt: String, model: String?,
     config: GladeConfig, proactive: Bool, schema: String? = StoragePrompt.schema,
-    question: String? = nil, earlier: [ConversationTurn]? = nil
+    question: String? = nil, earlier: [ConversationTurn]? = nil, effort: Effort? = nil
   ) async throws -> (AgentReply, String) {
+    let effort = effort ?? config.assistant.effort(for: provider.id)
     // The notes the person kept go first, so every kind of request knows them.
     var prompt = prompt
     if config.assistant.useNotes, let notes = AssistantNotes.section(AssistantNotes.load(), budget: provider.isLocal ? 1_500 : 7_000) {
@@ -238,10 +239,10 @@ public enum Assistant {
       question: question, earlier: earlier?.isEmpty == true ? nil : earlier
     )
     let started = Date()
-    Log.info(.agent, "Asking \(provider.name) (\(model ?? "default model"), effort \(config.assistant.effort.rawValue)) for: \(purpose); prompt \(prompt.count) characters")
+    Log.info(.agent, "Asking \(provider.name) (\(model ?? "default model"), effort \(effort.rawValue)) for: \(purpose); prompt \(prompt.count) characters")
     do {
       let reply = try await provider.complete(AgentRequest(
-        system: system, prompt: prompt, model: model, effort: config.assistant.effort,
+        system: system, prompt: prompt, model: model, effort: effort,
         timeout: config.assistant.timeout, jsonSchema: schema
       ))
       record.reply = reply.text

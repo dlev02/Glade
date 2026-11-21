@@ -38,7 +38,7 @@ public enum DiagnosticReport {
     sections.append(("Settings", """
       Level: \(config.level.rawValue); send everything to Trash: \(config.trashEverything)
       Protected folders added: \(config.protectedPaths.count); zones unlocked: \(config.unlockedZones.isEmpty ? "none" : config.unlockedZones.joined(separator: ", "))
-      Assistant order: \(config.assistant.order.joined(separator: ", ")); effort: \(config.assistant.effort.rawValue); proactive: \(config.assistant.proactive); share excerpts: \(config.assistant.shareExcerpts)
+      Assistant order: \(config.assistant.order.joined(separator: ", ")); effort: \(config.assistant.effort.rawValue) \(config.assistant.efforts.map { "\($0.key)=\($0.value.rawValue)" }.sorted().joined(separator: ",")); proactive: \(config.assistant.proactive); share excerpts: \(config.assistant.shareExcerpts)
       Alerts: \(config.automation.enabled ? "on" : "off") (storage below \(Int(config.automation.storageFreeGB)) GB, auto-clean \(config.automation.autoCleanOnLowStorage))
       Content index: \(config.index.enabled ? "on" : "off")
       """))

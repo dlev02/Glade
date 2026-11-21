@@ -102,6 +102,13 @@ public struct ProviderStatus: Sendable, Codable, Identifiable {
   }
 
   public var isReady: Bool { state == .ready }
+
+  /// The command a person runs in Terminal to sign in, taken from the hint's backticks:
+  /// `gemini`, `cursor-agent login`.
+  public var signInCommand: String? {
+    guard case .needsSignIn(let hint) = state, let range = hint.range(of: "`[^`]+`", options: .regularExpression) else { return nil }
+    return String(hint[range].dropFirst().dropLast())
+  }
 }
 
 /// A model Glade can ask for advice: an installed agent command-line tool, or Apple’s

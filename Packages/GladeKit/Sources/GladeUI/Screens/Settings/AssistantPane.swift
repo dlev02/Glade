@@ -1,3 +1,4 @@
+import AppKit
 import GladeKit
 import SwiftUI
 
@@ -6,6 +7,8 @@ struct AssistantPane: View {
   @Environment(AppModel.self) private var model
   @State private var refreshing = false
   @State private var confirmsSharing = false
+  /// Terminal was opened to sign in to an AI; look again when Glade comes back.
+  @State private var waitsForSignIn = false
 
   /// Runs-a-day choices; `nil` is no limit.
   private static let runChoices: [Int?] = [1, 3, 6, 12, 24, nil]
@@ -18,7 +21,10 @@ struct AssistantPane: View {
     Form {
       Section {
         ForEach(ready) { provider in
-          ProviderRow(provider: provider, model: modelBinding(\.models, provider.id), showsHandle: ready.count > 1)
+          ProviderRow(
+            provider: provider, model: modelBinding(\.models, provider.id), effort: effortBinding(provider.id),
+            showsHandle: ready.count > 1
+          )
             .contextMenu {
               Button("Move Up") { move(provider.id, by: -1) }
                 .disabled(provider.id == ready.first?.id)
@@ -67,17 +73,15 @@ struct AssistantPane: View {
       if !unavailable.isEmpty {
         Section("Unavailable") {
           ForEach(unavailable) { provider in
-            ProviderRow(provider: provider, model: modelBinding(\.models, provider.id), showsHandle: false, reservesHandle: ready.count > 1)
+            ProviderRow(
+              provider: provider, model: modelBinding(\.models, provider.id), showsHandle: false, reservesHandle: ready.count > 1,
+              signingIn: { waitsForSignIn = true }
+            )
           }
         }
       }
 
       Section {
-        // The same choices, with the same lines under them, as the composer’s.
-        choicePicker(
-          "Effort", value: model.config.assistant.effort.title, selection: $model.config.assistant.effort,
-          choices: Effort.allCases.map { Choice($0, $0.title, subtitle: $0.consequence) }
-        )
         // Who gives the second opinion and with which model, in one row, so its model
         // can’t be taken for the everyday one chosen in each AI’s row above. It reads
         // and writes only the second-opinion setting.
@@ -98,6 +102,11 @@ struct AssistantPane: View {
                 // that pairing means no second opinion.
                 emptyTitle: model.config.assistant.deepProvider == nil ? "None" : "Default"
               )
+            }
+            // Same AI with no model of its own is no second opinion, so no effort either.
+            if let deep = deepProvider, deep.supportsEffort,
+               model.config.assistant.deepProvider != nil || model.config.assistant.deepModels[deep.id] != nil {
+              EffortField(title: "second opinions", value: deepEffortBinding(deep.id))
             }
           }
         }
@@ -120,6 +129,15 @@ struct AssistantPane: View {
       } footer: {
         Text("Sent with every question, to whichever AI answers.")
           .foregroundStyle(.secondary)
+      }
+    }
+    .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+      guard waitsForSignIn else { return }
+      waitsForSignIn = false
+      refreshing = true
+      Task {
+        await model.refreshProviders()
+        refreshing = false
       }
     }
     .confirmationDialog("Share file excerpts with cloud AIs?", isPresented: $confirmsSharing) {
@@ -171,6 +189,20 @@ struct AssistantPane: View {
     Binding(
       get: { model.config.assistant[keyPath: key][id] ?? "" },
       set: { name in model.config.assistant[keyPath: key][id] = name.isEmpty ? nil : name }
+    )
+  }
+
+  private func effortBinding(_ id: String) -> Binding<Effort> {
+    Binding(
+      get: { model.config.assistant.effort(for: id) },
+      set: { model.config.assistant.efforts[id] = $0 }
+    )
+  }
+
+  private func deepEffortBinding(_ id: String) -> Binding<Effort> {
+    Binding(
+      get: { model.config.assistant.deepEffort(for: id) },
+      set: { model.config.assistant.deepEfforts[id] = $0 }
     )
   }
 

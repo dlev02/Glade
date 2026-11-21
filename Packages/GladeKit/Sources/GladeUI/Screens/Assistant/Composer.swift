@@ -130,12 +130,15 @@ struct Composer: View {
     model.config.assistant.models[active.id] = name.isEmpty ? nil : name
   }
 
+  /// How hard the chosen AI thinks, kept for that AI alone, the same setting as its row
+  /// in Settings › Assistant.
   private var effortMenu: some View {
-    @Bindable var model = model
+    let id = active.id
+    let current = model.config.assistant.effort(for: id)
     return ChoicePopover(
       "Effort",
-      value: "\(model.config.assistant.effort.title) effort",
-      selection: $model.config.assistant.effort,
+      value: "\(current.title) effort",
+      selection: Binding(get: { current }, set: { model.config.assistant.efforts[id] = $0 }),
       sections: [ChoiceSection(choices: Effort.allCases.map { Choice($0, $0.title, subtitle: $0.consequence) })],
       arrowEdge: .top,
       clears: Self.space

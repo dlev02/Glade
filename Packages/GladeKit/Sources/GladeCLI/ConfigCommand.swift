@@ -59,7 +59,7 @@ struct Config: ParsableCommand {
     /// accept a new key; everywhere else the key must already exist.
     private static func assign(_ node: inout JSONValue, _ path: ArraySlice<String>, _ value: JSONValue) -> Bool {
       guard case .object(var object) = node, let first = path.first else { return false }
-      let openEnded = ["models", "deepModels"]
+      let openEnded = ["models", "deepModels", "efforts", "deepEfforts"]
       if path.count == 1 {
         guard object[first] != nil || value == .null || true else { return false }
         if value == .null { object.removeValue(forKey: first) } else { object[first] = value }
