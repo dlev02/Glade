@@ -16,10 +16,15 @@ struct LittleSnitchCard: View {
         HStack(alignment: .firstTextBaseline) {
           SectionTitle("Little Snitch")
           Spacer()
+          // When it was imported and importing a newer one sit together.
           if let rules {
-            Text("Imported \(rules.imported.formatted(.relative(presentation: .named)))")
-              .font(.caption)
-              .foregroundStyle(.secondary)
+            HStack(spacing: Metrics.s) {
+              Text("Imported \(rules.imported.formatted(.relative(presentation: .named)))")
+                .foregroundStyle(.secondary)
+              Button("Import Again…") { importing = true }
+                .buttonStyle(.link)
+            }
+            .font(.caption)
           }
         }
         if let rules {
@@ -43,7 +48,6 @@ struct LittleSnitchCard: View {
             .font(.callout)
           }
           HStack {
-            Button("Import Again…") { importing = true }
             Spacer()
             Button("Review with Assistant") { Task { await model.reviewLittleSnitch() } }
               .buttonStyle(.borderedProminent)
