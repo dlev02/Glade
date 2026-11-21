@@ -21,9 +21,12 @@ public enum RouterCredentials {
   }
 
   /// Saves or replaces the password. Not synced through iCloud.
-  public static func save(_ secret: String, account: String) throws {
+  public static func save(_ secret: String, account: String) async throws {
     let data = Data(secret.utf8)
-    let status = SecItemUpdate(base(account) as CFDictionary, [kSecValueData as String: data] as CFDictionary)
+    var status = SecItemUpdate(base(account) as CFDictionary, [kSecValueData as String: data] as CFDictionary)
+    // Saved by another copy of Glade (a development build), which alone may change it:
+    // take it out and save it afresh.
+    if status == errSecInvalidOwnerEdit, await deleteWithSecurityTool(account) { status = errSecItemNotFound }
     if status == errSecItemNotFound {
       var item = base(account)
       item[kSecValueData as String] = data
@@ -37,9 +40,27 @@ public enum RouterCredentials {
     Log.info(.network, "Saved router access for \(account) in the Keychain")
   }
 
-  public static func delete(account: String) {
+  /// Removes the password. Throws when the Keychain keeps it.
+  public static func delete(account: String) async throws {
     let status = SecItemDelete(base(account) as CFDictionary)
-    if status != errSecSuccess, status != errSecItemNotFound { Log.warning(.network, "Couldn’t remove router access: OSStatus \(status)") }
+    switch status {
+    case errSecSuccess, errSecItemNotFound:
+      Log.info(.network, "Removed router access from the Keychain")
+    case errSecInvalidOwnerEdit:
+      // Only the copy of Glade that saved it may change it through the Keychain's own
+      // calls; macOS's `security` tool may remove it, without asking.
+      guard await deleteWithSecurityTool(account) else { throw failure(status) }
+      Log.info(.network, "Removed router access saved by another copy of Glade")
+    default:
+      throw failure(status)
+    }
+  }
+
+  /// Removes the item with `/usr/bin/security`. The account is the last argument, so
+  /// it stays out of the command's log line.
+  private static func deleteWithSecurityTool(_ account: String) async -> Bool {
+    let result = try? await Shell.run("/usr/bin/security", ["delete-generic-password", "-s", service, "-a", account], timeout: 15)
+    return result?.succeeded == true && !has(account: account)
   }
 
   /// Only for the code that logs in to the router.
@@ -80,7 +101,7 @@ public enum RouterAccessError: Error, LocalizedError {
 
   public var errorDescription: String? {
     switch self {
-    case .keychain(let status): "The Keychain wouldn’t keep it (error \(status))."
+    case .keychain(let status): "The Keychain refused (error \(status))."
     case .notSupported: "Glade can only sign in to AT&T gateways so far."
     case .wrongCode: "The router didn’t accept that code. It’s printed on the gateway’s label as Device Access Code."
     case .unreachable: "The router didn’t answer. Are you on its network?"

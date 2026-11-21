@@ -10,6 +10,9 @@ struct RouterCard: View {
   @State private var showsDevices = false
   @State private var addsCode = false
   @State private var accessRevision = 0
+  @State private var forgetting = false
+  /// Why the code couldn’t be forgotten.
+  @State private var accessProblem: String?
 
   var body: some View {
     Card {
@@ -61,23 +64,45 @@ struct RouterCard: View {
   /// Whether Glade holds the gateway’s Device Access Code, with Add or Forget.
   private func accessRow(_ report: RouterReport, host: String) -> some View {
     let saved = accessRevision >= 0 && RouterReader.hasAccess(report, host: host)
-    return HStack {
-      Text("Access code").foregroundStyle(.secondary)
-      Spacer()
-      if saved {
-        Text("In your Keychain")
-        Button("Forget") {
-          RouterReader.forgetAccess(report, host: host)
-          accessRevision += 1
+    return VStack(alignment: .leading, spacing: Metrics.xs) {
+      HStack {
+        Text("Access code").foregroundStyle(.secondary)
+        Spacer()
+        if saved {
+          Text("In your Keychain")
+          if forgetting {
+            ProgressView().controlSize(.small)
+          } else {
+            Button("Forget") { forget(report, host: host) }
+              .buttonStyle(.link)
+          }
+        } else {
+          Button("Add…") { addsCode = true }
+            .buttonStyle(.link)
         }
-        .buttonStyle(.link)
-      } else {
-        Button("Add…") { addsCode = true }
-          .buttonStyle(.link)
+      }
+      if let accessProblem {
+        Text(accessProblem)
+          .foregroundStyle(Palette.critical)
+          .fixedSize(horizontal: false, vertical: true)
       }
     }
     .sheet(isPresented: $addsCode, onDismiss: { accessRevision += 1 }) {
       RouterAccessSheet(title: report.title, host: host)
+    }
+  }
+
+  private func forget(_ report: RouterReport, host: String) {
+    forgetting = true
+    accessProblem = nil
+    Task {
+      do {
+        try await RouterReader.forgetAccess(report, host: host)
+      } catch {
+        accessProblem = "Couldn’t forget it. \(error.localizedDescription)"
+      }
+      forgetting = false
+      accessRevision += 1
     }
   }
 

@@ -301,7 +301,7 @@ struct NetworkRouterAccess: AsyncParsableCommand {
       throw ValidationError("Glade can’t read this router. AT&T gateways are supported so far.")
     }
     if forget {
-      RouterReader.forgetAccess(report, host: host)
+      try await RouterReader.forgetAccess(report, host: host)
       print("Forgot the code for \(report.title).")
       return
     }

@@ -103,7 +103,7 @@ extension RouterReader {
     guard report.kind == "AT&T gateway", let model = report.model else { throw RouterAccessError.notSupported }
     let session = try await ATTGateway.signIn(host: host, code: code.trimmingCharacters(in: .whitespacesAndNewlines))
     session.urlSession.invalidateAndCancel()
-    try RouterCredentials.save(code.trimmingCharacters(in: .whitespacesAndNewlines), account: RouterCredentials.account(model: model, serial: report.serial, host: host))
+    try await RouterCredentials.save(code.trimmingCharacters(in: .whitespacesAndNewlines), account: RouterCredentials.account(model: model, serial: report.serial, host: host))
   }
 
   /// Whether Glade has a working password for this router.
@@ -112,9 +112,9 @@ extension RouterReader {
     return RouterCredentials.has(account: RouterCredentials.account(model: model, serial: report.serial, host: host))
   }
 
-  public static func forgetAccess(_ report: RouterReport, host: String) {
+  public static func forgetAccess(_ report: RouterReport, host: String) async throws {
     guard let model = report.model else { return }
-    RouterCredentials.delete(account: RouterCredentials.account(model: model, serial: report.serial, host: host))
+    try await RouterCredentials.delete(account: RouterCredentials.account(model: model, serial: report.serial, host: host))
   }
 
   /// Signs in with the saved password, for reading or, later, changing settings.
