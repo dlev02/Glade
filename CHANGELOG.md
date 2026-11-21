@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.4.2 — 2026-11-20
+## 0.5.0 — 2026-11-20
+
+### The Assistant can do what it suggests
+
+- **Approve, and it's done.** When an answer suggests quitting idle apps, shutting down a simulator, a Careful clean, restarting a leaking macOS helper such as the Wi-Fi menu, or a speed test, a card under the answer lists each one with **Approve** and **Not Now**. A clean it ran has **Put Back**, and after a speed test the Assistant tells you what the result means.
+- **Choose how much it does by itself.** Settings › Assistant › Actions, also at the bottom of the conversation: **Ask Every Time** (the default) waits for you; **Auto** has a second AI check each action and runs it if that AI approves; **Full Access** runs them straight away.
+- **Glade's rules still decide.** Only what Free Up Memory or the clean level would choose, or what you named, ever runs by itself. Personal files, anything permanent and a speed test on a metered connection always wait for you, and the second AI can stop an action but never allow one. In Auto or Full Access, an app you asked to uninstall goes to the Trash without the extra confirmation, one at a time.
 
 ### Assistant
 

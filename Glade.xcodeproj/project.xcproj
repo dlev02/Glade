@@ -91,7 +91,7 @@
           "@executable_path/../Frameworks",
         ],
         "MACOSX_DEPLOYMENT_TARGET": "26.0",
-        "MARKETING_VERSION": "0.4.2",
+        "MARKETING_VERSION": "0.5.0",
         "PRODUCT_BUNDLE_IDENTIFIER[config=Debug]": "io.github.dlev02.glade.dev",
         "PRODUCT_BUNDLE_IDENTIFIER[config=Release]": "io.github.dlev02.glade",
         "PRODUCT_NAME": "$(TARGET_NAME)",
