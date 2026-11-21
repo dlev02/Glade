@@ -96,7 +96,14 @@ struct Ask: AsyncParsableCommand {
     let unplugged = status.reading.state == .onBattery ? history.unpluggedSince() : nil
     let energy = EnergyReport.build(period: unplugged == nil ? .hour : .unplugged, apps: apps, history: history, unpluggedAt: unplugged)
     let config = ConfigStore.load()
-    let network = config.network.enabled && MacDescription.isAboutNetwork(question) ? await NetworkStatus.current(config: config, devices: true) : nil
+    var earlier: [ConversationTurn] = []
+    if continues {
+      guard let previous = Conversation.continuing(from: Assistant.runs(limit: 30)) else {
+        throw ValidationError("There’s no question from the last six hours to follow on from. Ask without --continue.")
+      }
+      earlier = previous
+    }
+    let network = config.network.enabled && MacDescription.isAboutNetwork(question, earlier: earlier) ? await NetworkStatus.current(config: config, devices: true) : nil
     let description = MacDescription.build(
       snapshot: snapshot, apps: apps, context: context, suggestions: suggestions, scan: scan, plan: nil,
       battery: MacDescription.Battery(
@@ -106,20 +113,13 @@ struct Ask: AsyncParsableCommand {
       network: network, networkHistory: network == nil ? nil : NetworkHistoryStore.load()
     )
     // Asked to remove something: a proposal to confirm, never a removal.
-    if RemovalRequest.wantsProposal(question, scan: scan) {
+    if RemovalRequest.wantsProposal(QuestionTopic.withoutPaths(question), scan: scan) {
       try await propose(description: description, hasScan: scan != nil)
       return
     }
     if showSnapshot {
       print(description)
       return
-    }
-    var earlier: [ConversationTurn] = []
-    if continues {
-      guard let previous = Conversation.continuing(from: Assistant.runs(limit: 30)) else {
-        throw ValidationError("There’s no question from the last six hours to follow on from. Ask without --continue.")
-      }
-      earlier = previous
     }
     let reply = try await Assistant.ask(question, snapshot: description, earlier: earlier, providers: AgentProviders.all)
     struct Answer: Encodable {

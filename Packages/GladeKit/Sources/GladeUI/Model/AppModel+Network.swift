@@ -279,8 +279,8 @@ extension AppModel {
 
   /// The network for a question about it: what’s on screen if it’s fresh, else a new
   /// reading. `nil` for questions about anything else.
-  func networkForAssistant(_ question: String) async -> NetworkStatus? {
-    guard config.network.enabled, MacDescription.isAboutNetwork(question) else { return nil }
+  func networkForAssistant(_ question: String, earlier: [ConversationTurn] = []) async -> NetworkStatus? {
+    guard config.network.enabled, MacDescription.isAboutNetwork(question, earlier: earlier) else { return nil }
     if var status = network.status, Date().timeIntervalSince(status.date) < 60, !network.live.isEmpty {
       status.latency = NetworkTargets.Kind.allCases.map { NetworkStatus.Latency(kind: $0, host: nil, stats: network.stats($0)) }
       status.apps = network.traffic

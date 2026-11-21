@@ -790,7 +790,7 @@ public final class AppModel {
     let earlier = conversationSoFar
     messages.append(Message(role: .person, text: text))
     // Removing something named gets a proposal to confirm, not a plan.
-    if RemovalRequest.wantsProposal(text, scan: scan) {
+    if RemovalRequest.wantsProposal(QuestionTopic.withoutPaths(text), scan: scan) {
       await proposeRemoval(text)
       return
     }
@@ -800,8 +800,8 @@ public final class AppModel {
       await reviewLittleSnitch(goal: text, asked: true)
       return
     }
-    let wantsSpace = ["free", "clean", "clear", "space", "storage", " gb", "delete", "remove"].contains { lowered.contains($0) }
-    if wantsSpace, scan != nil {
+    // Whole words only, and never a pasted file's name: "CleanShot" isn't "clean".
+    if QuestionTopic.wantsSpace(text), scan != nil {
       await adviseStorage(goal: text)
       return
     }
@@ -814,7 +814,7 @@ public final class AppModel {
     }
     await refreshApps()
     await refreshBatteryForAssistant()
-    let networkBrief = await networkForAssistant(text)
+    let networkBrief = await networkForAssistant(text, earlier: earlier)
     let description = MacDescription.build(
       snapshot: snapshot, apps: apps, context: context, suggestions: suggestions, scan: scan, plan: plan,
       battery: batteryBrief, network: networkBrief, networkHistory: networkBrief == nil ? nil : NetworkHistoryStore.load()

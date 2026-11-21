@@ -1,17 +1,9 @@
 import Foundation
 
 extension MacDescription {
-  /// Words that make a question about the network, so the network is measured (27 pings)
-  /// before the AI is asked rather than for every question.
-  static let networkWords = [
-    "internet", "wifi", "wi-fi", "network", "router", "ping", "latency", "lag", "buffer", "stream", "speed", "upload",
-    "download", "vpn", "bandwidth", "connection", "call", "zoom", "facetime", "discord", "steam", "netflix", "youtube",
-    "data", "hotspot", "hotel", "mesh", "deco", "little snitch", "dns", "slow",
-  ]
-
-  public static func isAboutNetwork(_ question: String) -> Bool {
-    let lowered = question.lowercased()
-    return networkWords.contains { lowered.contains($0) }
+  /// Whether a question is about the network; see `QuestionTopic`.
+  public static func isAboutNetwork(_ question: String, earlier: [ConversationTurn] = []) -> Bool {
+    QuestionTopic.isAboutNetwork(question, earlier: earlier)
   }
 
   /// NETWORK: the verdicts, the link, latency by segment, what’s using it, the router’s
