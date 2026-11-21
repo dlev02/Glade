@@ -51,6 +51,10 @@ public enum MacDescription {
         if app.isCapturingAudio { notes.append("using the microphone") }
         if let reason = app.preventingSleep { notes.append("keeping the Mac awake: \(reason)") }
         if app.isSystem { notes.append("part of macOS") }
+        if let note = ProcessGuide.note(for: app) {
+          if let caption = note.caption { notes.append(caption) }
+          if let unusual = note.unusual { notes.append(unusual) }
+        }
         if let last = app.lastActive, !app.isFrontmost { notes.append("last used \(Format.age(last))") }
         if app.windowCount == 0, app.kind == .app { notes.append("no windows") }
         lines.append("\(app.name) | \(Format.bytes(app.memoryBytes)) | \(Int(app.cpuPercent))% | \(app.gpuPercent.map { "\(Int($0))%" } ?? "-") | \(notes.joined(separator: ", "))")

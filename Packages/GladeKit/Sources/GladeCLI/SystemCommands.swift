@@ -174,6 +174,10 @@ struct Apps: AsyncParsableCommand {
         if app.isFullScreen { flags.append("full screen") }
         if app.isSystem { flags.append("system") }
         if app.kind == .process { flags.append("process") }
+        if let note = ProcessGuide.note(for: app) {
+          if let caption = note.caption { flags.append(caption) }
+          if note.unusual != nil { flags.append("far more memory than usual") }
+        }
         let suffix = flags.isEmpty ? "" : "  [\(flags.joined(separator: ", "))]"
         print("\(String(format: "%.1f", app.cpuPercent).leftPadded(6))  \(Format.bytes(app.memoryBytes).leftPadded(9))  \(gpu.leftPadded(5))  \(String(app.pids.count).leftPadded(5))  \(String(app.windowCount).leftPadded(3))  \(lastUsed.padding(toLength: 11, withPad: " ", startingAt: 0))  \(app.name)\(suffix)")
       }

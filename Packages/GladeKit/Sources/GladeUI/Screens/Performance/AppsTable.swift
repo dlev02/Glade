@@ -38,9 +38,19 @@ struct AppsTable: View {
       TableColumn("Name", value: \.name, comparator: .localizedStandard) { row in
         HStack(spacing: Metrics.s) {
           AppIconView(path: row.app.bundlePath, size: 18)
-          Text(row.name)
+          let note = ProcessGuide.note(for: row.app)
+          // An unfamiliar name says what it is, quietly: "node  JavaScript tools · from T3 Code".
+          (Text(row.name) + Text(note?.caption.map { "  \($0)" } ?? "").foregroundStyle(.tertiary))
             .lineLimit(1)
             .truncationMode(.tail)
+            .help(note?.caption ?? "")
+          if let unusual = note?.unusual {
+            Image(systemName: "exclamationmark.triangle.fill")
+              .font(.system(size: 10, weight: .medium))
+              .foregroundStyle(Palette.warning)
+              .help(unusual)
+              .accessibilityLabel(unusual)
+          }
           StatusMarks(app: row.app, keepsRunning: model.keepsRunning(row.app))
         }
         .foregroundStyle(row.app.isSystem ? .secondary : .primary)

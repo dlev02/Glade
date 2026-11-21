@@ -76,6 +76,8 @@ public struct AppUsage: Codable, Sendable, Identifiable, Hashable {
   public var energyWatts: Double? = nil
   /// When it started keeping the Mac awake, for the oldest such request among members.
   public var preventingSleepSince: Date? = nil
+  /// For a command-line tool: the apps that started its processes, busiest first.
+  public var startedBy: [String]? = nil
 }
 
 /// Folds processes into apps.
@@ -247,6 +249,25 @@ public enum AppGrouper {
         pids.contains(gladePID) || (gladeBundleID != nil && bundleID?.lowercased() == gladeBundleID)
         || displayName.caseInsensitiveCompare(Brand.name) == .orderedSame
 
+      // A command-line tool says which apps started it (node from T3 Code), without
+      // being folded into them.
+      var startedBy: [String]?
+      if case .name = key, standaloneTools.contains(displayName.lowercased()) {
+        var owners: [String: Int64] = [:]
+        for process in group {
+          var cursor = process.parentPID
+          var steps = 0
+          while cursor > 1, steps < 24, let parent = byPID[cursor] {
+            if case .bundle(let path)? = directKey(parent) {
+              owners[launched.first { $0.bundlePath == path }?.name ?? BundleInfo.of(path).name, default: 0] += process.memoryBytes ?? 0
+              break
+            }
+            cursor = parent.parentPID
+            steps += 1
+          }
+        }
+        if !owners.isEmpty { startedBy = owners.sorted { $0.value > $1.value }.map(\.key) }
+      }
       rows.append(AppUsage(
         id: id, kind: kind, name: displayName, bundleIdentifier: bundleID, bundlePath: bundlePath,
         mainPID: mainPID, pids: pids, cpuPercent: cpu, memoryBytes: memory, gpuPercent: gpu, threadCount: threads,
@@ -259,7 +280,7 @@ public enum AppGrouper {
         windowCount: windows, isFullScreen: fullScreen, category: category,
         isGame: GameDetection.isGame(category: category, bundleID: bundleID, bundlePath: bundlePath),
         isSystem: isSystem, isGlade: isGlade, hasRestrictedMembers: restricted,
-        energyWatts: watts, preventingSleepSince: sleepReason == nil ? nil : sleepSince
+        energyWatts: watts, preventingSleepSince: sleepReason == nil ? nil : sleepSince, startedBy: startedBy
       ))
     }
     rows.sort { $0.memoryBytes > $1.memoryBytes }
