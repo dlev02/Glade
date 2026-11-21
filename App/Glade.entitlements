@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Glade asks Finder to move an app that belongs to the system; Finder asks for the
+	     person's password. -->
+	<key>com.apple.security.automation.apple-events</key>
+	<true/>
 	<!-- The hardened runtime blocks Location without this. Glade asks only so macOS will
 	     tell it the Wi-Fi network's name; it never reads where the Mac is. -->
 	<key>com.apple.security.personal-information.location</key>

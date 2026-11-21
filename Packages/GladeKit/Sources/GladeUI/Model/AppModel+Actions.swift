@@ -89,12 +89,15 @@ extension AppModel {
   }
 
   /// Puts back what an action’s clean moved to the Trash.
-  func putBackAction(_ id: String, in message: UUID) {
-    guard var card = actionCard(message), let receiptID = card.receipts[id], let receipt = receipt(receiptID) else { return }
-    let result = putBack(receipt)
+  func putBackAction(_ id: String, in message: UUID) async {
+    guard let card = actionCard(message), !card.putBack.contains(id), let receiptID = card.receipts[id],
+          let receipt = receipt(receiptID) else { return }
+    let result = await putBack(receipt)
     Log.info(.app, "Put back \(result.restored.count) items from an Assistant clean; \(result.missing.count) missing")
-    card.putBack.insert(id)
-    setActionCard(card, in: message)
+    // The card may have changed while Finder worked; mark it on the current one.
+    guard var current = actionCard(message) else { return }
+    current.putBack.insert(id)
+    setActionCard(current, in: message)
   }
 
   // MARK: Carrying out
@@ -160,7 +163,7 @@ extension AppModel {
       return (freed + trashed > 0, text, trashed > 0 ? receipt.id : nil)
     case .putBack:
       guard let id = action.receiptID, let receipt = receipt(id) else { return (false, "That clean’s record is gone.", nil) }
-      let result = putBack(receipt)
+      let result = await putBack(receipt)
       return (!result.restored.isEmpty, "Put back \(result.restored.count) items" + (result.missing.isEmpty ? "." : "; \(result.missing.count) were no longer in the Trash."), nil)
     case .speedTest:
       let before = network.lastTest?.date

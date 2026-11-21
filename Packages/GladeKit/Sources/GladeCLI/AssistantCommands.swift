@@ -168,9 +168,11 @@ extension Ask {
           print("  \(item.startsTicked ? "[x]" : "[ ]") \(item.title) · \(Format.bytes(item.bytes)) · id \(item.id)\(item.named ? "" : " · added by the AI")")
           if !item.why.isEmpty { print("      \(item.why)") }
           switch item.action {
-          case .remove: break
+          case .remove, .showInFinder:
+            if scan.finding(item.id)?.app?.needsAdministrator == true {
+              print("      Needs your password: with --finder, Finder moves it and asks for it.")
+            }
           case .openUninstaller: print("      Has its own uninstaller: \(Brand.cli) uninstall \(Self.appArgument(item, scan)) --open-uninstaller")
-          case .showInFinder: print("      Needs your password: move it to the Trash in Finder.")
           case .quitFirst: print("      Open now. Quit it first.")
           case .listOnly: print("      Can’t be removed now: \(item.blocked ?? "blocked").")
           }
@@ -194,7 +196,10 @@ extension Ask {
   /// all dry runs.
   static func commands(for proposal: RemovalProposal, scan: ScanResult) -> [String] {
     let ticked = proposal.items.filter(\.startsTicked)
-    var commands = ticked.filter(\.isApp).map { "\(Brand.cli) uninstall \(appArgument($0, scan))" }
+    var commands = ticked.filter(\.isApp).map { item in
+      let finder = scan.finding(item.id)?.app?.needsAdministrator == true ? " --finder" : ""
+      return "\(Brand.cli) uninstall \(appArgument(item, scan))\(finder)"
+    }
     let others = ticked.filter { !$0.isApp }.map(\.id)
     if !others.isEmpty { commands.append("\(Brand.cli) clean --ids \(others.joined(separator: " "))") }
     return commands

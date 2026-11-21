@@ -47,7 +47,7 @@ struct CleanSummary: View {
       HStack(spacing: Metrics.s) {
         if trashed > 0, restored == nil {
           Button(trashedCount == 1 ? "Put Back 1 Item" : "Put Back \(trashedCount) Items") {
-            restored = model.putBack(receipt)
+            Task { restored = await model.putBack(receipt) }
           }
           .accessibilityIdentifier("result.putBack")
           .secondaryAction()
@@ -71,7 +71,7 @@ struct CleanSummary: View {
     .padding(Metrics.xl)
     .onAppear {
       if !reduceMotion { appeared = true }
-      if DemoState.value("demoClean") == "putback", receipt.trashedBytes > 0 { restored = model.putBack(receipt) }
+      if DemoState.value("demoClean") == "putback", receipt.trashedBytes > 0 { Task { restored = await model.putBack(receipt) } }
     }
   }
 

@@ -208,9 +208,6 @@ public struct InstalledAppScanner: StorageScanner {
       || InUse.runningExecutable(inside: app.path, executables: context.running.executablePaths) != nil {
       blockers.append(Blocker(.appRunning, "\(app.name) is open. Quit it first."))
     }
-    if uninstaller == nil, needsAdministrator {
-      blockers.append(Blocker(.needsAdmin, "macOS asks for your password to remove this app, so move it to the Trash in Finder."))
-    }
 
     var evidence: [String] = []
     evidence.append("Version \(app.versionText), from \(source == .other ? "a download" : source.title).")
@@ -222,6 +219,9 @@ public struct InstalledAppScanner: StorageScanner {
     }
     if !parts.isEmpty {
       evidence.append("Its data in your home folder: \(Format.bytes(parts.reduce(0) { $0 + $1.bytes })) in \(parts.count == 1 ? "1 folder" : "\(parts.count) folders").")
+    }
+    if uninstaller == nil, needsAdministrator {
+      evidence.append("It belongs to the system, so macOS asks for your password to move it. Finder shows the prompt; Glade never sees the password.")
     }
     if bundle.unreadable > 0 { evidence.append("\(bundle.unreadable) items inside couldn’t be read, so it may be larger.") }
 

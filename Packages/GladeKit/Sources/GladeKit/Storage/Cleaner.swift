@@ -4,10 +4,14 @@ public struct CleanOptions: Sendable {
   /// Work out what would happen without removing anything.
   public var dryRun: Bool
   public var initiator: Initiator
+  /// When an app needs the person’s password to move, ask Finder to move it, which
+  /// shows Finder’s own password prompt. Only when a person is there to answer it.
+  public var askFinder: Bool
 
-  public init(dryRun: Bool = true, initiator: Initiator = .user) {
+  public init(dryRun: Bool = true, initiator: Initiator = .user, askFinder: Bool = false) {
     self.dryRun = dryRun
     self.initiator = initiator
+    self.askFinder = askFinder
   }
 }
 
@@ -67,7 +71,10 @@ public enum Cleaner {
       let outcome: RemovalOutcome
       var leftInPlace: [String: String] = [:]
       if case .uninstallApp(let bundleID) = finding.method {
-        (outcome, leftInPlace) = await uninstall(finding, bundleID: bundleID, protection: protection, running: running, dryRun: options.dryRun)
+        (outcome, leftInPlace) = await uninstall(
+          finding, bundleID: bundleID, protection: protection, running: running, dryRun: options.dryRun,
+          askFinder: options.askFinder
+        )
       } else {
         outcome = await remove(finding, protection: protection, running: running, config: config, dryRun: options.dryRun)
       }
@@ -341,7 +348,9 @@ public enum Cleaner {
 
   /// Moves everything a clean sent to the Trash back where it was. Things that were
   /// deleted outright can’t be put back; they rebuild or download again.
-  public static func restore(_ receipt: Receipt) -> RestoreResult {
+  /// - Parameter askFinder: An app that needs the person’s password to move goes back
+  ///   through Finder, which asks for it.
+  public static func restore(_ receipt: Receipt, askFinder: Bool = false) async -> RestoreResult {
     var result = RestoreResult(restored: [], missing: [], blocked: [])
     let manager = FileManager.default
     for entry in receipt.entries {
@@ -355,11 +364,18 @@ public enum Cleaner {
           result.blocked.append(original)
           continue
         }
+        let folder = (original as NSString).deletingLastPathComponent
         do {
-          try manager.createDirectory(atPath: (original as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+          try manager.createDirectory(atPath: folder, withIntermediateDirectories: true)
           try manager.moveItem(atPath: trashed, toPath: original)
           result.restored.append(original)
         } catch {
+          if askFinder, isPermission(error), entry.category == .installedApps, original.hasSuffix(".app"),
+            case .success(let now) = await FinderHandoff.move(trashed, into: folder) {
+            if now != original { Log.warning(.clean, "Finder put \(original) back as \(now)") }
+            result.restored.append(original)
+            continue
+          }
           result.blocked.append(original)
           Log.warning(.clean, "Couldn’t put back \(original): \(reason(error))")
         }

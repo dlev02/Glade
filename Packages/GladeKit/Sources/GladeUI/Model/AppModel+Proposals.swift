@@ -138,10 +138,10 @@ extension AppModel {
   }
 
   /// Puts back what the card’s clean moved to the Trash.
-  func putBackRemoval(in message: UUID) {
+  func putBackRemoval(in message: UUID) async {
     guard let index = messages.firstIndex(where: { $0.id == message }),
           let outcome = messages[index].proposal?.outcome, let receipt = receipt(outcome.receiptID) else { return }
-    let result = putBack(receipt)
+    let result = await putBack(receipt)
     Log.info(.app, "Put back \(result.restored.count) items from a proposal; \(result.missing.count) missing, \(result.blocked.count) blocked")
     messages[index].proposal?.outcome?.putBack = true
   }

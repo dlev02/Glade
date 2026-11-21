@@ -2,8 +2,9 @@
 # Signs a Glade.app from the inside out with the given codesign options: Sparkle's
 # helpers first, then the framework, then the app.
 # No --deep: it would apply one set of options to everything.
-# The app carries one entitlement, Location, which the hardened runtime needs before macOS
-# will tell it the Wi-Fi network's name (App/Glade.entitlements; see make_release.sh).
+# The app is signed with exactly App/Glade.entitlements: Location, which the hardened runtime
+# needs before macOS will tell it the Wi-Fi network's name, and Apple Events, so it can ask
+# Finder to move an app that needs the person's password (see make_release.sh).
 # Glade's engine is a local Swift package linked into the executable, so there is no
 # other framework or helper inside the app to sign.
 #   script/sign_app.sh path/to/Glade.app --force --sign IDENTITY [--options runtime] [--timestamp]

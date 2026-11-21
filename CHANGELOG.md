@@ -8,6 +8,12 @@
 - **Choose how much it does by itself.** Settings › Assistant › Actions, also at the bottom of the conversation: **Ask Every Time** (the default) waits for you; **Auto** has a second AI check each action and runs it if that AI approves; **Full Access** runs them straight away.
 - **Glade's rules still decide.** Only what Free Up Memory or the clean level would choose, or what you named, ever runs by itself. Personal files, anything permanent and a speed test on a metered connection always wait for you, and the second AI can stop an action but never allow one. In Auto or Full Access, an app you asked to uninstall goes to the Trash without the extra confirmation, one at a time.
 
+### Uninstall any app
+
+- Apps that belong to the system, which includes most from the App Store such as iMovie, Keynote and Xcode, can now be uninstalled from Glade like any other. Glade asks Finder to move the app, and Finder asks for your password or Touch ID; Glade never sees it. The first time, macOS asks whether Glade may control Finder. **Put Back** brings the app back the same way.
+- The Assistant can now propose these apps when you name them, ticked like the rest.
+- On the command line, `glade uninstall --finder` and `glade undo --finder` do the same.
+
 ### Assistant
 
 - **Your conversations are kept.** A column beside the conversation lists earlier ones under Pinned, Today, Yesterday and so on. Open any to read it or carry on, and rename, pin or delete it from its menu. Starting a new conversation no longer loses the last one.
@@ -22,6 +28,10 @@
 - **Unfamiliar names explain themselves.** `swift-frontend` says it's the Swift compiler, `node` says it's JavaScript and which app started it, and macOS helpers that leak, such as the Wi-Fi menu, are marked when they use far more memory than usual.
 - **Forget removes your router's access code.** It did nothing when a different copy of Glade had saved the code; now it removes it, or says why it couldn't.
 - **Little Snitch's import date and Import Again… sit together** at the top of its card.
+
+### Fixed
+
+- An app you deleted by hand but installed with Homebrew no longer keeps its leftovers hidden from App Leftovers.
 
 ## 0.4.1 — 2026-11-17
 

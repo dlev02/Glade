@@ -230,7 +230,7 @@ enum MCPTools {
       schema: noArguments, readOnly: false
     ) { _ in
       guard let receipt = Cleaner.receipts().first else { throw MCPFailure(message: "Nothing has been cleaned yet.") }
-      return JSONFiles.string(Cleaner.restore(receipt))
+      return JSONFiles.string(await Cleaner.restore(receipt))
     },
     MCPTool(
       name: "glade_protect_check",

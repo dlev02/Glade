@@ -49,6 +49,17 @@ struct CleanConfirmation: View {
               : "Space is freed when the Trash is emptied"
           )
         }
+        let locked = items.filter(\.needsPassword)
+        if !locked.isEmpty {
+          // Finder moves these and asks for the password; Glade never sees it.
+          outcome(
+            "Finder asks for your password",
+            symbol: "lock",
+            detail: locked.count == 1
+              ? "\(locked[0].title) belongs to the system, so macOS needs it"
+              : "\(locked.count) apps belong to the system, so macOS needs it"
+          )
+        }
       }
       .padding(.leading, Self.inset)
 

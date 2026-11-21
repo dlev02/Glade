@@ -121,7 +121,7 @@ private struct ActionRow: View {
           .accessibilityIdentifier("actions.approve.\(action.kind.rawValue)")
       }
     case .done where state.receipts[action.id] != nil && !state.putBack.contains(action.id):
-      Button("Put Back") { model.putBackAction(action.id, in: message) }
+      Button("Put Back") { Task { await model.putBackAction(action.id, in: message) } }
         .secondaryAction()
     default:
       EmptyView()

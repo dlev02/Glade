@@ -709,7 +709,7 @@ public final class AppModel {
     }
     do {
       let receipt = try await Cleaner.clean(
-        ids: ids, from: scan, config: config, options: CleanOptions(dryRun: false, initiator: .user)
+        ids: ids, from: scan, config: config, options: CleanOptions(dryRun: false, initiator: .user, askFinder: true)
       ) { [weak self] done, total, title in
         Task { @MainActor in
           guard let self, self.isCleaning else { return }
@@ -790,9 +790,9 @@ public final class AppModel {
 
   /// Moves a clean’s Trash items back where they were.
   @discardableResult
-  public func putBack(_ receipt: Receipt) -> Cleaner.RestoreResult {
+  public func putBack(_ receipt: Receipt) async -> Cleaner.RestoreResult {
     if isDemo { return Self.pretendRestore(receipt) }
-    return Cleaner.restore(receipt)
+    return await Cleaner.restore(receipt, askFinder: true)
   }
 
   // MARK: Assistant

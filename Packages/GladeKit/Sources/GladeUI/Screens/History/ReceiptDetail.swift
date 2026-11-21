@@ -29,7 +29,7 @@ struct ReceiptDetail: View {
               trashed.count == 1 ? "Put back 1 item from the Trash?" : "Put back \(trashed.count) items from the Trash?",
               isPresented: $confirmsPutBack
             ) {
-              Button("Put Back") { restore = model.putBack(receipt) }
+              Button("Put Back") { Task { restore = await model.putBack(receipt) } }
                 .keyboardShortcut(.defaultAction)
               Button("Cancel", role: .cancel) {}
             } message: {

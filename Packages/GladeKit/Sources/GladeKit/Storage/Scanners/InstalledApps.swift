@@ -189,10 +189,15 @@ public struct InstalledApps: Sendable {
   static func toolNames() -> Set<String> {
     var names = Set<String>()
     var folders = Shell.searchPaths
-    folders += ["/opt/homebrew/Cellar", "/opt/homebrew/Caskroom", "/usr/local/Cellar", "/usr/local/Caskroom"]
+    folders += ["/opt/homebrew/Cellar", "/usr/local/Cellar"]
     for folder in folders {
       for name in (try? FileManager.default.contentsOfDirectory(atPath: folder)) ?? [] {
         names.insert(name.lowercased())
+      }
+    }
+    for caskroom in ["/opt/homebrew/Caskroom", "/usr/local/Caskroom"] {
+      for cask in DiskWalk.children(of: caskroom) where caskIsInstalled(cask) {
+        names.insert((cask as NSString).lastPathComponent.lowercased())
       }
     }
     // Third-party taps ("homebrew-autoupdate") install tools that write under the
@@ -203,6 +208,23 @@ public struct InstalledApps: Sendable {
       }
     }
     return names
+  }
+
+  /// Whether a Homebrew cask is still on this Mac. A cask that installs an app counts
+  /// only while one of its apps is still there: Homebrew keeps the cask’s folder when
+  /// the app is deleted by hand, and that folder alone mustn’t keep the app’s data
+  /// looking in use. Casks without an app (fonts, command-line tools) always count.
+  static func caskIsInstalled(_ cask: String) -> Bool {
+    var apps = 0
+    for version in DiskWalk.children(of: cask) {
+      for item in DiskWalk.children(of: version) where item.hasSuffix(".app") {
+        apps += 1
+        // The link Homebrew leaves points at where it put the app; `fileExists`
+        // follows it, so a dangling one reads as gone.
+        if FileManager.default.fileExists(atPath: item) { return true }
+      }
+    }
+    return apps == 0
   }
 
   // MARK: Reading a bundle

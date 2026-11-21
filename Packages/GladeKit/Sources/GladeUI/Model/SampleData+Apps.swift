@@ -10,7 +10,7 @@ extension SampleData {
     func app(
       _ name: String, _ bundleID: String, path: String, version: String, _ gigabytes: Double, daysAgo: Double?,
       source: AppSource, data: [(String, String, Double)] = [], kept: [(String, String, String)] = [],
-      uninstaller: String? = nil, blocker: Blocker? = nil
+      uninstaller: String? = nil, blocker: Blocker? = nil, needsPassword: Bool = false
     ) -> Finding {
       let parts = data.map { AppDetails.Part(path: "\(home)/Library/\($0.0)", label: $0.1, bytes: Int64($0.2 * 1e9)) }
       let opened = daysAgo.map { Date().addingTimeInterval(-$0 * day) }
@@ -18,7 +18,7 @@ extension SampleData {
         bundleID: bundleID, name: name, version: version, source: source, bundlePath: path,
         bundleBytes: Int64(gigabytes * 1e9), parts: parts,
         kept: kept.map { AppDetails.Kept(path: "\(home)/Library/\($0.0)", label: $0.1, reason: $0.2) },
-        lastOpened: opened, uninstaller: uninstaller, needsAdministrator: blocker?.kind == .needsAdmin
+        lastOpened: opened, uninstaller: uninstaller, needsAdministrator: needsPassword
       )
       var blockers: [Blocker] = []
       if uninstaller != nil {
@@ -52,7 +52,7 @@ extension SampleData {
       ),
       app(
         "iMovie", "com.apple.iMovieApp", path: "/Applications/iMovie.app", version: "10.4.5", 3.98, daysAgo: 240,
-        source: .appStore, data: [("Containers/com.apple.iMovieApp", "Containers", 1.2)]
+        source: .appStore, data: [("Containers/com.apple.iMovieApp", "Containers", 1.2)], needsPassword: true
       ),
       app(
         "Adobe Photoshop 2025", "com.adobe.Photoshop", path: "/Applications/Adobe Photoshop 2025/Adobe Photoshop 2025.app",
@@ -73,7 +73,7 @@ extension SampleData {
       ),
       app(
         "Xcode", "com.apple.dt.Xcode", path: "/Applications/Xcode.app", version: "27.2", 4.23, daysAgo: 1, source: .appStore,
-        blocker: Blocker(.needsAdmin, "macOS asks for your password to remove this app, so move it to the Trash in Finder.")
+        needsPassword: true
       ),
       app(
         "Docker", "com.docker.docker", path: "/Applications/Docker.app", version: "4.52", 2.1, daysAgo: 0, source: .homebrew,

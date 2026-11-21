@@ -103,6 +103,7 @@ Each AI tool runs in a new, empty temporary folder that is deleted afterwards, w
 - **Location** (optional) lets Glade read your Wi-Fi network's name and which access point you're on, which macOS treats as location. Glade uses it only to label data used by network and to notice when you move between access points; it never reads where you are. Everything else on Network works without it. Withdraw it in System Settings under Privacy & Security > Location Services. It's the one entitlement in Glade's signature, because macOS won't offer Location without it.
 - **Local Network** lets Glade ping your router and read its status pages. Withdraw it in System Settings under Privacy & Security > Local Network.
 - **Notifications** carry Glade's alerts. Turn them off in System Settings under Notifications.
+- **Control Finder** (Automation) is asked for the first time you uninstall, or put back, an app that belongs to the system. Glade asks Finder to move that one app, and Finder asks for your password; Glade never sees it and sends Finder nothing else. Withdraw it in System Settings under Privacy & Security > Automation.
 
 The `glade` command and the MCP server run with the permissions of the app you start them from, such as Terminal or your coding agent.
 

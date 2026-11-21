@@ -19,6 +19,9 @@ struct InstalledAppRow: Encodable {
   var source: String
   var hasOwnUninstaller: Bool
   var uninstaller: String?
+  /// macOS asks for the person’s password to move it, so `uninstall --finder` hands it
+  /// to Finder, which asks.
+  var needsPassword: Bool
   /// Whether `uninstall --confirm` would move it to the Trash right now.
   var canUninstall: Bool
   /// Why it can’t, when it can’t.
@@ -40,6 +43,7 @@ struct InstalledAppRow: Encodable {
     source = app?.source.rawValue ?? AppSource.other.rawValue
     hasOwnUninstaller = finding.blockers.contains { $0.kind == .ownUninstaller }
     uninstaller = app?.uninstaller.map(Redactor.tilde)
+    needsPassword = app?.needsAdministrator == true && !hasOwnUninstaller
     canUninstall = !finding.isBlocked
     blocked = finding.blockers.first?.detail
   }
@@ -166,7 +170,9 @@ struct Uninstall: AsyncParsableCommand {
     discussion: """
       Everything goes to the Trash, so `\(Brand.cli) undo` puts it back. Apps that come with \
       their own uninstaller (Adobe’s, for example) aren’t removed by Glade: --open-uninstaller \
-      opens theirs, and the next scan lists anything left behind under App Leftovers.
+      opens theirs, and the next scan lists anything left behind under App Leftovers. \
+      Apps that belong to the system (most from the App Store) need your password: with \
+      --finder, Finder moves them and shows its own password prompt.
       """
   )
 
@@ -181,9 +187,14 @@ struct Uninstall: AsyncParsableCommand {
   @Flag(name: .customLong("open-uninstaller"), help: "For an app with its own uninstaller, open it.")
   var openUninstaller = false
 
+  @Flag(name: .long, help: "For an app that needs your password, have Finder move it; Finder asks for the password.")
+  var finder = false
+
   func run() async throws {
     let (finding, scan) = try await AppScans.find(name)
-    let report = try await UninstallReport.make(finding, scan: scan, confirm: confirm, openUninstaller: openUninstaller)
+    let report = try await UninstallReport.make(
+      finding, scan: scan, confirm: confirm, openUninstaller: openUninstaller, askFinder: finder
+    )
     emit(report, json: output.json) { report.print() }
   }
 }
@@ -212,7 +223,8 @@ struct UninstallReport: Encodable {
   var receipt: String?
 
   static func make(
-    _ finding: Finding, scan: ScanResult, confirm: Bool, openUninstaller: Bool, initiator: Initiator = .commandLine
+    _ finding: Finding, scan: ScanResult, confirm: Bool, openUninstaller: Bool, initiator: Initiator = .commandLine,
+    askFinder: Bool = false
   ) async throws -> UninstallReport {
     let row = InstalledAppRow(finding)
     let details = finding.app
@@ -235,7 +247,7 @@ struct UninstallReport: Encodable {
     }
 
     let receipt = try await Cleaner.clean(
-      ids: [finding.id], from: scan, options: CleanOptions(dryRun: !confirm, initiator: initiator)
+      ids: [finding.id], from: scan, options: CleanOptions(dryRun: !confirm, initiator: initiator, askFinder: askFinder)
     )
     let entry = receipt.entries.first
     for (path, reason) in (entry?.leftInPlace ?? [:]).sorted(by: { $0.key < $1.key }) {
@@ -247,9 +259,10 @@ struct UninstallReport: Encodable {
     case .wouldRemove?:
       result = "wouldMove"
       message = "Dry run: \(Format.bytes(goes.reduce(0) { $0 + $1.bytes })) would go to the Trash. Add --confirm to do it."
+        + (row.needsPassword ? " macOS needs your password for this app: add --finder too, and Finder will ask for it." : "")
     case .trashed?:
       result = "moved"
-      message = "Moved \(finding.title) to the Trash. `\(Brand.cli) undo` puts it back; the space is freed when the Trash is emptied."
+      message = "Moved \(finding.title) to the Trash. `\(Brand.cli) undo\(row.needsPassword ? " --finder" : "")` puts it back; the space is freed when the Trash is emptied."
       if let last = ScanEngine.loadLast() { ScanEngine.save(last.removing(receipt)) }
     case .skipped(let reason)?:
       result = "skipped"
@@ -281,9 +294,6 @@ struct UninstallReport: Encodable {
       for item in stays { Swift.print("  \(item.path) — \(item.reason)") }
     }
     Swift.print("\n\(message)")
-    if result == "failed" || result == "skipped", app.blocked?.contains("Finder") == true || message.contains("Finder") {
-      Swift.print("Show it in Finder: open -R \"\((app.path as NSString).expandingTildeInPath)\"")
-    }
     if let receipt { Swift.print("Receipt \(receipt).") }
   }
 }

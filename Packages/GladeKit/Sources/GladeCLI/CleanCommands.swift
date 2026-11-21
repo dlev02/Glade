@@ -106,6 +106,9 @@ struct Clean: AsyncParsableCommand {
   @Flag(name: .long, help: "Scan again first.")
   var rescan = false
 
+  @Flag(name: .long, help: "For an app that needs your password, have Finder move it; Finder asks for the password.")
+  var finder = false
+
   func run() async throws {
     guard level != nil || !ids.isEmpty else {
       throw ValidationError("Say what to clean: --level careful|balanced|aggressive, or --ids <id> …")
@@ -118,7 +121,7 @@ struct Clean: AsyncParsableCommand {
     }
     let receipt = try await Cleaner.clean(
       ids: targets, from: scan, config: config,
-      options: CleanOptions(dryRun: !confirm, initiator: .commandLine)
+      options: CleanOptions(dryRun: !confirm, initiator: .commandLine, askFinder: finder)
     ) { done, total, title in
       guard !output.json, !title.isEmpty else { return }
       FileHandle.standardError.write(Data("\r\u{1B}[K  \(done + 1)/\(total) \(title)".utf8))
@@ -152,7 +155,7 @@ struct Clean: AsyncParsableCommand {
   }
 }
 
-struct Undo: ParsableCommand {
+struct Undo: AsyncParsableCommand {
   static let configuration = CommandConfiguration(
     abstract: "Put back what a clean moved to the Trash.",
     discussion: "Without an identifier, uses the most recent clean. Deleted caches can’t be put back; they rebuild."
@@ -163,16 +166,19 @@ struct Undo: ParsableCommand {
   @Argument(help: "A receipt identifier (or its first characters) from `receipts`.")
   var receipt: String?
 
-  func run() throws {
+  @Flag(name: .long, help: "Put back an app that needs your password through Finder, which asks for it.")
+  var finder = false
+
+  func run() async throws {
     let all = Cleaner.receipts()
     guard let chosen = receipt.map({ wanted in all.first { $0.id.hasPrefix(wanted) } }) ?? all.first else {
       throw ValidationError("No matching clean found.")
     }
-    let result = Cleaner.restore(chosen)
+    let result = await Cleaner.restore(chosen, askFinder: finder)
     emit(result, json: output.json) {
       print("Put back \(result.restored.count) items.")
       if !result.missing.isEmpty { print("\(result.missing.count) are no longer in the Trash.") }
-      if !result.blocked.isEmpty { print("\(result.blocked.count) couldn’t be put back because something is already there.") }
+      if !result.blocked.isEmpty { print("\(result.blocked.count) couldn’t be put back because something is already there, or macOS needs your password (try --finder).") }
     }
   }
 }
