@@ -1,9 +1,10 @@
+import GladeKit
 import SwiftUI
 
 /// An AI’s answer, rendered from its Markdown: paragraphs, bold, italic, inline code
 /// and links, modest headings, lists with hanging indents on the answer’s text edge,
-/// quiet code blocks with Copy, quotes and simple tables. Everything is selectable;
-/// copying the whole answer elsewhere copies the original Markdown.
+/// quiet code blocks with Copy, quotes and simple tables. Text is selectable except a
+/// block with a link, which stays clickable; Copy copies the original Markdown.
 struct MarkdownText: View {
   var source: String
   /// The space between blocks.
@@ -18,10 +19,36 @@ struct MarkdownText: View {
     let blocks = MarkdownBlock.parse(source)
     VStack(alignment: .leading, spacing: spacing) {
       ForEach(Array(blocks.enumerated()), id: \.offset) { index, block in
-        view(for: block, after: index > 0 ? blocks[index - 1] : nil)
+        // On the Mac, selectable text swallows clicks on its links, so a block with a
+        // link gives up selection to keep the link working. Copy copies everything.
+        if Self.hasLink(block) {
+          view(for: block, after: index > 0 ? blocks[index - 1] : nil)
+            .textSelection(.disabled)
+        } else {
+          view(for: block, after: index > 0 ? blocks[index - 1] : nil)
+            .textSelection(.enabled)
+        }
       }
     }
-    .textSelection(.enabled)
+    .environment(\.openURL, OpenURLAction { url in
+      guard ["http", "https", "mailto"].contains(url.scheme?.lowercased() ?? "") else { return .discarded }
+      // Sample data opens nothing, so a check of the link doesn't open a browser.
+      if DemoState.value("demoLinks") == "log" {
+        Log.info(.app, "Would open a link from an answer: \(url.absoluteString)")
+        return .handled
+      }
+      return .systemAction
+    })
+  }
+
+  /// Whether a block’s text holds a link.
+  static func hasLink(_ block: MarkdownBlock) -> Bool {
+    let text: String
+    switch block {
+    case .paragraph(let value), .heading(_, let value), .item(_, _, let value), .quote(let value): text = value
+    default: return false
+    }
+    return inline(text).runs.contains { $0.link != nil }
   }
 
   @ViewBuilder
