@@ -37,6 +37,7 @@ Everything stays on your Mac.
 | Your router's access code, only if you added it | your login Keychain, as "Glade router access" (not synced) |
 | Notes you keep for the Assistant: up to 30 short dated notes, only ones you typed or saved | `~/Library/Application Support/Glade/assistant-notes.json` |
 | Assistant runs: exactly what was sent to an AI and what came back, the newest 100 | `~/Library/Application Support/Glade/AgentRuns/` |
+| Conversations with the Assistant: your questions and its answers, with which AI answered and when, so you can open them again; the newest 200 plus any you pin. Deleting one in the Assistant deletes its file | `~/Library/Application Support/Glade/Conversations/` |
 | When each app was last in front, by bundle identifier | `~/Library/Application Support/Glade/activity.json` |
 | When each alert last fired, so alerts don't repeat | `~/Library/Application Support/Glade/alerts.json` |
 | Data used, recorded while the app is open: bytes received and sent each hour for each network (by name only with Location access, otherwise "Wi-Fi" or "Ethernet") and each day for each app, for 90 days, under a megabyte | `~/Library/Application Support/Glade/network-history.json` |

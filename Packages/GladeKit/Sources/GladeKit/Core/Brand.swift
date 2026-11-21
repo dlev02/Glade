@@ -45,6 +45,8 @@ public enum GladePaths {
 
   public static var receipts: URL { directory(support.appendingPathComponent("Receipts", isDirectory: true)) }
   public static var agentRuns: URL { directory(support.appendingPathComponent("AgentRuns", isDirectory: true)) }
+  /// Conversations with the Assistant, kept so they can be opened again.
+  public static var conversations: URL { directory(support.appendingPathComponent("Conversations", isDirectory: true)) }
   public static var config: URL { support.appendingPathComponent("config.json") }
   public static var lastScan: URL { support.appendingPathComponent("last-scan.json") }
   public static var diskUsage: URL { support.appendingPathComponent("disk-usage.json") }

@@ -14,6 +14,8 @@ struct AssistantScreen: View {
   @State private var shownRun: AssistantRun?
   /// The confirmation for a proposal’s ticked items is showing.
   @State private var showsCleanSheet = false
+  /// The column of earlier conversations.
+  @AppStorage("assistantShowsConversations") private var showsConversations = true
 
   init(preview: AssistantPreview? = nil, showsDetails: Bool = false) {
     self.preview = preview
@@ -28,15 +30,33 @@ struct AssistantScreen: View {
     let providers = preview?.providers ?? model.providers
     let active = preview?.providers == nil ? model.activeProvider : providers.first(where: \.isReady)
 
-    content(messages: messages, state: state, providers: providers, active: active)
+    HStack(spacing: 0) {
+      if showsConversations {
+        ConversationList()
+          .frame(width: 240)
+          .transition(.move(edge: .leading).combined(with: .opacity))
+        Divider()
+      }
+      content(messages: messages, state: state, providers: providers, active: active)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
       .navigationTitle("Assistant")
       .toolbar {
+        ToolbarItem(placement: .navigation) {
+          Button("Conversations", systemImage: "sidebar.leading") {
+            withAnimation(.snappy(duration: 0.2)) { showsConversations.toggle() }
+          }
+          .accessibilityIdentifier("toolbar.conversations")
+          .accessibilityValue(showsConversations ? "Shown" : "Hidden")
+          .help(showsConversations ? "Hide Conversations" : "Show Conversations")
+          .keyboardShortcut("s", modifiers: [.command, .control])
+        }
         ToolbarItem(placement: .primaryAction) {
           Button("New Conversation", systemImage: Symbols.newConversation) { model.clearConversation() }
             .accessibilityIdentifier("toolbar.newConversation")
             .help("New Conversation")
             .keyboardShortcut("n")
-            .disabled(messages.isEmpty)
+            .disabled(messages.isEmpty || !model.canSwitchConversation)
         }
         // Declared once in the main toolbar, its own capsule at the trailing edge, the
         // same as Storage’s and History’s inspector buttons.

@@ -214,7 +214,13 @@ public final class AppModel {
   public private(set) var providers: [ProviderStatus] = []
   public internal(set) var assistantState: AssistantState = .idle
   public private(set) var advice: StorageAdvice?
-  public internal(set) var messages: [Message] = []
+  public internal(set) var messages: [Message] = [] {
+    didSet { keepConversation() }
+  }
+  /// The conversation on screen, as it’s saved.
+  public internal(set) var conversationID = UUID()
+  /// Saved conversations, pinned first, then the latest first.
+  public internal(set) var savedConversations: [SavedConversation] = []
 
   // MARK: Permissions
 
@@ -323,6 +329,7 @@ public final class AppModel {
       rebuildPlan()
     }
     receipts = Cleaner.receipts()
+    Task { await loadConversations() }
     NSWorkspace.shared.notificationCenter.addObserver(
       forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
     ) { note in
@@ -858,7 +865,9 @@ public final class AppModel {
     }
   }
 
+  /// Starts a new conversation. The one on screen is already saved.
   public func clearConversation() {
+    conversationID = UUID()
     messages = []
     assistantState = .idle
   }
@@ -950,6 +959,7 @@ public final class AppModel {
     receipts = sample.receipts
     providers = sample.providers
     messages = sample.messages
+    savedConversations = Self.sampleConversations()
     hasFullDiskAccess = true
     notificationsAllowed = true
     showsSetup = false
