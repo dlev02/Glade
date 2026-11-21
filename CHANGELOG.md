@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.4.2 — 2026-11-20
+
+### Assistant
+
+- **Your conversations are kept.** A column beside the conversation lists earlier ones under Pinned, Today, Yesterday and so on. Open any to read it or carry on, and rename, pin or delete it from its menu. Starting a new conversation no longer loses the last one.
+- **Questions go where you meant.** A pasted screenshot's file name no longer turns a question into a clean-up ("CleanShot" isn't "clean"), and a follow-up in a conversation about your network still gets your network's readings.
+- **It knows what Glade can do with your router.** The Assistant is told whether your gateway's access code is saved, so it no longer says it can't see it or sends you to the sticker.
+- **Effort for each AI.** Choose how hard each AI thinks, and the second opinion too, in Settings › Assistant or under the question box.
+- **Signing in to an AI is one click.** An AI that needs signing in, such as Gemini, has **Sign In…**, which opens Terminal running its command, and a button to copy the command. Glade looks again when you come back.
+- **Links in answers open.** A web address in an answer can be clicked.
+
+### Performance and Network
+
+- **Unfamiliar names explain themselves.** `swift-frontend` says it's the Swift compiler, `node` says it's JavaScript and which app started it, and macOS helpers that leak, such as the Wi-Fi menu, are marked when they use far more memory than usual.
+- **Forget removes your router's access code.** It did nothing when a different copy of Glade had saved the code; now it removes it, or says why it couldn't.
+- **Little Snitch's import date and Import Again… sit together** at the top of its card.
+
 ## 0.4.1 — 2026-11-17
 
 - **Adding your AT&T gateway's access code works.** Saving the Device Access Code always said "The router didn't answer", even on the router's own network. Glade now signs in and keeps the code in your Keychain, and if the router really is slow to answer, it says so instead of claiming it can't sign in to that router.
